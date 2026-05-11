@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createProgram } from "../program.js";
-import { extractResponsesImageBase64 } from "../commands/short.js";
+import { extractResponsesImageBase64, resolveCoverApiKey } from "../commands/short.js";
 
 describe("short command", () => {
   it("registers public short run command", () => {
@@ -33,5 +33,16 @@ describe("short command", () => {
     };
 
     expect(extractResponsesImageBase64(payload)).toBe("iVBORw0KGgo=");
+  });
+
+  it("requires an explicit cover API key", () => {
+    const oldValue = process.env.INKOS_TEST_MISSING_COVER_KEY;
+    delete process.env.INKOS_TEST_MISSING_COVER_KEY;
+    try {
+      expect(() => resolveCoverApiKey("INKOS_TEST_MISSING_COVER_KEY")).toThrow(/API key/i);
+    } finally {
+      if (oldValue === undefined) delete process.env.INKOS_TEST_MISSING_COVER_KEY;
+      else process.env.INKOS_TEST_MISSING_COVER_KEY = oldValue;
+    }
   });
 });

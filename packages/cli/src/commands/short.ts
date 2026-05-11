@@ -49,7 +49,7 @@ shortCommand
   .option("--draft-review-model <model>", "Model for draft review")
   .option("--revise-model <model>", "Model for second full draft")
   .option("--package-model <model>", "Model for synopsis and cover prompt packaging")
-  .option("--cover-base-url <url>", "OpenAI-compatible Responses base URL for cover generation")
+  .option("--cover-base-url <url>", "OpenAI-compatible Responses API base URL for cover generation, e.g. https://api.openai.com/v1")
   .option("--cover-endpoint <url>", "Exact Responses endpoint for cover generation; overrides --cover-base-url")
   .option("--cover-model <model>", "Image-capable Responses model for cover generation", "gpt-5.5")
   .option("--cover-size <size>", "Cover image size", "1024x1360")
@@ -438,9 +438,11 @@ async function generateCoverArtifact(input: {
   const model = input.coverModel || process.env.INKOS_COVER_MODEL || "gpt-5.5";
   const size = input.coverSize || process.env.INKOS_COVER_SIZE || "1024x1360";
   const apiKeyEnv = input.coverApiKeyEnv || "INKOS_COVER_API_KEY";
-  const apiKey = process.env[apiKeyEnv] || (isLocalhostUrl(endpoint) ? "sk-dummy" : "");
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  const apiKey = resolveCoverApiKey(apiKeyEnv);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  };
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -494,6 +496,14 @@ export function extractResponsesImageBase64(payload: unknown): string | undefine
   return undefined;
 }
 
+export function resolveCoverApiKey(apiKeyEnv: string): string {
+  const apiKey = process.env[apiKeyEnv];
+  if (!apiKey) {
+    throw new Error(`Cover API key is required. Set ${apiKeyEnv} or pass --cover-api-key-env.`);
+  }
+  return apiKey;
+}
+
 function resolveCoverEndpoint(coverEndpoint?: string, coverBaseUrl?: string): string {
   const endpoint = coverEndpoint || process.env.INKOS_COVER_ENDPOINT;
   if (endpoint) return endpoint;
@@ -536,15 +546,6 @@ async function writeText(root: string, path: string, value: string): Promise<voi
 
 function resolvePath(root: string, path: string): string {
   return isAbsolute(path) ? path : resolve(root, path);
-}
-
-function isLocalhostUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost" || parsed.hostname === "::1";
-  } catch {
-    return false;
-  }
 }
 
 function parseBoundedInteger(
