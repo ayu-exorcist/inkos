@@ -1,0 +1,72 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn", "oxc", "jsdoc", "node", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn",
+    "pedantic": "off",
+    "style": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    "no-empty": ["error", { "allowEmptyCatch": false }],
+    "no-debugger": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-unused-vars": "off",
+    "no-unsafe-optional-chaining": "off",
+    "no-useless-catch": "warn",
+    "no-control-regex": "off",
+    "no-ex-assign": "off",
+    "no-useless-escape": "off",
+    "no-extra-boolean-cast": "off",
+    "no-useless-rename": "off",
+    "no-unused-expressions": "off",
+    "unicorn/no-empty-file": "warn",
+    "unicorn/no-thenable": "warn",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "unicorn/no-useless-spread": "off",
+    "unicorn/prefer-string-starts-ends-with": "off",
+    "oxc/no-map-spread": "off",
+    "promise/always-return": "off",
+    "typescript/no-floating-promises": "warn",
+    "typescript/no-misused-promises": "warn",
+    "import/no-named-export": "off",
+    "import/prefer-default-export": "off",
+    "import/no-unassigned-import": "off",
+    "import/no-named-as-default-member": "off",
+    "unicorn/filename-case": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/prefer-set-has": "off",
+    "unicorn/prefer-array-find": "off",
+    "eslint/no-magic-numbers": "off",
+    "eslint/sort-keys": "off",
+    "eslint/no-await-in-loop": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/no-shadow": "off",
+    "eslint/no-empty-function": "off",
+    "eslint/preserve-caught-error": "off",
+    "eslint/no-useless-constructor": "off",
+    "eslint/no-unneeded-ternary": "off",
+    "typescript/no-unsafe-argument": "off",
+    "typescript/no-unsafe-assignment": "off",
+    "typescript/no-unsafe-call": "off",
+    "typescript/no-unsafe-member-access": "off",
+    "typescript/no-unsafe-return": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist", "*.d.ts", "scripts/*.mjs"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "no-empty": "off",
+        "no-debugger": "off"
+      }
+    }
+  ]
+}
