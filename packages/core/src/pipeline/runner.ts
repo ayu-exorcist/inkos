@@ -3,7 +3,12 @@ import { chatCompletion, createLLMClient } from "../llm/provider.js";
 import type { Logger } from "../utils/logger.js";
 import type { BookConfig, FanficMode } from "../models/book.js";
 import type { ChapterMeta } from "../models/chapter.js";
-import type { NotifyChannel, LLMConfig, AgentLLMOverride, InputGovernanceMode } from "../models/project.js";
+import type {
+  NotifyChannel,
+  LLMConfig,
+  AgentLLMOverride,
+  InputGovernanceMode,
+} from "../models/project.js";
 import type { GenreProfile } from "../models/genre-profile.js";
 import { ArchitectAgent, type ArchitectOutput } from "../agents/architect.js";
 import { FoundationReviewerAgent } from "../agents/foundation-reviewer.js";
@@ -14,7 +19,11 @@ import { LengthNormalizerAgent } from "../agents/length-normalizer.js";
 import { ChapterAnalyzerAgent } from "../agents/chapter-analyzer.js";
 import { ContinuityAuditor } from "../agents/continuity.js";
 import { ReviserAgent, DEFAULT_REVISE_MODE, type ReviseMode } from "../agents/reviser.js";
-import { StateValidatorAgent, type ValidationResult, type ValidationWarning } from "../agents/state-validator.js";
+import {
+  StateValidatorAgent,
+  type ValidationResult,
+  type ValidationWarning,
+} from "../agents/state-validator.js";
 import { RadarAgent } from "../agents/radar.js";
 import type { RadarSource } from "../agents/radar-source.js";
 import { readGenreProfile } from "../agents/rules-reader.js";
@@ -29,7 +38,14 @@ import type { AuditResult, AuditIssue } from "../agents/continuity.js";
 import type { RadarResult } from "../agents/radar.js";
 import type { LengthSpec, LengthTelemetry } from "../models/length-governance.js";
 import type { ChapterMemo, ContextPackage, RuleStack } from "../models/input-governance.js";
-import { buildLengthSpec, countChapterLength, formatLengthCount, isOutsideHardRange, resolveLengthCountingMode, type LengthLanguage } from "../utils/length-metrics.js";
+import {
+  buildLengthSpec,
+  countChapterLength,
+  formatLengthCount,
+  isOutsideHardRange,
+  resolveLengthCountingMode,
+  type LengthLanguage,
+} from "../utils/length-metrics.js";
 import { analyzeLongSpanFatigue } from "../utils/long-span-fatigue.js";
 import { buildWritingMethodologySection } from "../utils/writing-methodology.js";
 import {
@@ -38,7 +54,10 @@ import {
   readStoryFrame,
   readVolumeMap,
 } from "../utils/outline-paths.js";
-import { loadNarrativeMemorySeed, loadSnapshotCurrentStateFacts } from "../state/runtime-state-store.js";
+import {
+  loadNarrativeMemorySeed,
+  loadSnapshotCurrentStateFacts,
+} from "../state/runtime-state-store.js";
 import { rewriteStructuredStateFromMarkdown } from "../state/state-bootstrap.js";
 import { readFile, readdir, writeFile, mkdir, rename, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
@@ -50,264 +69,29 @@ import {
 import { persistChapterArtifacts } from "./chapter-persistence.js";
 import { runChapterReviewCycle } from "./chapter-review-cycle.js";
 import { validateChapterTruthPersistence } from "./chapter-truth-validation.js";
-import { loadPersistedPlan, relativeToBookDir, savePersistedPlan } from "./persisted-governed-plan.js";
+import {
+  loadPersistedPlan,
+  relativeToBookDir,
+  savePersistedPlan,
+} from "./persisted-governed-plan.js";
 
-const SEQUENCE_LEVEL_CATEGORIES = new Set([
-  "Pacing Monotony", "节奏单调",
-  "Mood Monotony", "情绪单调",
-  "Title Collapse", "标题重复",
-  "Title Clustering", "标题聚集",
-  "Opening Pattern Repetition", "开头同构",
-  "Ending Pattern Repetition", "结尾同构",
-]);
+import {
+  buildImportFoundationSource,
+  type PipelineConfig,
+  type TokenUsageSummary,
+  type ChapterPipelineResult,
+  type DraftResult,
+  type PlanChapterResult,
+  type ComposeChapterResult,
+  type ReviseResult,
+  type TruthFiles,
+  type BookStatusInfo,
+  type ImportChaptersInput,
+  type ImportChaptersResult,
+  type InitBookOptions,
+} from "./runner-helpers.js";
 
-function isSequenceLevelCategory(category: string): boolean {
-  return SEQUENCE_LEVEL_CATEGORIES.has(category);
-}
-
-interface ImportFoundationSourceOptions {
-  readonly maxFullTextChars?: number;
-  readonly chapterExcerptChars?: number;
-  readonly titleCatalogChars?: number;
-  readonly edgeChapterCount?: number;
-  readonly middleAnchorCount?: number;
-}
-
-const DEFAULT_IMPORT_FOUNDATION_MAX_FULL_TEXT_CHARS = 80_000;
-const DEFAULT_IMPORT_CHAPTER_EXCERPT_CHARS = 6_000;
-const DEFAULT_IMPORT_TITLE_CATALOG_CHARS = 24_000;
-const DEFAULT_IMPORT_EDGE_CHAPTER_COUNT = 4;
-const DEFAULT_IMPORT_MIDDLE_ANCHOR_COUNT = 8;
-
-function formatImportedChapter(
-  chapter: { readonly title: string; readonly content: string },
-  index: number,
-  language: LengthLanguage,
-  content = chapter.content,
-): string {
-  return language === "en"
-    ? `Chapter ${index + 1}: ${chapter.title}\n\n${content}`
-    : `第${index + 1}章 ${chapter.title}\n\n${content}`;
-}
-
-function estimateImportFullTextLength(
-  chapters: ReadonlyArray<{ readonly title: string; readonly content: string }>,
-): number {
-  return chapters.reduce((total, chapter) => total + chapter.title.length + chapter.content.length + 24, 0);
-}
-
-function excerptHeadTail(text: string, maxChars: number, language: LengthLanguage): string {
-  const clean = text.trim();
-  if (clean.length <= maxChars) return clean;
-  const headChars = Math.max(200, Math.floor(maxChars * 0.6));
-  const tailChars = Math.max(200, maxChars - headChars);
-  const omitted = clean.length - headChars - tailChars;
-  const marker = language === "en"
-    ? `\n\n[... ${omitted} chars omitted for import-context budget ...]\n\n`
-    : `\n\n【中间省略 ${omitted} 字，用于控制导入上下文预算】\n\n`;
-  return `${clean.slice(0, headChars).trimEnd()}${marker}${clean.slice(-tailChars).trimStart()}`;
-}
-
-function pickImportAnchorIndexes(
-  chapterCount: number,
-  edgeChapterCount: number,
-  middleAnchorCount: number,
-): ReadonlyArray<number> {
-  const selected = new Set<number>();
-  for (let i = 0; i < Math.min(edgeChapterCount, chapterCount); i++) selected.add(i);
-  for (let i = Math.max(0, chapterCount - edgeChapterCount); i < chapterCount; i++) selected.add(i);
-
-  const middleStart = Math.min(edgeChapterCount, chapterCount);
-  const middleEnd = Math.max(middleStart, chapterCount - edgeChapterCount);
-  const middleSize = middleEnd - middleStart;
-  const anchors = Math.min(middleAnchorCount, middleSize);
-  for (let i = 0; i < anchors; i++) {
-    const offset = Math.floor(((i + 1) * middleSize) / (anchors + 1));
-    selected.add(Math.min(chapterCount - 1, middleStart + offset));
-  }
-
-  return [...selected].sort((a, b) => a - b);
-}
-
-function buildTitleCatalog(
-  chapters: ReadonlyArray<{ readonly title: string; readonly content: string }>,
-  language: LengthLanguage,
-  maxChars: number,
-): string {
-  const lines = chapters.map((chapter, index) =>
-    language === "en"
-      ? `- Chapter ${index + 1}: ${chapter.title} (${chapter.content.length} chars)`
-      : `- 第${index + 1}章：${chapter.title}（${chapter.content.length}字）`,
-  );
-  const joined = lines.join("\n");
-  if (joined.length <= maxChars) return joined;
-
-  const headBudget = Math.floor(maxChars * 0.55);
-  const tailBudget = maxChars - headBudget;
-  const head: string[] = [];
-  const tail: string[] = [];
-  let headChars = 0;
-  let tailChars = 0;
-  for (const line of lines) {
-    if (headChars + line.length + 1 > headBudget) break;
-    head.push(line);
-    headChars += line.length + 1;
-  }
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i]!;
-    if (tailChars + line.length + 1 > tailBudget) break;
-    tail.unshift(line);
-    tailChars += line.length + 1;
-  }
-  const omitted = lines.length - head.length - tail.length;
-  const marker = language === "en"
-    ? `- ... ${omitted} chapter titles omitted ...`
-    : `- ……中间 ${omitted} 个章节标题省略……`;
-  return [...head, marker, ...tail].join("\n");
-}
-
-export function buildImportFoundationSource(
-  chapters: ReadonlyArray<{ readonly title: string; readonly content: string }>,
-  language: LengthLanguage,
-  options: ImportFoundationSourceOptions = {},
-): string {
-  const maxFullTextChars = options.maxFullTextChars ?? DEFAULT_IMPORT_FOUNDATION_MAX_FULL_TEXT_CHARS;
-  const chapterExcerptChars = options.chapterExcerptChars ?? DEFAULT_IMPORT_CHAPTER_EXCERPT_CHARS;
-  const titleCatalogChars = options.titleCatalogChars ?? DEFAULT_IMPORT_TITLE_CATALOG_CHARS;
-  const edgeChapterCount = options.edgeChapterCount ?? DEFAULT_IMPORT_EDGE_CHAPTER_COUNT;
-  const middleAnchorCount = options.middleAnchorCount ?? DEFAULT_IMPORT_MIDDLE_ANCHOR_COUNT;
-
-  if (estimateImportFullTextLength(chapters) <= maxFullTextChars) {
-    return chapters.map((chapter, index) => formatImportedChapter(chapter, index, language)).join("\n\n---\n\n");
-  }
-
-  const anchorIndexes = pickImportAnchorIndexes(chapters.length, edgeChapterCount, middleAnchorCount);
-  const header = language === "en"
-    ? [
-        "## Import foundation source package",
-        "",
-        `The imported book has ${chapters.length} chapters. To avoid overflowing the LLM context, this package keeps the opening chapters, ending/continuation point, selected middle anchors, and a capped title catalog. Full chapters will still be replayed sequentially after foundation generation to rebuild truth files.`,
-      ].join("\n")
-    : [
-        "## 导入基础设定压缩资料包",
-        "",
-        `本次导入共 ${chapters.length} 章。为避免超出 LLM 上下文，这里保留开篇、结尾续写点、少量中段锚点和标题目录；完整章节将在后续顺序回放中逐章分析并沉淀 truth files。`,
-      ].join("\n");
-  const catalogTitle = language === "en" ? "## Capped chapter title catalog" : "## 章节标题目录（截断）";
-  const anchorsTitle = language === "en" ? "## Source excerpts for architecture" : "## 用于反推基础设定的正文摘录";
-  const anchorText = anchorIndexes
-    .map((index) => {
-      const chapter = chapters[index]!;
-      return formatImportedChapter(
-        chapter,
-        index,
-        language,
-        excerptHeadTail(chapter.content, chapterExcerptChars, language),
-      );
-    })
-    .join("\n\n---\n\n");
-
-  return [
-    header,
-    "",
-    catalogTitle,
-    buildTitleCatalog(chapters, language, titleCatalogChars),
-    "",
-    anchorsTitle,
-    anchorText,
-  ].join("\n");
-}
-
-export interface PipelineConfig {
-  readonly client: LLMClient;
-  readonly model: string;
-  readonly projectRoot: string;
-  readonly defaultLLMConfig?: LLMConfig;
-  readonly foundationReviewRetries?: number;
-  readonly writingReviewRetries?: number;
-  readonly notifyChannels?: ReadonlyArray<NotifyChannel>;
-  readonly radarSources?: ReadonlyArray<RadarSource>;
-  readonly externalContext?: string;
-  readonly modelOverrides?: Record<string, string | AgentLLMOverride>;
-  readonly inputGovernanceMode?: InputGovernanceMode;
-  readonly logger?: Logger;
-  readonly onStreamProgress?: OnStreamProgress;
-}
-
-export interface TokenUsageSummary {
-  readonly promptTokens: number;
-  readonly completionTokens: number;
-  readonly totalTokens: number;
-}
-
-export interface ChapterPipelineResult {
-  readonly chapterNumber: number;
-  readonly title: string;
-  readonly wordCount: number;
-  readonly auditResult: AuditResult;
-  readonly revised: boolean;
-  readonly status: "ready-for-review" | "audit-failed" | "state-degraded";
-  readonly lengthWarnings?: ReadonlyArray<string>;
-  readonly lengthTelemetry?: LengthTelemetry;
-  readonly tokenUsage?: TokenUsageSummary;
-}
-
-// Atomic operation results
-export interface DraftResult {
-  readonly chapterNumber: number;
-  readonly title: string;
-  readonly wordCount: number;
-  readonly filePath: string;
-  readonly lengthWarnings?: ReadonlyArray<string>;
-  readonly lengthTelemetry?: LengthTelemetry;
-  readonly tokenUsage?: TokenUsageSummary;
-}
-
-export interface PlanChapterResult {
-  readonly bookId: string;
-  readonly chapterNumber: number;
-  readonly intentPath: string;
-  readonly goal: string;
-  readonly conflicts: ReadonlyArray<string>;
-}
-
-export interface ComposeChapterResult extends PlanChapterResult {
-  readonly contextPath: string;
-  readonly ruleStackPath: string;
-  readonly tracePath: string;
-}
-
-export interface ReviseResult {
-  readonly chapterNumber: number;
-  readonly wordCount: number;
-  readonly fixedIssues: ReadonlyArray<string>;
-  readonly applied: boolean;
-  readonly status: "unchanged" | "ready-for-review" | "audit-failed";
-  readonly skippedReason?: string;
-  readonly lengthWarnings?: ReadonlyArray<string>;
-  readonly lengthTelemetry?: LengthTelemetry;
-}
-
-export interface TruthFiles {
-  readonly currentState: string;
-  readonly particleLedger: string;
-  readonly pendingHooks: string;
-  readonly storyBible: string;
-  readonly volumeOutline: string;
-  readonly bookRules: string;
-}
-
-export interface BookStatusInfo {
-  readonly bookId: string;
-  readonly title: string;
-  readonly genre: string;
-  readonly platform: string;
-  readonly status: string;
-  readonly chaptersWritten: number;
-  readonly totalWords: number;
-  readonly nextChapter: number;
-  readonly chapters: ReadonlyArray<ChapterMeta>;
-}
+export * from "./runner-helpers.js";
 
 interface MergedAuditEvaluation {
   readonly auditResult: AuditResult;
@@ -315,28 +99,6 @@ interface MergedAuditEvaluation {
   readonly blockingCount: number;
   readonly criticalCount: number;
   readonly revisionBlockingIssues: ReadonlyArray<AuditIssue>;
-}
-
-export interface ImportChaptersInput {
-  readonly bookId: string;
-  readonly chapters: ReadonlyArray<{ readonly title: string; readonly content: string }>;
-  readonly resumeFrom?: number;
-  /** "continuation" (default) = pick up where the text left off, no new spacetime.
-   *  "series" = shared universe but independent new story, requires new spacetime. */
-  readonly importMode?: "continuation" | "series";
-}
-
-export interface ImportChaptersResult {
-  readonly bookId: string;
-  readonly importedCount: number;
-  readonly totalWords: number;
-  readonly nextChapter: number;
-}
-
-export interface InitBookOptions {
-  readonly externalContext?: string;
-  readonly authorIntent?: string;
-  readonly currentFocus?: string;
 }
 
 export class PipelineRunner {
@@ -365,6 +127,7 @@ export class PipelineRunner {
       const { profile } = await this.loadGenreProfile(book.genre);
       return profile.language;
     } catch {
+      // failure expected, safe to ignore
       return "zh";
     }
   }
@@ -374,6 +137,7 @@ export class PipelineRunner {
       const book = await this.state.loadBookConfig(bookId);
       return await this.resolveBookLanguage(book);
     } catch {
+      // failure expected, safe to ignore
       return "zh";
     }
   }
@@ -405,7 +169,7 @@ export class PipelineRunner {
     try {
       await this.generateStyleGuide(bookId, referenceText, sourceName);
     } catch (error) {
-      const resolvedLanguage = language ?? await this.resolveBookLanguageById(bookId);
+      const resolvedLanguage = language ?? (await this.resolveBookLanguageById(bookId));
       const detail = error instanceof Error ? error.message : String(error);
       this.logWarn(resolvedLanguage, {
         zh: `风格指纹提取失败，已跳过：${detail}`,
@@ -457,7 +221,9 @@ export class PipelineRunner {
         en: `Foundation rejected (${review.totalScore}/100), regenerating...`,
       });
 
-      foundation = await params.generate(this.buildFoundationReviewFeedback(review, params.language));
+      foundation = await params.generate(
+        this.buildFoundationReviewFeedback(review, params.language),
+      );
     }
 
     // Final review
@@ -487,11 +253,11 @@ export class PipelineRunner {
     language: "zh" | "en",
   ): string {
     const dimensionLines = review.dimensions
-      .map((dimension) => (
+      .map((dimension) =>
         language === "en"
           ? `- ${dimension.name} [${dimension.score}]: ${dimension.feedback}`
-          : `- ${dimension.name}（${dimension.score}分）：${dimension.feedback}`
-      ))
+          : `- ${dimension.name}（${dimension.score}分）：${dimension.feedback}`,
+      )
       .join("\n");
 
     return language === "en"
@@ -502,13 +268,7 @@ export class PipelineRunner {
           "## Dimension Notes",
           dimensionLines || "- none",
         ].join("\n")
-      : [
-          "## 总评",
-          review.overallFeedback,
-          "",
-          "## 分项问题",
-          dimensionLines || "- 无",
-        ].join("\n");
+      : ["## 总评", review.overallFeedback, "", "## 分项问题", dimensionLines || "- 无"].join("\n");
   }
 
   private agentCtx(bookId?: string): AgentContext {
@@ -551,8 +311,8 @@ export class PipelineRunner {
     let client = this.agentClients.get(cacheKey);
     if (!client) {
       const apiKey = override.apiKeyEnv
-        ? process.env[override.apiKeyEnv] ?? ""
-        : base?.apiKey ?? "";
+        ? (process.env[override.apiKeyEnv] ?? "")
+        : (base?.apiKey ?? "");
       client = createLLMClient({
         provider,
         service: base?.service ?? "custom",
@@ -591,6 +351,7 @@ export class PipelineRunner {
       await stat(path);
       return true;
     } catch {
+      // failure expected, safe to ignore
       return false;
     }
   }
@@ -622,13 +383,11 @@ export class PipelineRunner {
     this.logStage(stageLanguage, { zh: "生成基础设定", en: "generating foundation" });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", book.id));
-    const resolvedLanguage = (book.language ?? gp.language) === "en" ? "en" as const : "zh" as const;
+    const resolvedLanguage =
+      (book.language ?? gp.language) === "en" ? ("en" as const) : ("zh" as const);
     const foundation = await this.generateAndReviewFoundation({
-      generate: (reviewFeedback) => architect.generateFoundation(
-        book,
-        effectiveExternalContext,
-        reviewFeedback,
-      ),
+      generate: (reviewFeedback) =>
+        architect.generateFoundation(book, effectiveExternalContext, reviewFeedback),
       reviewer,
       mode: "original",
       language: resolvedLanguage,
@@ -673,7 +432,9 @@ export class PipelineRunner {
 
       if (await this.pathExists(bookDir)) {
         if (await this.state.isCompleteBookDirectory(bookDir)) {
-          throw new Error(`Book "${book.id}" already exists at books/${book.id}/. Use a different title or delete the existing book first.`);
+          throw new Error(
+            `Book "${book.id}" already exists at books/${book.id}/. Use a different title or delete the existing book first.`,
+          );
         }
         await rm(bookDir, { recursive: true, force: true });
       }
@@ -702,7 +463,12 @@ export class PipelineRunner {
     const backupDir = join(storyDir, `.backup-${backupTag}-${timestamp}`);
     await mkdir(backupDir, { recursive: true });
 
-    const flatFiles = ["story_bible.md", "volume_outline.md", "book_rules.md", "character_matrix.md"];
+    const flatFiles = [
+      "story_bible.md",
+      "volume_outline.md",
+      "book_rules.md",
+      "character_matrix.md",
+    ];
     for (const fileName of flatFiles) {
       try {
         const content = await readFile(join(storyDir, fileName), "utf-8");
@@ -751,7 +517,7 @@ export class PipelineRunner {
     });
 
     const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", bookId));
-    const resolvedLanguage = (book.language ?? "zh") === "en" ? "en" as const : "zh" as const;
+    const resolvedLanguage = (book.language ?? "zh") === "en" ? ("en" as const) : ("zh" as const);
     try {
       const review = await reviewer.review({
         foundation,
@@ -788,14 +554,16 @@ export class PipelineRunner {
     try {
       await mkdir(dest, { recursive: true });
       const entries = await readdir(src);
-      await Promise.all(entries.map(async (entry) => {
-        try {
-          const content = await readFile(join(src, entry), "utf-8");
-          await writeFile(join(dest, entry), content, "utf-8");
-        } catch {
-          // Skip unreadable files.
-        }
-      }));
+      await Promise.all(
+        entries.map(async (entry) => {
+          try {
+            const content = await readFile(join(src, entry), "utf-8");
+            await writeFile(join(dest, entry), content, "utf-8");
+          } catch {
+            // Skip unreadable files.
+          }
+        }),
+      );
     } catch {
       // Source directory does not exist.
     }
@@ -865,14 +633,11 @@ export class PipelineRunner {
     const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", book.id));
     this.logStage(stageLanguage, { zh: "生成同人基础设定", en: "generating fanfic foundation" });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
-    const resolvedLanguage = (book.language ?? gp.language) === "en" ? "en" as const : "zh" as const;
+    const resolvedLanguage =
+      (book.language ?? gp.language) === "en" ? ("en" as const) : ("zh" as const);
     const foundation = await this.generateAndReviewFoundation({
-      generate: (reviewFeedback) => architect.generateFanficFoundation(
-        book,
-        fanficCanon,
-        fanficMode,
-        reviewFeedback,
-      ),
+      generate: (reviewFeedback) =>
+        architect.generateFanficFoundation(book, fanficCanon, fanficMode, reviewFeedback),
       reviewer,
       mode: "fanfic",
       sourceCanon: fanficCanon,
@@ -891,7 +656,10 @@ export class PipelineRunner {
 
     // Step 3: Generate style guide from source material
     if (sourceText.length >= 500) {
-      this.logStage(stageLanguage, { zh: "提取原作风格指纹", en: "extracting source style fingerprint" });
+      this.logStage(stageLanguage, {
+        zh: "提取原作风格指纹",
+        en: "extracting source style fingerprint",
+      });
       await this.tryGenerateStyleGuide(book.id, sourceText, sourceName, stageLanguage);
     }
 
@@ -974,18 +742,25 @@ export class PipelineRunner {
       // Save chapter file
       const chaptersDir = join(bookDir, "chapters");
       const paddedNum = String(chapterNumber).padStart(4, "0");
-      const sanitized = draftOutput.title.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, "_").slice(0, 50);
+      const sanitized = draftOutput.title
+        .replace(/[/\\?%*:|"<>]/g, "")
+        .replace(/\s+/g, "_")
+        .slice(0, 50);
       const filename = `${paddedNum}_${sanitized}.md`;
       const filePath = join(chaptersDir, filename);
 
       const resolvedLang = book.language ?? gp.language;
-      const heading = resolvedLang === "en"
-        ? `# Chapter ${chapterNumber}: ${draftOutput.title}`
-        : `# 第${chapterNumber}章 ${draftOutput.title}`;
+      const heading =
+        resolvedLang === "en"
+          ? `# Chapter ${chapterNumber}: ${draftOutput.title}`
+          : `# 第${chapterNumber}章 ${draftOutput.title}`;
       await writeFile(filePath, `${heading}\n\n${draftOutput.content}`, "utf-8");
 
       // Save truth files
-      this.logStage(stageLanguage, { zh: "落盘草稿与真相文件", en: "persisting draft and truth files" });
+      this.logStage(stageLanguage, {
+        zh: "落盘草稿与真相文件",
+        en: "persisting draft and truth files",
+      });
       await writer.saveChapter(bookDir, draftOutput, gp.numericalSystem, resolvedLang);
       await writer.saveNewTruthFiles(bookDir, draftOutput, resolvedLang);
       await this.syncLegacyStructuredStateFromMarkdown(bookDir, chapterNumber, draftOutput);
@@ -1007,14 +782,18 @@ export class PipelineRunner {
         ...(draftOutput.tokenUsage ? { tokenUsage: draftOutput.tokenUsage } : {}),
       };
       const existingIdx = existingIndex.findIndex((e) => e.number === chapterNumber);
-      const updatedIndex = existingIdx >= 0
-        ? existingIndex.map((e, i) => i === existingIdx ? newEntry : e)
-        : [...existingIndex, newEntry];
+      const updatedIndex =
+        existingIdx >= 0
+          ? existingIndex.map((e, i) => (i === existingIdx ? newEntry : e))
+          : [...existingIndex, newEntry];
       await this.state.saveChapterIndex(bookId, updatedIndex);
       await this.markBookActiveIfNeeded(bookId);
 
       // Snapshot
-      this.logStage(stageLanguage, { zh: "更新章节索引与快照", en: "updating chapter index and snapshots" });
+      this.logStage(stageLanguage, {
+        zh: "更新章节索引与快照",
+        en: "updating chapter index and snapshots",
+      });
       await this.state.snapshotState(bookId, chapterNumber);
       await this.syncCurrentStateFactHistory(bookId, chapterNumber);
 
@@ -1067,7 +846,10 @@ export class PipelineRunner {
     const bookDir = this.state.bookDir(bookId);
     const chapterNumber = await this.state.getNextChapterNumber(bookId);
     const stageLanguage = await this.resolveBookLanguage(book);
-    this.logStage(stageLanguage, { zh: "组装章节运行时上下文", en: "composing chapter runtime context" });
+    this.logStage(stageLanguage, {
+      zh: "组装章节运行时上下文",
+      en: "composing chapter runtime context",
+    });
     const { plan, composed } = await this.createGovernedArtifacts(
       book,
       bookDir,
@@ -1089,7 +871,10 @@ export class PipelineRunner {
   }
 
   /** Audit the latest (or specified) chapter. Read-only, no lock needed. */
-  async auditDraft(bookId: string, chapterNumber?: number): Promise<AuditResult & { readonly chapterNumber: number }> {
+  async auditDraft(
+    bookId: string,
+    chapterNumber?: number,
+  ): Promise<AuditResult & { readonly chapterNumber: number }> {
     const book = await this.state.loadBookConfig(bookId);
     const bookDir = this.state.bookDir(bookId);
     const targetChapter = chapterNumber ?? (await this.state.getNextChapterNumber(bookId)) - 1;
@@ -1128,28 +913,33 @@ export class PipelineRunner {
         : ch,
     );
     await this.state.saveChapterIndex(bookId, updated);
-    const latestChapter = index.length > 0 ? Math.max(...index.map((chapter) => chapter.number)) : targetChapter;
+    const latestChapter =
+      index.length > 0 ? Math.max(...index.map((chapter) => chapter.number)) : targetChapter;
     if (targetChapter === latestChapter) {
       await this.persistAuditDriftGuidance({
         bookDir,
         chapterNumber: targetChapter,
-        issues: result.issues.filter((issue) => issue.severity === "critical" || issue.severity === "warning"),
+        issues: result.issues.filter(
+          (issue) => issue.severity === "critical" || issue.severity === "warning",
+        ),
         language,
       }).catch(() => undefined);
     }
 
-    await this.emitWebhook(
-      result.passed ? "audit-passed" : "audit-failed",
-      bookId,
-      targetChapter,
-      { summary: result.summary, issueCount: result.issues.length },
-    );
+    await this.emitWebhook(result.passed ? "audit-passed" : "audit-failed", bookId, targetChapter, {
+      summary: result.summary,
+      issueCount: result.issues.length,
+    });
 
     return { ...result, chapterNumber: targetChapter };
   }
 
   /** Revise the latest (or specified) chapter based on audit issues. */
-  async reviseDraft(bookId: string, chapterNumber?: number, mode: ReviseMode = DEFAULT_REVISE_MODE): Promise<ReviseResult> {
+  async reviseDraft(
+    bookId: string,
+    chapterNumber?: number,
+    mode: ReviseMode = DEFAULT_REVISE_MODE,
+  ): Promise<ReviseResult> {
     const releaseLock = await this.state.acquireBookLock(bookId);
     try {
       const book = await this.state.loadBookConfig(bookId);
@@ -1177,15 +967,16 @@ export class PipelineRunner {
       const { profile: gp } = await this.loadGenreProfile(book.genre);
       const language = book.language ?? gp.language;
       const countingMode = resolveLengthCountingMode(language);
-      const reviseControlInput = (this.config.inputGovernanceMode ?? "v2") === "legacy"
-        ? undefined
-        : await this.createGovernedArtifacts(
-          book,
-          bookDir,
-          targetChapter,
-          this.config.externalContext,
-          { reuseExistingIntentWhenContextMissing: true },
-        );
+      const reviseControlInput =
+        (this.config.inputGovernanceMode ?? "v2") === "legacy"
+          ? undefined
+          : await this.createGovernedArtifacts(
+              book,
+              bookDir,
+              targetChapter,
+              this.config.externalContext,
+              { reuseExistingIntentWhenContextMissing: true },
+            );
       const preRevision = await this.evaluateMergedAudit({
         auditor,
         book,
@@ -1215,13 +1006,9 @@ export class PipelineRunner {
       }
 
       const chapterLengthTarget = chapterMeta.lengthTelemetry?.target ?? book.chapterWordCount;
-      const lengthLanguage = chapterMeta.lengthTelemetry?.countingMode === "en_words"
-        ? "en"
-        : language;
-      const lengthSpec = buildLengthSpec(
-        chapterLengthTarget,
-        lengthLanguage,
-      );
+      const lengthLanguage =
+        chapterMeta.lengthTelemetry?.countingMode === "en_words" ? "en" : language;
+      const lengthSpec = buildLengthSpec(chapterLengthTarget, lengthLanguage);
 
       const reviser = new ReviserAgent(this.agentCtxFor("reviser", bookId));
       this.logStage(stageLanguage, {
@@ -1271,24 +1058,39 @@ export class PipelineRunner {
               contextPackage: reviseControlInput.composed.contextPackage,
               ruleStack: reviseControlInput.composed.ruleStack,
               truthFileOverrides: {
-                currentState: reviseOutput.updatedState !== "(状态卡未更新)" ? reviseOutput.updatedState : undefined,
-                ledger: reviseOutput.updatedLedger !== "(账本未更新)" ? reviseOutput.updatedLedger : undefined,
-                hooks: reviseOutput.updatedHooks !== "(伏笔池未更新)" ? reviseOutput.updatedHooks : undefined,
+                currentState:
+                  reviseOutput.updatedState !== "(状态卡未更新)"
+                    ? reviseOutput.updatedState
+                    : undefined,
+                ledger:
+                  reviseOutput.updatedLedger !== "(账本未更新)"
+                    ? reviseOutput.updatedLedger
+                    : undefined,
+                hooks:
+                  reviseOutput.updatedHooks !== "(伏笔池未更新)"
+                    ? reviseOutput.updatedHooks
+                    : undefined,
               },
             }
           : {
               temperature: 0,
               truthFileOverrides: {
-                currentState: reviseOutput.updatedState !== "(状态卡未更新)" ? reviseOutput.updatedState : undefined,
-                ledger: reviseOutput.updatedLedger !== "(账本未更新)" ? reviseOutput.updatedLedger : undefined,
-                hooks: reviseOutput.updatedHooks !== "(伏笔池未更新)" ? reviseOutput.updatedHooks : undefined,
+                currentState:
+                  reviseOutput.updatedState !== "(状态卡未更新)"
+                    ? reviseOutput.updatedState
+                    : undefined,
+                ledger:
+                  reviseOutput.updatedLedger !== "(账本未更新)"
+                    ? reviseOutput.updatedLedger
+                    : undefined,
+                hooks:
+                  reviseOutput.updatedHooks !== "(伏笔池未更新)"
+                    ? reviseOutput.updatedHooks
+                    : undefined,
               },
             },
       });
-      const effectivePostRevision = this.restoreActionableAuditIfLost(
-        preRevision,
-        postRevision,
-      );
+      const effectivePostRevision = this.restoreActionableAuditIfLost(preRevision, postRevision);
       const revisionBaseCount = countChapterLength(content, lengthSpec.countingMode);
       const lengthWarnings = this.buildLengthWarnings(
         targetChapter,
@@ -1310,10 +1112,11 @@ export class PipelineRunner {
       const blockingDidNotWorsen = effectivePostRevision.blockingCount <= preRevision.blockingCount;
       const criticalDidNotWorsen = effectivePostRevision.criticalCount <= preRevision.criticalCount;
       const aiDidNotWorsen = effectivePostRevision.aiTellCount <= preRevision.aiTellCount;
-      const shouldApplyRevision = blockingDidNotWorsen
-        && criticalDidNotWorsen
-        && aiDidNotWorsen
-        && (improvedBlocking || improvedAITells);
+      const shouldApplyRevision =
+        blockingDidNotWorsen &&
+        criticalDidNotWorsen &&
+        aiDidNotWorsen &&
+        (improvedBlocking || improvedAITells);
 
       if (!shouldApplyRevision) {
         return {
@@ -1322,7 +1125,8 @@ export class PipelineRunner {
           fixedIssues: [],
           applied: false,
           status: "unchanged",
-          skippedReason: "Manual revision did not improve merged audit or AI-tell metrics; kept original chapter.",
+          skippedReason:
+            "Manual revision did not improve merged audit or AI-tell metrics; kept original chapter.",
         };
       }
       this.logLengthWarnings(lengthWarnings);
@@ -1337,12 +1141,15 @@ export class PipelineRunner {
       const paddedNum = String(targetChapter).padStart(4, "0");
       const existingFile = files.find((f) => f.startsWith(paddedNum) && f.endsWith(".md"));
       if (!existingFile) {
-        throw new Error(`Chapter ${targetChapter} file not found in ${chaptersDir} (expected filename starting with ${paddedNum})`);
+        throw new Error(
+          `Chapter ${targetChapter} file not found in ${chaptersDir} (expected filename starting with ${paddedNum})`,
+        );
       }
       const reviseLang = book.language ?? gp.language;
-      const reviseHeading = reviseLang === "en"
-        ? `# Chapter ${targetChapter}: ${chapterMeta.title}`
-        : `# 第${targetChapter}章 ${chapterMeta.title}`;
+      const reviseHeading =
+        reviseLang === "en"
+          ? `# Chapter ${targetChapter}: ${chapterMeta.title}`
+          : `# 第${targetChapter}章 ${chapterMeta.title}`;
       await writeFile(
         join(chaptersDir, existingFile),
         `${reviseHeading}\n\n${normalizedRevision.content}`,
@@ -1354,7 +1161,11 @@ export class PipelineRunner {
       if (reviseOutput.updatedState !== "(状态卡未更新)") {
         await writeFile(join(storyDir, "current_state.md"), reviseOutput.updatedState, "utf-8");
       }
-      if (gp.numericalSystem && reviseOutput.updatedLedger && reviseOutput.updatedLedger !== "(账本未更新)") {
+      if (
+        gp.numericalSystem &&
+        reviseOutput.updatedLedger &&
+        reviseOutput.updatedLedger !== "(账本未更新)"
+      ) {
         await writeFile(join(storyDir, "particle_ledger.md"), reviseOutput.updatedLedger, "utf-8");
       }
       if (reviseOutput.updatedHooks !== "(伏笔池未更新)") {
@@ -1367,17 +1178,22 @@ export class PipelineRunner {
         ch.number === targetChapter
           ? {
               ...ch,
-              status: (effectivePostRevision.auditResult.passed ? "ready-for-review" : "audit-failed") as ChapterMeta["status"],
+              status: (effectivePostRevision.auditResult.passed
+                ? "ready-for-review"
+                : "audit-failed") as ChapterMeta["status"],
               wordCount: normalizedRevision.wordCount,
               updatedAt: new Date().toISOString(),
-              auditIssues: effectivePostRevision.auditResult.issues.map((i) => `[${i.severity}] ${i.description}`),
+              auditIssues: effectivePostRevision.auditResult.issues.map(
+                (i) => `[${i.severity}] ${i.description}`,
+              ),
               lengthWarnings,
               lengthTelemetry,
             }
           : ch,
       );
       await this.state.saveChapterIndex(bookId, updatedIndex);
-      const latestChapter = index.length > 0 ? Math.max(...index.map((chapter) => chapter.number)) : targetChapter;
+      const latestChapter =
+        index.length > 0 ? Math.max(...index.map((chapter) => chapter.number)) : targetChapter;
       if (targetChapter === latestChapter) {
         await this.persistAuditDriftGuidance({
           bookDir,
@@ -1425,6 +1241,7 @@ export class PipelineRunner {
       try {
         return await readFile(path, "utf-8");
       } catch {
+        // failure expected, safe to ignore
         return "(文件不存在)";
       }
     };
@@ -1473,10 +1290,19 @@ export class PipelineRunner {
   // Full pipeline (convenience — runs draft + audit + revise in one shot)
   // ---------------------------------------------------------------------------
 
-  async writeNextChapter(bookId: string, wordCount?: number, temperatureOverride?: number): Promise<ChapterPipelineResult> {
+  async writeNextChapter(
+    bookId: string,
+    wordCount?: number,
+    temperatureOverride?: number,
+  ): Promise<ChapterPipelineResult> {
     const releaseLock = await this.state.acquireBookLock(bookId);
     try {
-      return await this._writeNextChapterLocked(bookId, wordCount, temperatureOverride, this.config.externalContext);
+      return await this._writeNextChapterLocked(
+        bookId,
+        wordCount,
+        temperatureOverride,
+        this.config.externalContext,
+      );
     } finally {
       await releaseLock();
     }
@@ -1491,7 +1317,10 @@ export class PipelineRunner {
     }
   }
 
-  async resyncChapterArtifacts(bookId: string, chapterNumber?: number): Promise<ChapterPipelineResult> {
+  async resyncChapterArtifacts(
+    bookId: string,
+    chapterNumber?: number,
+  ): Promise<ChapterPipelineResult> {
     const releaseLock = await this.state.acquireBookLock(bookId);
     try {
       return await this._resyncChapterArtifactsLocked(bookId, chapterNumber);
@@ -1513,31 +1342,22 @@ export class PipelineRunner {
     const chapterNumber = await this.state.getNextChapterNumber(bookId);
     const stageLanguage = await this.resolveBookLanguage(book);
     this.logStage(stageLanguage, { zh: "准备章节输入", en: "preparing chapter inputs" });
-    const writeInput = await this.prepareWriteInput(
-      book,
-      bookDir,
-      chapterNumber,
-      externalContext,
-    );
-    const reducedControlInput = writeInput.chapterIntent && writeInput.contextPackage && writeInput.ruleStack
-      ? {
-          chapterIntent: writeInput.chapterIntent,
-          chapterMemo: writeInput.chapterMemo,
-          chapterIntentData: writeInput.chapterIntentData,
-          contextPackage: writeInput.contextPackage,
-          ruleStack: writeInput.ruleStack,
-        }
-      : undefined;
+    const writeInput = await this.prepareWriteInput(book, bookDir, chapterNumber, externalContext);
+    const reducedControlInput =
+      writeInput.chapterIntent && writeInput.contextPackage && writeInput.ruleStack
+        ? {
+            chapterIntent: writeInput.chapterIntent,
+            chapterMemo: writeInput.chapterMemo,
+            chapterIntentData: writeInput.chapterIntentData,
+            contextPackage: writeInput.contextPackage,
+            ruleStack: writeInput.ruleStack,
+          }
+        : undefined;
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const pipelineLang = book.language ?? gp.language;
-    const lengthSpec = buildLengthSpec(
-      wordCount ?? book.chapterWordCount,
-      pipelineLang,
-    );
-    const {
-      normalizePostWriteSurface,
-      validatePostWrite: postWriteValidate,
-    } = await import("../agents/post-write-validator.js");
+    const lengthSpec = buildLengthSpec(wordCount ?? book.chapterWordCount, pipelineLang);
+    const { normalizePostWriteSurface, validatePostWrite: postWriteValidate } =
+      await import("../agents/post-write-validator.js");
     const { validateHookLedger } = await import("../utils/hook-ledger-validator.js");
     const { readBookRules } = await import("../agents/rules-reader.js");
     const parsedBookRules = (await readBookRules(bookDir))?.rules ?? null;
@@ -1557,7 +1377,11 @@ export class PipelineRunner {
     const writerCount = countChapterLength(output.content, lengthSpec.countingMode);
 
     // Token usage accumulator
-    let totalUsage: TokenUsageSummary = output.tokenUsage ?? { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+    let totalUsage: TokenUsageSummary = output.tokenUsage ?? {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    };
     const auditor = new ContinuityAuditor(this.agentCtxFor("auditor", bookId));
     const reviewResult = await runChapterReviewCycle({
       book: { genre: book.genre },
@@ -1569,13 +1393,14 @@ export class PipelineRunner {
       initialUsage: totalUsage,
       createReviser: () => new ReviserAgent(this.agentCtxFor("reviser", bookId)),
       auditor,
-      normalizeDraftLengthIfNeeded: (chapterContent) => this.normalizeDraftLengthIfNeeded({
-        bookId,
-        chapterNumber,
-        chapterContent,
-        lengthSpec,
-        chapterIntent: writeInput.chapterIntent,
-      }),
+      normalizeDraftLengthIfNeeded: (chapterContent) =>
+        this.normalizeDraftLengthIfNeeded({
+          bookId,
+          chapterNumber,
+          chapterContent,
+          lengthSpec,
+          chapterIntent: writeInput.chapterIntent,
+        }),
       normalizePostWriteSurface: (chapterContent) =>
         normalizePostWriteSurface(chapterContent, pipelineLang),
       assertChapterContentNotEmpty: (content, stage) =>
@@ -1594,9 +1419,7 @@ export class PipelineRunner {
           }));
         // Phase 9-3: verify the draft acts on every hook the memo committed to.
         const memoBody = writeInput.chapterMemo?.body ?? "";
-        const ledgerIssues = memoBody
-          ? validateHookLedger(memoBody, content)
-          : [];
+        const ledgerIssues = memoBody ? validateHookLedger(memoBody, content) : [];
         return [...baseIssues, ...ledgerIssues];
       },
       maxReviewIterations: this.config.writingReviewRetries,
@@ -1617,19 +1440,29 @@ export class PipelineRunner {
     // updated ledger. No LLM calls — pure ledger parse + threshold check.
     {
       const { rerunPromotionPass } = await import("../utils/hook-promotion.js");
-      const { parsePendingHooksMarkdown, renderHookSnapshot } = await import("../utils/story-markdown.js");
+      const { parsePendingHooksMarkdown, renderHookSnapshot } =
+        await import("../utils/story-markdown.js");
       const promotionStoryDir = join(bookDir, "story");
       const ledgerPath = join(promotionStoryDir, "pending_hooks.md");
       const ledgerRaw = await readFile(ledgerPath, "utf-8").catch(() => "");
       if (ledgerRaw.trim()) {
         const hooks = parsePendingHooksMarkdown(ledgerRaw);
         if (hooks.length > 0) {
-          const summariesRaw = await readFile(join(promotionStoryDir, "chapter_summaries.md"), "utf-8").catch(() => "");
+          const summariesRaw = await readFile(
+            join(promotionStoryDir, "chapter_summaries.md"),
+            "utf-8",
+          ).catch(() => "");
           const promotionResult = rerunPromotionPass(hooks, summariesRaw);
           if (promotionResult.updated) {
             const ledgerLang: "zh" | "en" = /[\u4e00-\u9fff]/.test(ledgerRaw) ? "zh" : "en";
-            await writeFile(ledgerPath, renderHookSnapshot([...promotionResult.hooks], ledgerLang), "utf-8");
-            this.config.logger?.info(`[promotion] ${promotionResult.flippedCount} hook(s) promoted after chapter ${chapterNumber}`);
+            await writeFile(
+              ledgerPath,
+              renderHookSnapshot([...promotionResult.hooks], ledgerLang),
+              "utf-8",
+            );
+            this.config.logger?.info(
+              `[promotion] ${promotionResult.flippedCount} hook(s) promoted after chapter ${chapterNumber}`,
+            );
           }
         }
       }
@@ -1671,20 +1504,25 @@ export class PipelineRunner {
       };
     }
     if (persistenceOutput.title !== output.title) {
-      const description = pipelineLang === "en"
-        ? `Chapter title "${output.title}" was auto-adjusted to "${persistenceOutput.title}".`
-        : `章节标题"${output.title}"已自动调整为"${persistenceOutput.title}"。`;
+      const description =
+        pipelineLang === "en"
+          ? `Chapter title "${output.title}" was auto-adjusted to "${persistenceOutput.title}".`
+          : `章节标题"${output.title}"已自动调整为"${persistenceOutput.title}"。`;
       this.config.logger?.warn(`[title] ${description}`);
       auditResult = {
         ...auditResult,
-        issues: [...auditResult.issues, {
-          severity: "warning",
-          category: "title-dedup",
-          description,
-          suggestion: pipelineLang === "en"
-            ? "If the auto-renamed title is weak, revise the chapter title manually."
-            : "如果自动改名不理想，可以在后续手动修订章节标题。",
-        }],
+        issues: [
+          ...auditResult.issues,
+          {
+            severity: "warning",
+            category: "title-dedup",
+            description,
+            suggestion:
+              pipelineLang === "en"
+                ? "If the auto-renamed title is weak, revise the chapter title manually."
+                : "如果自动改名不理想，可以在后续手动修订章节标题。",
+          },
+        ],
       };
     }
     const longSpanFatigue = await analyzeLongSpanFatigue({
@@ -1703,11 +1541,7 @@ export class PipelineRunner {
       ],
     };
     finalWordCount = persistenceOutput.wordCount;
-    const lengthWarnings = this.buildLengthWarnings(
-      chapterNumber,
-      finalWordCount,
-      lengthSpec,
-    );
+    const lengthWarnings = this.buildLengthWarnings(chapterNumber, finalWordCount, lengthSpec);
     const lengthTelemetry = this.buildLengthTelemetry({
       lengthSpec,
       writerCount,
@@ -1722,7 +1556,14 @@ export class PipelineRunner {
     // 4.1 Validate settler output before writing
     this.logStage(stageLanguage, { zh: "校验真相文件变更", en: "validating truth file updates" });
     const storyDir = join(bookDir, "story");
-    const [oldState, oldHooks, oldLedger, authorityStoryFrame, authorityBookRules, authorityChapterSummaries] = await Promise.all([
+    const [
+      oldState,
+      oldHooks,
+      oldLedger,
+      authorityStoryFrame,
+      authorityBookRules,
+      authorityChapterSummaries,
+    ] = await Promise.all([
       readFile(join(storyDir, "current_state.md"), "utf-8").catch(() => ""),
       readFile(join(storyDir, "pending_hooks.md"), "utf-8").catch(() => ""),
       readFile(join(storyDir, "particle_ledger.md"), "utf-8").catch(() => ""),
@@ -1763,18 +1604,18 @@ export class PipelineRunner {
 
     // 4.2 Final paragraph shape check on persisted content (post-normalize, post-revise)
     {
-      const {
-        detectParagraphLengthDrift,
-        detectParagraphShapeWarnings,
-      } = await import("../agents/post-write-validator.js");
+      const { detectParagraphLengthDrift, detectParagraphShapeWarnings } =
+        await import("../agents/post-write-validator.js");
       const chapDir = join(bookDir, "chapters");
       const recentFiles = (await readdir(chapDir).catch(() => [] as string[]))
         .filter((f) => f.endsWith(".md") && /^\d{4}/.test(f))
         .sort()
         .slice(-5);
-      const recentContent = (await Promise.all(
-        recentFiles.map((f) => readFile(join(chapDir, f), "utf-8").catch(() => "")),
-      )).join("\n\n");
+      const recentContent = (
+        await Promise.all(
+          recentFiles.map((f) => readFile(join(chapDir, f), "utf-8").catch(() => "")),
+        )
+      ).join("\n\n");
       const paragraphIssues = [
         ...detectParagraphShapeWarnings(finalContent, pipelineLang),
         ...detectParagraphLengthDrift(finalContent, recentContent, pipelineLang),
@@ -1785,17 +1626,21 @@ export class PipelineRunner {
         }
         auditResult = {
           ...auditResult,
-          issues: [...auditResult.issues, ...paragraphIssues.map((v) => ({
-            severity: v.severity as "warning",
-            category: "paragraph-shape",
-            description: v.description,
-            suggestion: v.suggestion,
-          }))],
+          issues: [
+            ...auditResult.issues,
+            ...paragraphIssues.map((v) => ({
+              severity: v.severity as "warning",
+              category: "paragraph-shape",
+              description: v.description,
+              suggestion: v.suggestion,
+            })),
+          ],
         };
       }
     }
 
-    const resolvedStatus = chapterStatus ?? (auditResult.passed ? "ready-for-review" : "audit-failed");
+    const resolvedStatus =
+      chapterStatus ?? (auditResult.passed ? "ready-for-review" : "audit-failed");
     await persistChapterArtifacts({
       chapterNumber,
       chapterTitle: persistenceOutput.title,
@@ -1807,7 +1652,8 @@ export class PipelineRunner {
       degradedIssues,
       tokenUsage: totalUsage,
       loadChapterIndex: () => this.state.loadChapterIndex(bookId),
-      saveChapter: () => writer.saveChapter(bookDir, persistenceOutput, gp.numericalSystem, pipelineLang),
+      saveChapter: () =>
+        writer.saveChapter(bookDir, persistenceOutput, gp.numericalSystem, pipelineLang),
       saveTruthFiles: async () => {
         await writer.saveNewTruthFiles(bookDir, persistenceOutput, pipelineLang);
         await this.syncLegacyStructuredStateFromMarkdown(bookDir, chapterNumber, persistenceOutput);
@@ -1816,23 +1662,26 @@ export class PipelineRunner {
       },
       saveChapterIndex: (index) => this.state.saveChapterIndex(bookId, index),
       markBookActiveIfNeeded: () => this.markBookActiveIfNeeded(bookId),
-      persistAuditDriftGuidance: (issues) => this.persistAuditDriftGuidance({
-        bookDir,
-        chapterNumber,
-        issues,
-        language: stageLanguage,
-      }).catch(() => undefined),
+      persistAuditDriftGuidance: (issues) =>
+        this.persistAuditDriftGuidance({
+          bookDir,
+          chapterNumber,
+          issues,
+          language: stageLanguage,
+        }).catch(() => undefined),
       snapshotState: () => this.state.snapshotState(bookId, chapterNumber),
       syncCurrentStateFactHistory: () => this.syncCurrentStateFactHistory(bookId, chapterNumber),
       logSnapshotStage: () =>
-        this.logStage(stageLanguage, { zh: "更新章节索引与快照", en: "updating chapter index and snapshots" }),
+        this.logStage(stageLanguage, {
+          zh: "更新章节索引与快照",
+          en: "updating chapter index and snapshots",
+        }),
     });
 
     // 6. Send notification
     if (this.config.notifyChannels && this.config.notifyChannels.length > 0) {
-      const statusEmoji = resolvedStatus === "state-degraded"
-        ? "🧯"
-        : auditResult.passed ? "✅" : "⚠️";
+      const statusEmoji =
+        resolvedStatus === "state-degraded" ? "🧯" : auditResult.passed ? "✅" : "⚠️";
       const chapterLength = formatLengthCount(finalWordCount, lengthSpec.countingMode);
       await dispatchNotification(this.config.notifyChannels, {
         title: `${statusEmoji} ${book.title} 第${chapterNumber}章`,
@@ -1872,7 +1721,10 @@ export class PipelineRunner {
     };
   }
 
-  private async _repairChapterStateLocked(bookId: string, chapterNumber?: number): Promise<ChapterPipelineResult> {
+  private async _repairChapterStateLocked(
+    bookId: string,
+    chapterNumber?: number,
+  ): Promise<ChapterPipelineResult> {
     const book = await this.state.loadBookConfig(bookId);
     const bookDir = this.state.bookDir(bookId);
     const stageLanguage = await this.resolveBookLanguage(book);
@@ -1892,10 +1744,15 @@ export class PipelineRunner {
       throw new Error(`Chapter ${targetChapter} is not state-degraded.`);
     }
     if (targetChapter !== latestChapter) {
-      throw new Error(`Only the latest state-degraded chapter can be repaired safely (latest is ${latestChapter}).`);
+      throw new Error(
+        `Only the latest state-degraded chapter can be repaired safely (latest is ${latestChapter}).`,
+      );
     }
 
-    this.logStage(stageLanguage, { zh: "修复章节状态结算", en: "repairing chapter state settlement" });
+    this.logStage(stageLanguage, {
+      zh: "修复章节状态结算",
+      en: "repairing chapter state settlement",
+    });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const pipelineLang = book.language ?? gp.language;
     const content = await this.readChapterContent(bookDir, targetChapter);
@@ -1943,8 +1800,8 @@ export class PipelineRunner {
       });
       if (recovery.kind !== "recovered") {
         throw new Error(
-          recovery.issues[0]?.description
-            ?? `State repair still failed for chapter ${targetChapter}.`,
+          recovery.issues[0]?.description ??
+            `State repair still failed for chapter ${targetChapter}.`,
         );
       }
       repairedOutput = recovery.output;
@@ -1982,7 +1839,9 @@ export class PipelineRunner {
       auditResult: {
         passed: repairedPassesAudit,
         issues: [],
-        summary: repairedPassesAudit ? "state repaired" : "state repaired but chapter still needs review",
+        summary: repairedPassesAudit
+          ? "state repaired"
+          : "state repaired but chapter still needs review",
       },
       revised: false,
       status: baseStatus,
@@ -1992,7 +1851,10 @@ export class PipelineRunner {
     };
   }
 
-  private async _resyncChapterArtifactsLocked(bookId: string, chapterNumber?: number): Promise<ChapterPipelineResult> {
+  private async _resyncChapterArtifactsLocked(
+    bookId: string,
+    chapterNumber?: number,
+  ): Promise<ChapterPipelineResult> {
     const book = await this.state.loadBookConfig(bookId);
     const bookDir = this.state.bookDir(bookId);
     const stageLanguage = await this.resolveBookLanguage(book);
@@ -2010,10 +1872,15 @@ export class PipelineRunner {
     const targetMeta = index[targetIndex]!;
     const latestChapter = Math.max(...index.map((chapter) => chapter.number));
     if (targetChapter !== latestChapter) {
-      throw new Error(`Only the latest persisted chapter can be synced safely (latest is ${latestChapter}).`);
+      throw new Error(
+        `Only the latest persisted chapter can be synced safely (latest is ${latestChapter}).`,
+      );
     }
 
-    this.logStage(stageLanguage, { zh: "根据已编辑正文同步真相文件与索引", en: "syncing truth files and indexes from edited chapter body" });
+    this.logStage(stageLanguage, {
+      zh: "根据已编辑正文同步真相文件与索引",
+      en: "syncing truth files and indexes from edited chapter body",
+    });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const pipelineLang = book.language ?? gp.language;
     const content = await this.readChapterContent(bookDir, targetChapter);
@@ -2023,15 +1890,16 @@ export class PipelineRunner {
       readFile(join(storyDir, "pending_hooks.md"), "utf-8").catch(() => ""),
     ]);
 
-    const reducedControlInput = (this.config.inputGovernanceMode ?? "v2") === "legacy"
-      ? undefined
-      : await this.createGovernedArtifacts(
-        book,
-        bookDir,
-        targetChapter,
-        this.config.externalContext,
-        { reuseExistingIntentWhenContextMissing: true },
-      );
+    const reducedControlInput =
+      (this.config.inputGovernanceMode ?? "v2") === "legacy"
+        ? undefined
+        : await this.createGovernedArtifacts(
+            book,
+            bookDir,
+            targetChapter,
+            this.config.externalContext,
+            { reuseExistingIntentWhenContextMissing: true },
+          );
 
     const writer = new WriterAgent(this.agentCtxFor("writer", bookId));
     let syncedOutput = await writer.settleChapterState({
@@ -2081,8 +1949,8 @@ export class PipelineRunner {
       });
       if (recovery.kind !== "recovered") {
         throw new Error(
-          recovery.issues[0]?.description
-            ?? `Chapter sync still failed for chapter ${targetChapter}.`,
+          recovery.issues[0]?.description ??
+            `Chapter sync still failed for chapter ${targetChapter}.`,
         );
       }
       syncedOutput = recovery.output;
@@ -2100,9 +1968,10 @@ export class PipelineRunner {
     await this.state.snapshotState(bookId, targetChapter);
     await this.syncCurrentStateFactHistory(bookId, targetChapter);
 
-    const finalStatus: "ready-for-review" | "audit-failed" = targetMeta.status === "state-degraded"
-      ? resolveStateDegradedBaseStatus(targetMeta)
-      : "ready-for-review";
+    const finalStatus: "ready-for-review" | "audit-failed" =
+      targetMeta.status === "state-degraded"
+        ? resolveStateDegradedBaseStatus(targetMeta)
+        : "ready-for-review";
 
     if (targetMeta.status === "state-degraded") {
       const degradedMetadata = parseStateDegradedReviewNote(targetMeta.reviewNote);
@@ -2129,9 +1998,10 @@ export class PipelineRunner {
       auditResult: {
         passed: finalStatus !== "audit-failed",
         issues: [],
-        summary: finalStatus === "audit-failed"
-          ? "chapter truth/state resynced from edited body, but chapter still needs audit fixes"
-          : "chapter truth/state resynced from edited body",
+        summary:
+          finalStatus === "audit-failed"
+            ? "chapter truth/state resynced from edited body, but chapter still needs audit fixes"
+            : "chapter truth/state resynced from edited body",
       },
       revised: false,
       status: finalStatus,
@@ -2149,7 +2019,11 @@ export class PipelineRunner {
    * Generate a qualitative style guide from reference text via LLM.
    * Also saves the statistical style_profile.json.
    */
-  async generateStyleGuide(bookId: string, referenceText: string, sourceName?: string): Promise<string> {
+  async generateStyleGuide(
+    bookId: string,
+    referenceText: string,
+    sourceName?: string,
+  ): Promise<string> {
     const sample = referenceText.trim();
     if (!sample) {
       throw new Error("Reference text is required for style extraction.");
@@ -2162,27 +2036,35 @@ export class PipelineRunner {
 
     // Statistical fingerprint
     const profile = analyzeStyle(sample, sourceName);
-    await writeFile(join(storyDir, "style_profile.json"), JSON.stringify(profile, null, 2), "utf-8");
+    await writeFile(
+      join(storyDir, "style_profile.json"),
+      JSON.stringify(profile, null, 2),
+      "utf-8",
+    );
 
     const book = await this.state.loadBookConfig(bookId);
     const { profile: gp } = await this.loadGenreProfile(book.genre);
-    const lang = (book.language ?? gp.language) === "en" ? "en" as const : "zh" as const;
+    const lang = (book.language ?? gp.language) === "en" ? ("en" as const) : ("zh" as const);
 
     let qualitativeGuide: string;
     if (sample.length < 500) {
       qualitativeGuide = this.buildDeterministicStyleGuide(profile, {
         language: lang,
-        reason: lang === "en"
-          ? `The sample is short (${sample.length} chars), so this guide uses the statistical fingerprint instead of LLM qualitative extraction.`
-          : `样本文本较短（${sample.length}字），本次先使用统计指纹生成文风指南，不强行调用 LLM 做定性拆解。`,
+        reason:
+          lang === "en"
+            ? `The sample is short (${sample.length} chars), so this guide uses the statistical fingerprint instead of LLM qualitative extraction.`
+            : `样本文本较短（${sample.length}字），本次先使用统计指纹生成文风指南，不强行调用 LLM 做定性拆解。`,
       });
     } else {
       try {
         // LLM qualitative extraction
-        const response = await chatCompletion(this.config.client, this.config.model, [
-          {
-            role: "system",
-            content: `你是一位文学风格分析专家。分析参考文本的写作风格，提取可供模仿的定性特征。
+        const response = await chatCompletion(
+          this.config.client,
+          this.config.model,
+          [
+            {
+              role: "system",
+              content: `你是一位文学风格分析专家。分析参考文本的写作风格，提取可供模仿的定性特征。
 
 输出格式（Markdown）：
 ## 叙事声音与语气
@@ -2210,26 +2092,30 @@ export class PipelineRunner {
 （任何值得模仿的个人写作习惯）
 
 分析必须基于原文实际特征，不要泛泛而谈。每个部分用1-2个原文例句佐证。`,
-          },
-          {
-            role: "user",
-            content: `分析以下参考文本的写作风格：\n\n${sample.slice(0, 20000)}`,
-          },
-        ], { temperature: 0.3 });
+            },
+            {
+              role: "user",
+              content: `分析以下参考文本的写作风格：\n\n${sample.slice(0, 20000)}`,
+            },
+          ],
+          { temperature: 0.3 },
+        );
         qualitativeGuide = response.content.trim()
           ? response.content
           : this.buildDeterministicStyleGuide(profile, {
               language: lang,
-              reason: lang === "en"
-                ? "The LLM returned empty style analysis; using the statistical fingerprint fallback."
-                : "LLM 未返回有效文风分析，本次使用统计指纹兜底生成文风指南。",
+              reason:
+                lang === "en"
+                  ? "The LLM returned empty style analysis; using the statistical fingerprint fallback."
+                  : "LLM 未返回有效文风分析，本次使用统计指纹兜底生成文风指南。",
             });
       } catch (error) {
         qualitativeGuide = this.buildDeterministicStyleGuide(profile, {
           language: lang,
-          reason: lang === "en"
-            ? `LLM qualitative extraction failed: ${error instanceof Error ? error.message : String(error)}. Using the statistical fingerprint fallback.`
-            : `LLM 定性拆解失败：${error instanceof Error ? error.message : String(error)}。本次使用统计指纹兜底生成文风指南。`,
+          reason:
+            lang === "en"
+              ? `LLM qualitative extraction failed: ${error instanceof Error ? error.message : String(error)}. Using the statistical fingerprint fallback.`
+              : `LLM 定性拆解失败：${error instanceof Error ? error.message : String(error)}。本次使用统计指纹兜底生成文风指南。`,
         });
       }
     }
@@ -2264,8 +2150,12 @@ export class PipelineRunner {
         `- Sentence length variance: ${profile.sentenceLengthStdDev}`,
         `- Average paragraph length: ${profile.avgParagraphLength}`,
         `- Vocabulary diversity: ${Math.round(profile.vocabularyDiversity * 100)}%`,
-        profile.topPatterns.length > 0 ? `- Repeated openings: ${profile.topPatterns.join(", ")}` : "- Repeated openings: none obvious in this sample",
-        profile.rhetoricalFeatures.length > 0 ? `- Rhetorical features: ${profile.rhetoricalFeatures.join(", ")}` : "- Rhetorical features: none obvious in this sample",
+        profile.topPatterns.length > 0
+          ? `- Repeated openings: ${profile.topPatterns.join(", ")}`
+          : "- Repeated openings: none obvious in this sample",
+        profile.rhetoricalFeatures.length > 0
+          ? `- Rhetorical features: ${profile.rhetoricalFeatures.join(", ")}`
+          : "- Rhetorical features: none obvious in this sample",
         "",
         "## How To Use",
         "- Treat this as a lightweight style fingerprint, not a full imitation bible.",
@@ -2285,8 +2175,12 @@ export class PipelineRunner {
       `- 句长波动：${profile.sentenceLengthStdDev}`,
       `- 平均段落长度：${profile.avgParagraphLength}`,
       `- 词汇多样性：${Math.round(profile.vocabularyDiversity * 100)}%`,
-      profile.topPatterns.length > 0 ? `- 高频句首/模式：${profile.topPatterns.join("、")}` : "- 高频句首/模式：样本内不明显",
-      profile.rhetoricalFeatures.length > 0 ? `- 修辞特征：${profile.rhetoricalFeatures.join("、")}` : "- 修辞特征：样本内不明显",
+      profile.topPatterns.length > 0
+        ? `- 高频句首/模式：${profile.topPatterns.join("、")}`
+        : "- 高频句首/模式：样本内不明显",
+      profile.rhetoricalFeatures.length > 0
+        ? `- 修辞特征：${profile.rhetoricalFeatures.join("、")}`
+        : "- 修辞特征：样本内不明显",
       "",
       "## 使用方式",
       "- 这是一份轻量文风指纹，不是完整仿写圣经。",
@@ -2303,10 +2197,14 @@ export class PipelineRunner {
     // Validate both books exist
     const bookIds = await this.state.listBooks();
     if (!bookIds.includes(parentBookId)) {
-      throw new Error(`Parent book "${parentBookId}" not found. Available: ${bookIds.join(", ") || "(none)"}`);
+      throw new Error(
+        `Parent book "${parentBookId}" not found. Available: ${bookIds.join(", ") || "(none)"}`,
+      );
     }
     if (!bookIds.includes(targetBookId)) {
-      throw new Error(`Target book "${targetBookId}" not found. Available: ${bookIds.join(", ") || "(none)"}`);
+      throw new Error(
+        `Target book "${targetBookId}" not found. Available: ${bookIds.join(", ") || "(none)"}`,
+      );
     }
 
     const parentDir = this.state.bookDir(parentBookId);
@@ -2315,7 +2213,11 @@ export class PipelineRunner {
     await mkdir(storyDir, { recursive: true });
 
     const readSafe = async (path: string): Promise<string> => {
-      try { return await readFile(path, "utf-8"); } catch { return "(无)"; }
+      try {
+        return await readFile(path, "utf-8");
+      } catch {
+        return "(无)";
+      }
     };
 
     const parentBook = await this.state.loadBookConfig(parentBookId);
@@ -2339,10 +2241,13 @@ export class PipelineRunner {
         readSafe(join(parentDir, "story/character_matrix.md")),
       ]);
 
-    const response = await chatCompletion(this.config.client, this.config.model, [
-      {
-        role: "system",
-        content: `你是一位网络小说架构师。基于正传的全部设定和状态文件，生成一份完整的"正传正典参照"文档，供番外写作和审计使用。
+    const response = await chatCompletion(
+      this.config.client,
+      this.config.model,
+      [
+        {
+          role: "system",
+          content: `你是一位网络小说架构师。基于正传的全部设定和状态文件，生成一份完整的"正传正典参照"文档，供番外写作和审计使用。
 
 输出格式（Markdown）：
 # 正传正典（《{正传书名}》）
@@ -2388,10 +2293,10 @@ meta:
 1. 世界规则完整复制，不压缩——准确性优先
 2. 正典约束必须穷尽，遗漏会导致番外与正传矛盾
 3. 角色快照必须包含信息边界（已知/未知），防止番外中角色引用不该知道的信息`,
-      },
-      {
-        role: "user",
-        content: `正传书名：${parentBook.title}
+        },
+        {
+          role: "user",
+          content: `正传书名：${parentBook.title}
 正传ID：${parentBookId}
 
 ## 正传世界设定
@@ -2417,8 +2322,10 @@ ${emotions}
 
 ## 正传角色矩阵
 ${matrix}`,
-      },
-    ], { temperature: 0.3 });
+        },
+      ],
+      { temperature: 0.3 },
+    );
 
     // Append deterministic meta block (LLM may hallucinate timestamps)
     const metaBlock = [
@@ -2460,6 +2367,7 @@ ${matrix}`,
       }
       return chunks.join("\n\n---\n\n");
     } catch {
+      // failure expected, safe to ignore
       return "";
     }
   }
@@ -2489,18 +2397,29 @@ ${matrix}`,
 
       // Step 1: Generate foundation on first run (not on resume)
       if (startFrom === 1) {
-        log?.info(this.localize(resolvedLanguage, {
-          zh: `步骤 1：从 ${input.chapters.length} 章生成基础设定...`,
-          en: `Step 1: Generating foundation from ${input.chapters.length} chapters...`,
-        }));
+        log?.info(
+          this.localize(resolvedLanguage, {
+            zh: `步骤 1：从 ${input.chapters.length} 章生成基础设定...`,
+            en: `Step 1: Generating foundation from ${input.chapters.length} chapters...`,
+          }),
+        );
         const foundationSource = buildImportFoundationSource(input.chapters, resolvedLanguage);
 
         const architect = new ArchitectAgent(this.agentCtxFor("architect", input.bookId));
         const isSeries = input.importMode === "series";
         const foundation = isSeries
           ? await this.generateAndReviewFoundation({
-              generate: (reviewFeedback) => architect.generateFoundationFromImport(book, foundationSource, undefined, reviewFeedback, { importMode: "series" }),
-              reviewer: new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", input.bookId)),
+              generate: (reviewFeedback) =>
+                architect.generateFoundationFromImport(
+                  book,
+                  foundationSource,
+                  undefined,
+                  reviewFeedback,
+                  { importMode: "series" },
+                ),
+              reviewer: new FoundationReviewerAgent(
+                this.agentCtxFor("foundation-reviewer", input.bookId),
+              ),
               mode: "series",
               language: resolvedLanguage === "en" ? "en" : "zh",
               stageLanguage: resolvedLanguage,
@@ -2518,24 +2437,35 @@ ${matrix}`,
 
         // Generate style guide from imported chapters
         if (foundationSource.length >= 500) {
-          log?.info(this.localize(resolvedLanguage, {
-            zh: "提取原文风格指纹...",
-            en: "Extracting source style fingerprint...",
-          }));
-          await this.tryGenerateStyleGuide(input.bookId, foundationSource, book.title, resolvedLanguage);
+          log?.info(
+            this.localize(resolvedLanguage, {
+              zh: "提取原文风格指纹...",
+              en: "Extracting source style fingerprint...",
+            }),
+          );
+          await this.tryGenerateStyleGuide(
+            input.bookId,
+            foundationSource,
+            book.title,
+            resolvedLanguage,
+          );
         }
 
-        log?.info(this.localize(resolvedLanguage, {
-          zh: "基础设定已生成。",
-          en: "Foundation generated.",
-        }));
+        log?.info(
+          this.localize(resolvedLanguage, {
+            zh: "基础设定已生成。",
+            en: "Foundation generated.",
+          }),
+        );
       }
 
       // Step 2: Sequential replay
-      log?.info(this.localize(resolvedLanguage, {
-        zh: `步骤 2：从第 ${startFrom} 章开始顺序回放...`,
-        en: `Step 2: Sequential replay from chapter ${startFrom}...`,
-      }));
+      log?.info(
+        this.localize(resolvedLanguage, {
+          zh: `步骤 2：从第 ${startFrom} 章开始顺序回放...`,
+          en: `Step 2: Sequential replay from chapter ${startFrom}...`,
+        }),
+      );
       const analyzer = new ChapterAnalyzerAgent(this.agentCtxFor("chapter-analyzer", input.bookId));
       const writer = new WriterAgent(this.agentCtxFor("writer", input.bookId));
       const countingMode = resolveLengthCountingMode(book.language ?? gp.language);
@@ -2547,10 +2477,12 @@ ${matrix}`,
         const chapterNumber = i + 1;
         const governedInput = await this.prepareWriteInput(book, bookDir, chapterNumber);
 
-        log?.info(this.localize(resolvedLanguage, {
-          zh: `分析章节 ${chapterNumber}/${input.chapters.length}：${ch.title}...`,
-          en: `Analyzing chapter ${chapterNumber}/${input.chapters.length}: ${ch.title}...`,
-        }));
+        log?.info(
+          this.localize(resolvedLanguage, {
+            zh: `分析章节 ${chapterNumber}/${input.chapters.length}：${ch.title}...`,
+            en: `Analyzing chapter ${chapterNumber}/${input.chapters.length}: ${ch.title}...`,
+          }),
+        );
 
         // Analyze chapter to get truth file updates
         const output = await analyzer.analyzeChapter({
@@ -2565,18 +2497,27 @@ ${matrix}`,
         });
 
         // Save chapter file + core truth files (state, ledger, hooks)
-        await writer.saveChapter(bookDir, {
-          ...output,
-          postWriteErrors: [],
-          postWriteWarnings: [],
-        }, gp.numericalSystem, resolvedLanguage);
+        await writer.saveChapter(
+          bookDir,
+          {
+            ...output,
+            postWriteErrors: [],
+            postWriteWarnings: [],
+          },
+          gp.numericalSystem,
+          resolvedLanguage,
+        );
 
         // Save extended truth files (summaries, subplots, emotional arcs, character matrix)
-        await writer.saveNewTruthFiles(bookDir, {
-          ...output,
-          postWriteErrors: [],
-          postWriteWarnings: [],
-        }, resolvedLanguage);
+        await writer.saveNewTruthFiles(
+          bookDir,
+          {
+            ...output,
+            postWriteErrors: [],
+            postWriteWarnings: [],
+          },
+          resolvedLanguage,
+        );
         await this.syncLegacyStructuredStateFromMarkdown(bookDir, chapterNumber, output);
         await this.syncNarrativeMemoryIndex(input.bookId);
 
@@ -2596,9 +2537,10 @@ ${matrix}`,
         };
         // Replace if exists (resume case), otherwise append
         const existingIdx = existingIndex.findIndex((e) => e.number === chapterNumber);
-        const updatedIndex = existingIdx >= 0
-          ? existingIndex.map((e, idx) => idx === existingIdx ? newEntry : e)
-          : [...existingIndex, newEntry];
+        const updatedIndex =
+          existingIdx >= 0
+            ? existingIndex.map((e, idx) => (idx === existingIdx ? newEntry : e))
+            : [...existingIndex, newEntry];
         await this.state.saveChapterIndex(input.bookId, updatedIndex);
 
         // Snapshot state after each chapter for rollback + resume support
@@ -2614,10 +2556,12 @@ ${matrix}`,
       }
 
       const nextChapter = input.chapters.length + 1;
-      log?.info(this.localize(resolvedLanguage, {
-        zh: `完成。已导入 ${importedCount} 章，共 ${formatLengthCount(totalWords, countingMode)}。下一章：${nextChapter}`,
-        en: `Done. ${importedCount} chapters imported, ${formatLengthCount(totalWords, countingMode)}. Next chapter: ${nextChapter}`,
-      }));
+      log?.info(
+        this.localize(resolvedLanguage, {
+          zh: `完成。已导入 ${importedCount} 章，共 ${formatLengthCount(totalWords, countingMode)}。下一章：${nextChapter}`,
+          en: `Done. ${importedCount} chapters imported, ${formatLengthCount(totalWords, countingMode)}. Next chapter: ${nextChapter}`,
+        }),
+      );
 
       return {
         bookId: input.bookId,
@@ -2632,7 +2576,11 @@ ${matrix}`,
 
   private static addUsage(
     a: TokenUsageSummary,
-    b?: { readonly promptTokens: number; readonly completionTokens: number; readonly totalTokens: number },
+    b?: {
+      readonly promptTokens: number;
+      readonly completionTokens: number;
+      readonly totalTokens: number;
+    },
   ): TokenUsageSummary {
     if (!b) return a;
     return {
@@ -2704,7 +2652,17 @@ ${matrix}`,
     bookDir: string,
     chapterNumber: number,
     externalContext?: string,
-  ): Promise<Pick<WriteChapterInput, "externalContext" | "chapterIntent" | "chapterMemo" | "chapterIntentData" | "contextPackage" | "ruleStack">> {
+  ): Promise<
+    Pick<
+      WriteChapterInput,
+      | "externalContext"
+      | "chapterIntent"
+      | "chapterMemo"
+      | "chapterIntentData"
+      | "contextPackage"
+      | "ruleStack"
+    >
+  > {
     if ((this.config.inputGovernanceMode ?? "v2") === "legacy") {
       return { externalContext };
     }
@@ -2824,10 +2782,7 @@ ${matrix}`,
     applied: boolean;
     tokenUsage?: TokenUsageSummary;
   }> {
-    const writerCount = countChapterLength(
-      params.chapterContent,
-      params.lengthSpec.countingMode,
-    );
+    const writerCount = countChapterLength(params.chapterContent, params.lengthSpec.countingMode);
     if (!isOutsideHardRange(writerCount, params.lengthSpec)) {
       return {
         content: params.chapterContent,
@@ -2872,7 +2827,11 @@ ${matrix}`,
     };
   }
 
-  private assertChapterContentNotEmpty(content: string, chapterNumber: number, stage: string): void {
+  private assertChapterContentNotEmpty(
+    content: string,
+    chapterNumber: number,
+    stage: string,
+  ): void {
     if (content.trim().length > 0) return;
     throw new Error(`Chapter ${chapterNumber} has empty chapter content after ${stage}`);
   }
@@ -2959,7 +2918,10 @@ ${matrix}`,
     }
   }
 
-  private async rebuildCurrentStateFactHistory(bookDir: string, uptoChapter: number): Promise<void> {
+  private async rebuildCurrentStateFactHistory(
+    bookDir: string,
+    uptoChapter: number,
+  ): Promise<void> {
     const memoryDb = await this.withMemoryIndexRetry(async () => {
       const db = new MemoryDB(bookDir);
       try {
@@ -3040,6 +3002,7 @@ ${matrix}`,
       memoryDb = new MemoryDB(bookDir);
       return true;
     } catch {
+      // failure expected, safe to ignore
       return false;
     } finally {
       memoryDb?.close();
@@ -3051,12 +3014,11 @@ ${matrix}`,
       return;
     }
 
-    const code = typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code?: unknown }).code ?? "")
-      : "";
-    const message = error instanceof Error
-      ? error.message
-      : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code ?? "")
+        : "";
+    const message = error instanceof Error ? error.message : String(error);
 
     this.logWarn(await this.resolveBookLanguageById(bookId), {
       zh: `SQLite 记忆索引调试：node=${process.version}; execArgv=${JSON.stringify(process.execArgv)}; code=${code || "(none)"}; message=${message}`,
@@ -3086,35 +3048,37 @@ ${matrix}`,
   private isMemoryIndexUnavailableError(error: unknown): boolean {
     if (!error) return false;
 
-    const code = typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code?: unknown }).code ?? "")
-      : "";
-    const message = error instanceof Error
-      ? error.message
-      : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code ?? "")
+        : "";
+    const message = error instanceof Error ? error.message : String(error);
     const normalizedMessage = message.trim();
 
-    return /^No such built-in module:\s*node:sqlite$/i.test(normalizedMessage)
-      || /^Cannot find module ['"]node:sqlite['"]$/i.test(normalizedMessage)
-      || (code === "ERR_UNKNOWN_BUILTIN_MODULE" && /\bnode:sqlite\b/i.test(normalizedMessage));
+    return (
+      /^No such built-in module:\s*node:sqlite$/i.test(normalizedMessage) ||
+      /^Cannot find module ['"]node:sqlite['"]$/i.test(normalizedMessage) ||
+      (code === "ERR_UNKNOWN_BUILTIN_MODULE" && /\bnode:sqlite\b/i.test(normalizedMessage))
+    );
   }
 
   private isMemoryIndexBusyError(error: unknown): boolean {
     if (!error) return false;
 
-    const code = typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code?: unknown }).code ?? "")
-      : "";
-    const message = error instanceof Error
-      ? error.message
-      : String(error);
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code ?? "")
+        : "";
+    const message = error instanceof Error ? error.message : String(error);
 
-    return code === "SQLITE_BUSY"
-      || code === "SQLITE_LOCKED"
-      || /\bSQLITE_BUSY\b/i.test(message)
-      || /\bSQLITE_LOCKED\b/i.test(message)
-      || /database is locked/i.test(message)
-      || /database is busy/i.test(message);
+    return (
+      code === "SQLITE_BUSY" ||
+      code === "SQLITE_LOCKED" ||
+      /\bSQLITE_BUSY\b/i.test(message) ||
+      /\bSQLITE_LOCKED\b/i.test(message) ||
+      /database is locked/i.test(message) ||
+      /database is busy/i.test(message)
+    );
   }
 
   private factKey(fact: Pick<Fact, "subject" | "predicate">): string {
@@ -3198,7 +3162,9 @@ ${matrix}`,
         zh: `> 第${params.chapterNumber}章审计发现以下问题，下一章写作时必须避免：`,
         en: `> Chapter ${params.chapterNumber} audit found the following issues to avoid in the next chapter:`,
       }),
-      ...params.issues.map((issue) => `> - [${issue.severity}] ${issue.category}: ${issue.description}`),
+      ...params.issues.map(
+        (issue) => `> - [${issue.severity}] ${issue.category}: ${issue.description}`,
+      ),
       "",
     ].join("\n");
 
@@ -3304,7 +3270,11 @@ ${matrix}`,
       params.auditOptions,
     );
     const aiTells = analyzeAITells(params.chapterContent, params.language);
-    const sensitiveResult = analyzeSensitiveWords(params.chapterContent, undefined, params.language);
+    const sensitiveResult = analyzeSensitiveWords(
+      params.chapterContent,
+      undefined,
+      params.language,
+    );
     const longSpanFatigue = await analyzeLongSpanFatigue({
       bookDir: params.bookDir,
       chapterNumber: params.chapterNumber,
@@ -3335,7 +3305,9 @@ ${matrix}`,
         tokenUsage: llmAudit.tokenUsage,
       },
       aiTellCount: aiTells.issues.length,
-      blockingCount: revisionBlockingIssues.filter((issue) => issue.severity === "warning" || issue.severity === "critical").length,
+      blockingCount: revisionBlockingIssues.filter(
+        (issue) => issue.severity === "warning" || issue.severity === "critical",
+      ).length,
       criticalCount: revisionBlockingIssues.filter((issue) => issue.severity === "critical").length,
       revisionBlockingIssues,
     };
@@ -3364,7 +3336,13 @@ ${matrix}`,
     plan: PlanChapterOutput;
     composed: ComposeChapterOutput;
   }> {
-    const plan = await this.resolveGovernedPlan(book, bookDir, chapterNumber, externalContext, options);
+    const plan = await this.resolveGovernedPlan(
+      book,
+      bookDir,
+      chapterNumber,
+      externalContext,
+      options,
+    );
     const composed = await composeGovernedChapter({
       book,
       bookDir,
