@@ -5700,7 +5700,7 @@ describe("PipelineRunner", () => {
   );
 
   it("excludes pure sequence-level fatigue from revision blocker counts", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
+    const { root, state, bookId } = await createRunnerFixture();
     const bookDir = state.bookDir(bookId);
     const storyDir = join(bookDir, "story");
     const book = await state.loadBookConfig(bookId);
@@ -5720,37 +5720,25 @@ describe("PipelineRunner", () => {
       "utf-8",
     );
 
-    const result = await (
-      runner as unknown as {
-        evaluateMergedAudit: (params: {
-          auditor: Pick<ContinuityAuditor, "auditChapter">;
-          book: BookConfig;
-          bookDir: string;
-          chapterContent: string;
-          chapterNumber: number;
-          language: "zh" | "en";
-        }) => Promise<{
-          auditResult: AuditResult;
-          aiTellCount: number;
-          blockingCount: number;
-          criticalCount: number;
-        }>;
-      }
-    ).evaluateMergedAudit({
-      auditor: {
-        auditChapter: vi.fn().mockResolvedValue(
-          createAuditResult({
-            passed: true,
-            issues: [],
-            summary: "clean",
-          }),
-        ),
-      },
+    const { AuditService } = await import("../services/audit.js");
+    const auditService = new AuditService({
+      resolveAgent: async () =>
+        ({
+          auditChapter: vi.fn().mockResolvedValue(
+            createAuditResult({
+              passed: true,
+              issues: [],
+              summary: "clean",
+            }),
+          ),
+        }) as unknown as import("../agents/continuity.js").ContinuityAuditor,
+    });
+
+    const result = await auditService.evaluateMergedAudit({
       book,
       bookDir,
       chapterContent: "林越把纸页摊平，先看角上的水痕，再看最末那道被抹掉的签名。",
       chapterNumber: 3,
-      language: "zh",
     });
 
     expect(result.auditResult.issues.some((issue) => issue.category === "节奏单调")).toBe(true);
@@ -5761,7 +5749,7 @@ describe("PipelineRunner", () => {
   });
 
   it("keeps chapter-level blockers even when sequence-level fatigue shares the same category label", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
+    const { root, state, bookId } = await createRunnerFixture();
     const bookDir = state.bookDir(bookId);
     const storyDir = join(bookDir, "story");
     const book = await state.loadBookConfig(bookId);
@@ -5781,44 +5769,32 @@ describe("PipelineRunner", () => {
       "utf-8",
     );
 
-    const result = await (
-      runner as unknown as {
-        evaluateMergedAudit: (params: {
-          auditor: Pick<ContinuityAuditor, "auditChapter">;
-          book: BookConfig;
-          bookDir: string;
-          chapterContent: string;
-          chapterNumber: number;
-          language: "zh" | "en";
-        }) => Promise<{
-          auditResult: AuditResult;
-          aiTellCount: number;
-          blockingCount: number;
-          criticalCount: number;
-        }>;
-      }
-    ).evaluateMergedAudit({
-      auditor: {
-        auditChapter: vi.fn().mockResolvedValue(
-          createAuditResult({
-            passed: false,
-            issues: [
-              {
-                severity: "warning",
-                category: "节奏单调",
-                description: "这一章的推进依然原地打转，没有完成当前场景应有的落点。",
-                suggestion: "让当前章把既定动作落下，不要继续停在同一观察节拍。",
-              },
-            ],
-            summary: "needs revision",
-          }),
-        ),
-      },
+    const { AuditService } = await import("../services/audit.js");
+    const auditService = new AuditService({
+      resolveAgent: async () =>
+        ({
+          auditChapter: vi.fn().mockResolvedValue(
+            createAuditResult({
+              passed: false,
+              issues: [
+                {
+                  severity: "warning",
+                  category: "节奏单调",
+                  description: "这一章的推进依然原地打转，没有完成当前场景应有的落点。",
+                  suggestion: "让当前章把既定动作落下，不要继续停在同一观察节拍。",
+                },
+              ],
+              summary: "needs revision",
+            }),
+          ),
+        }) as unknown as import("../agents/continuity.js").ContinuityAuditor,
+    });
+
+    const result = await auditService.evaluateMergedAudit({
       book,
       bookDir,
       chapterContent: "林越把纸页摊平，先看角上的水痕，再看最末那道被抹掉的签名。",
       chapterNumber: 3,
-      language: "zh",
     });
 
     expect(result.auditResult.issues.filter((issue) => issue.category === "节奏单调")).toHaveLength(

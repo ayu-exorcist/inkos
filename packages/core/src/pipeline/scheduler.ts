@@ -10,6 +10,7 @@ import {
   AdaptiveQualityGate,
   type ChapterOutcome,
 } from "../governance/adaptive-gates.js";
+import { INKOS_EVENTS } from "../events/events.js";
 
 export interface SchedulerConfig extends PipelineConfig {
   readonly radarCron: string;
@@ -146,6 +147,7 @@ export class Scheduler {
     this.consecutiveFailures.delete(bookId);
     this.failureDimensions.delete(bookId);
     this.adaptiveGate?.reset(bookId);
+    this.config.eventBus?.emit(INKOS_EVENTS.BOOK_RESUMED, { bookId });
   }
 
   /** Check if a book is paused. */
@@ -359,6 +361,11 @@ export class Scheduler {
       const reason = `${failures} consecutive audit failures (threshold: ${gates.pauseAfterConsecutiveFailures}, mode: ${this.adaptiveGate?.snapshot(bookId).mode ?? "static"})`;
       this.log?.error(`${bookId} PAUSED: ${reason}`);
       this.config.onPause?.(bookId, reason);
+      this.config.eventBus?.emit(INKOS_EVENTS.BOOK_PAUSED, {
+        bookId,
+        reason,
+        consecutiveFailures: failures,
+      });
 
       if (this.config.notifyChannels && this.config.notifyChannels.length > 0) {
         await dispatchWebhookEvent(this.config.notifyChannels, {

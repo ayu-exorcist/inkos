@@ -11,6 +11,8 @@ import type { RadarSource } from "../agents/radar-source.js";
 import type { AuditResult, AuditIssue } from "../agents/continuity.js";
 import type { LengthTelemetry } from "../models/length-governance.js";
 import type { LengthLanguage } from "../utils/length-metrics.js";
+import { isOutsideHardRange } from "../utils/length-metrics.js";
+import type { LengthSpec } from "../models/length-governance.js";
 
 const SEQUENCE_LEVEL_CATEGORIES = new Set([
   "Pacing Monotony",
@@ -197,6 +199,70 @@ export function buildImportFoundationSource(
     anchorsTitle,
     anchorText,
   ].join("\n");
+}
+
+export function localize(
+  language: LengthLanguage,
+  messages: { zh: string; en: string },
+): string {
+  return language === "en" ? messages.en : messages.zh;
+}
+
+export function languageFromLengthSpec(
+  lengthSpec: Pick<LengthSpec, "countingMode">,
+): LengthLanguage {
+  return lengthSpec.countingMode === "en_words" ? "en" : "zh";
+}
+
+export function buildLengthWarnings(
+  chapterNumber: number,
+  finalCount: number,
+  lengthSpec: LengthSpec,
+): string[] {
+  if (!isOutsideHardRange(finalCount, lengthSpec)) {
+    return [];
+  }
+  const lang = languageFromLengthSpec(lengthSpec);
+  return [
+    localize(lang, {
+      zh: `第${chapterNumber}章经过一次字数归一化后仍超出硬区间（${lengthSpec.hardMin}-${lengthSpec.hardMax}，实际 ${finalCount}）。`,
+      en: `Chapter ${chapterNumber} remains outside hard range (${lengthSpec.hardMin}-${lengthSpec.hardMax}, actual ${finalCount}) after a single normalization pass.`,
+    }),
+  ];
+}
+
+export function buildLengthTelemetry(params: {
+  lengthSpec: LengthSpec;
+  writerCount: number;
+  postWriterNormalizeCount: number;
+  postReviseCount: number;
+  finalCount: number;
+  normalizeApplied: boolean;
+  lengthWarning: boolean;
+}): LengthTelemetry {
+  return {
+    target: params.lengthSpec.target,
+    softMin: params.lengthSpec.softMin,
+    softMax: params.lengthSpec.softMax,
+    hardMin: params.lengthSpec.hardMin,
+    hardMax: params.lengthSpec.hardMax,
+    countingMode: params.lengthSpec.countingMode,
+    writerCount: params.writerCount,
+    postWriterNormalizeCount: params.postWriterNormalizeCount,
+    postReviseCount: params.postReviseCount,
+    finalCount: params.finalCount,
+    normalizeApplied: params.normalizeApplied,
+    lengthWarning: params.lengthWarning,
+  };
+}
+
+export function logLengthWarnings(
+  logger: Logger | undefined,
+  lengthWarnings: ReadonlyArray<string>,
+): void {
+  for (const warning of lengthWarnings) {
+    logger?.warn(warning);
+  }
 }
 
 export interface PipelineConfig {
