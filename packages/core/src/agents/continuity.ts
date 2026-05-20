@@ -20,6 +20,7 @@ import {
   readCurrentStateWithFallback,
 } from "../utils/outline-paths.js";
 import { join } from "node:path";
+import type { ResolvedPolicy } from "../governance/policy-loader.js";
 
 export interface AuditResult {
   readonly passed: boolean;
@@ -310,8 +311,19 @@ function buildDimensionList(
   language: PromptLanguage,
   hasParentCanon = false,
   fanficMode?: FanficMode,
+  policy?: ResolvedPolicy,
 ): ReadonlyArray<{ readonly id: number; readonly name: string; readonly note: string }> {
   const activeIds = new Set(gp.auditDimensions);
+
+  // Apply policy overrides
+  if (policy) {
+    for (const id of activeIds) {
+      if (policy.isDimensionDisabled(id)) activeIds.delete(id);
+    }
+    for (let id = 1; id <= 40; id++) {
+      if (policy.isDimensionEnabled(id)) activeIds.add(id);
+    }
+  }
 
   // Add book-level additional dimensions (supports both numeric IDs and name strings)
   if (bookRules?.additionalAuditDimensions) {
@@ -378,7 +390,9 @@ function buildDimensionList(
     const name = dimensionName(id, language);
     if (!name) continue;
 
-    const note = buildDimensionNote(id, language, gp, bookRules, fanficMode, fanficConfig);
+    let note = buildDimensionNote(id, language, gp, bookRules, fanficMode, fanficConfig);
+    const noteOverride = policy?.dimensionNoteOverride(id);
+    if (noteOverride) note = noteOverride;
 
     dims.push({ id, name, note });
   }
@@ -407,6 +421,8 @@ export class ContinuityAuditor extends BaseAgent {
         ledger?: string;
         hooks?: string;
       };
+      /** External governance policy — overrides hardcoded defaults. */
+      policy?: ResolvedPolicy;
     },
   ): Promise<AuditResult> {
     const [
@@ -469,12 +485,14 @@ export class ContinuityAuditor extends BaseAgent {
     const fanficMode = hasFanficCanon
       ? (bookRules?.fanficMode as FanficMode | undefined)
       : undefined;
+    const policy = options?.policy;
     const dimensions = buildDimensionList(
       gp,
       bookRules,
       resolvedLanguage,
       hasParentCanon,
       fanficMode,
+      policy,
     );
     const dimList = dimensions
       .map(
@@ -528,13 +546,13 @@ Output format MUST be JSON:
 
 passed is false ONLY when critical-severity issues exist.
 
-overall_score calibration:
+${policy?.buildScoreCalibration("en") ?? `overall_score calibration:
 - 95-100: Publishable as-is, no noticeable issues
 - 85-94: Minor blemishes but smooth reading, the reader won't break immersion
 - 75-84: Noticeable problems but the story backbone holds, needs revision but not urgent
 - 65-74: Multiple issues hurt the reading experience, pacing or continuity has gaps
 - < 65: Structural breakdown, needs major rewrite
-Score holistically — do not let a single minor issue tank the score.`
+Score holistically — do not let a single minor issue tank the score.`}`
       : `你是一位严格的${gp.name}网络小说结构审稿编辑。你只审完成度 + 结构，不审文笔。${protagonistBlock}${searchNote}
 
 ## 审稿边界（硬约束）
@@ -567,13 +585,13 @@ ${dimList}
 
 只有当存在 critical 级别问题时，passed 才为 false。
 
-overall_score 评分校准：
+${policy?.buildScoreCalibration("zh") ?? `overall_score 评分校准：
 - 95-100：可直接发布，无明显问题
 - 85-94：有小瑕疵但整体流畅可读，读者不会出戏
 - 75-84：有明显问题但故事主干完整，需要修但不紧急
 - 65-74：多处影响阅读体验的问题，节奏或连续性有断裂
 - < 65：结构性问题，需要大幅重写
-综合评分，不要因为单一小问题大幅拉低分数。`;
+综合评分，不要因为单一小问题大幅拉低分数。`}`;
 
     const ledgerBlock = gp.numericalSystem
       ? isEnglish
