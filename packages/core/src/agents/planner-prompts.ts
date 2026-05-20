@@ -57,6 +57,26 @@ threadRefs:
 <如果本章是非高压章节，每段非冲突段落说明功能。格式：[段落位置] → [承担功能]
 如果本章是高压/冲突章节，写"不适用 - 本章无日常过渡">
 
+## 场景分解
+<将本章拆解为 1-4 个场景，每个场景必须包含：>
+
+### 场景 1
+- **位置/环境**：具体地点、时间、氛围（至少 1 种五感细节）
+- **POV**：谁的视角
+- **目标**：角色在本场景要达成什么
+- **冲突/阻碍**：什么在阻止目标达成
+- **结果**：场景结束时达成什么、留下什么缺口
+- **角色状态约束**：出场角色进入此场景时的心理状态，以及离开时的状态变化（必须引用角色档案中的形成事件或决策矩阵）
+
+### 场景 2
+（同上格式）
+
+**硬规则**：
+- 场景总数 ≤ 4（高压章可 1-2 个，过渡章可 2-4 个）
+- 每个场景必须有明确的冲突或张力，禁止纯描写/纯对话的"水场景"
+- 场景之间的过渡必须有过场理由（时间跳跃、地点转移、视角切换），禁止"前一刻在 A，下一刻在 B"的无缝瞬移
+- 角色的状态变化必须在场景描述中写明，供 downstream writer 作为因果约束
+
 ## 关键抉择过三连问
 - 主角本章最关键的一次选择：
   - 为什么这么做？
@@ -161,6 +181,26 @@ threadRefs:
 ## What the slow / transitional beats carry
 <if this is a non-pressure chapter, name the function of each non-conflict paragraph. Format: [position] → [function]
 if this is a pressure / conflict chapter, write "n/a — pressure chapter, no transitional beats">
+
+## Scene breakdown
+<Decompose this chapter into 1-4 scenes. Each scene MUST contain:>
+
+### Scene 1
+- **Location / Environment**: specific place, time, atmosphere (at least 1 sensory detail)
+- **POV**: whose perspective
+- **Objective**: what the character aims to achieve in this scene
+- **Conflict / Obstacle**: what prevents the objective
+- **Result**: what is achieved by scene end, what gap remains
+- **Character state constraint**: the entering psychological state of each present character, and their exiting state change (must reference formative events or decision matrix from their role profile)
+
+### Scene 2
+(same format)
+
+**Hard rules**:
+- Total scenes ≤ 4 (pressure chapters: 1-2, transitional: 2-4)
+- Every scene must have explicit conflict or tension; no "water scenes" of pure description or idle dialogue
+- Transitions between scenes must have a stated reason (time skip, location shift, POV switch); no seamless teleportation
+- Character state changes must be written into the scene description as causal constraints for the downstream writer
 
 ## Three-question check on the key choice
 - Protagonist's most important choice this chapter:

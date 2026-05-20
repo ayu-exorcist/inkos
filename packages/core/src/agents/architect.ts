@@ -310,8 +310,17 @@ name: <角色名>
 ## 反差细节
 （1-2 个与核心标签反差的具体细节——"冷酷杀手但会给流浪猫留鱼骨"。反差细节是人物立体化的公式，必须有。）
 
-## 人物小传（过往经历）
-（一段散文，说这个人怎么变成现在这样。童年/重大事件/塑造性格的那件事。只写关键过往，简版。）
+## 根系（环境决定层）
+**是什么把他变成了现在这样的人。** 原生家庭结构、经济状况、教养方式。2-3 个早期形成事件（年龄/事件/即时反应/形成的生存策略/长期影响），每个事件必须包含至少 1 个感官细节（气味、温度、声音、触感）。社会环境烙印（阶层、教育、信仰、语言习惯）。
+
+## 茎干（当前状态推导层）
+**从根系长出来的当前模样。禁止标签化写作。** 性格：外在表现、形成原因（必须引用根系中的具体形成事件）、代价、崩溃条件。三观（对权力/金钱/爱情/死亡）。能力：核心能力、盲区、禁忌区。
+
+## 枝叶（动态变化层）
+**随故事推进的动态部分。** 决策矩阵：至少 3 种情境类型（被权威命令/他人求助/面对背叛/金钱诱惑/生死抉择），每种包含默认反应、根源于哪个形成事件、什么情况下会打破。当前压力与形变。身体反应模式（紧张/愤怒/恐惧时的具体身体反应及来源）。
+
+## 花果（叙事功能层）
+**在故事中的叙事功能。** 叙事功能（导师/对手/盟友/镜像/悲剧预警）。读者情感变化（初见→深入了解→高潮→结局）。绝对不能做的事（3-5 条，违反即崩人设）。标志性动作（压力下才出现的 2-3 个具体动作）。
 
 ## 主角弧线（起点 → 终点 → 代价）
 **只有主角必须写本段；其他 major 角色如果弧线分量重也可以写，否则略过。**主角从哪里出发（身份、处境、核心缺陷、一开始最想要什么），到哪里落脚（最终变成什么样的人、拿到/失去什么），为了这个落脚他付出了什么不可逆的代价（关系、身体、信念、某段过去）。不要只写"变强"这种平面变化，要写**内在的位移**。本段是之前 story_frame.段 2 迁移过来的权威位置，写足写实。
@@ -321,12 +330,6 @@ name: <角色名>
 
 ## 关系网络
 （与主角、与其他重要角色的关系——一句话一条，关系不是标签是动态。）
-
-## 内在驱动
-（他想要什么、为什么想要、愿意付出什么代价。）
-
-## 成长弧光
-（他在这本书里会经历什么内在位移——变好变坏变复杂，落在哪里。非主角可短可长。）
 
 ---ROLE---
 tier: major
@@ -340,7 +343,7 @@ name: <下一个主要角色>
 tier: minor
 name: <次要角色名>
 ---CONTENT---
-（次要角色简化版，只需要 4 个小标题：核心标签 / 反差细节 / 当前现状 / 与主角关系，每段 1-2 行即可）
+（次要角色简化版，只需要 4 个小标题：核心标签 / 反差细节 / 当前现状 / 与主角关系，每段 1-2 行即可。次要角色不需要写 ECCM 四层。）
 
 （次要角色 3-5 个，按出场密度给。）
 
@@ -364,7 +367,7 @@ prohibitions:
   - (3-5条本书禁忌)
 chapterTypesOverride: []
 fatigueWordsOverride: []
-additionalAuditDimensions: []
+additionalAuditDimensions: [38, 39, 40]
 enableFullCastTracking: false
 ---
 \`\`\`
@@ -506,8 +509,17 @@ name: <character name>
 ## Contrast_Detail
 (1-2 concrete details that contradict the core tags — "ice-cold killer but leaves fish bones for stray cats". Contrast detail is the formula for character dimensionality.)
 
-## Back_Story
-(Prose paragraph — how this person became who they are. Key past only, keep it lean.)
+## Root (environment-causal layer)
+**What made them who they are.** Family structure, economic status, parenting style. 2-3 formative events (age / event / immediate reaction / survival strategy formed / long-term impact), each with at least 1 sensory detail (smell, temperature, sound, texture). Social imprint (class, education, belief, language habits).
+
+## Stem (current-state derivation layer)
+**What grew out of the root. No label-based writing.** Personality: outward manifestation, formation cause (must reference a specific formative event in Root), cost, collapse condition. Values (power / money / love / death). Abilities: core ability, blind spot, forbidden zone.
+
+## Branch (dynamic layer)
+**Parts that evolve as the story advances.** Decision matrix: at least 3 situation types (ordered by authority / asked for help / facing betrayal / money temptation / life-or-death), each with default reaction, root formative event, and breaking condition. Current pressure and deformation. Physiological reaction patterns (specific body reactions under tension / anger / fear and their sources).
+
+## Fruit (narrative-function layer)
+**Narrative role in the story.** Narrative function (mentor / opponent / ally / mirror / tragedy warning). Reader emotion arc (first impression → after deepening → at climax → at ending). Absolute taboos (3-5 lines; violating any breaks the character). Signature actions (2-3 specific actions that only appear under pressure).
 
 ## Protagonist_Arc (start → end → cost)
 **Mandatory for the protagonist; optional for other majors with substantial arcs.** Where they start (identity, situation, core flaw, initial desire); where they land (who they become, what they gain or lose); the irreversible cost they pay for that landing. Show internal displacement, not just growth. This section absorbs what used to live in story_frame.02_Protagonist_Arc.
@@ -517,12 +529,6 @@ name: <character name>
 
 ## Relationship_Network
 (With protagonist, with other major characters. One line each. Relationships are dynamic, not labels.)
-
-## Inner_Driver
-(What they want, why, what they're willing to pay.)
-
-## Growth_Arc
-(Internal displacement across the book. Can be short for non-protagonists.)
 
 ---ROLE---
 tier: major
@@ -536,7 +542,7 @@ name: <next major>
 tier: minor
 name: <minor name>
 ---CONTENT---
-(Simplified: only 4 sections — Core_Tags / Contrast_Detail / Current_State / Relationship_to_Protagonist, 1-2 lines each.)
+(Simplified: only 4 sections — Core_Tags / Contrast_Detail / Current_State / Relationship_to_Protagonist, 1-2 lines each. Minors do NOT need the ECCM four-layer structure.)
 
 (3-5 minors.)
 
@@ -560,7 +566,7 @@ prohibitions:
   - (3-5 book-specific prohibitions)
 chapterTypesOverride: []
 fatigueWordsOverride: []
-additionalAuditDimensions: []
+additionalAuditDimensions: [38, 39, 40]
 enableFullCastTracking: false
 ---
 \`\`\`
@@ -911,6 +917,14 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
         language === "en"
           ? "# Emotional Arcs\n\n| Character | Chapter | Emotional State | Trigger Event | Intensity (1-10) | Arc Direction |\n| --- | --- | --- | --- | --- | --- |\n"
           : "# 情感弧线\n\n| 角色 | 章节 | 情绪状态 | 触发事件 | 强度(1-10) | 弧线方向 |\n|------|------|----------|----------|------------|----------|\n",
+        "utf-8",
+      ));
+      // used_elements.md — migrated from castor/xs originality tracking
+      writes.push(writeFile(
+        join(storyDir, "used_elements.md"),
+        language === "en"
+          ? "# Used Elements Tracker\n\n## Consumed Hooks / Payoffs\n- [ch?] (fill after each chapter)\n\n## Consumed Scene Archetypes\n- [ch?] (fill after each chapter)\n\n## Banned Reuse (next N chapters)\n- (manually set ban period)\n\n## Pending (planted but not yet paid off)\n- (manually track upcoming beats)\n"
+          : "# 已消耗元素追踪\n\n## 已消耗钩子/爽点\n- [第?章]（每章写完后填写）\n\n## 已消耗场景原型\n- [第?章]（每章写完后填写）\n\n## 禁止复用（未来 N 章内）\n- （手动设置禁用期限）\n\n## 待使用（已铺垫但未兑现）\n- （手动追踪即将使用的节拍）\n",
         "utf-8",
       ));
     }

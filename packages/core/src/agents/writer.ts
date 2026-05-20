@@ -738,7 +738,48 @@ export class WriterAgent extends BaseAgent {
       );
     }
 
+    // ── Append used-elements from postSettlement ──
+    const usedElements = this.extractUsedElements(output.postSettlement, output.chapterNumber, language);
+    if (usedElements) {
+      writes.push(this.appendUsedElements(storyDir, usedElements, language));
+    }
+
     await Promise.all(writes);
+  }
+
+  private extractUsedElements(postSettlement: string, chapterNumber: number, language: "zh" | "en"): string | null {
+    const marker = "=== USED_ELEMENTS ===";
+    const idx = postSettlement.indexOf(marker);
+    if (idx === -1) return null;
+    let block = postSettlement.slice(idx + marker.length).trim();
+    // Stop at the next === block or end of string
+    const nextBlock = block.indexOf("\n===");
+    if (nextBlock !== -1) {
+      block = block.slice(0, nextBlock).trim();
+    }
+    if (!block) return null;
+    const header = language === "en"
+      ? `## Chapter ${chapterNumber}`
+      : `## 第${chapterNumber}章`;
+    return `${header}\n${block}`;
+  }
+
+  private async appendUsedElements(storyDir: string, block: string, language: "zh" | "en"): Promise<void> {
+    const path = join(storyDir, "used_elements.md");
+    let existing = "";
+    try {
+      existing = await readFile(path, "utf-8");
+    } catch {
+      // File doesn't exist yet
+    }
+    if (!existing.trim()) {
+      const header = language === "en"
+        ? "# Used Elements Tracker\n\n"
+        : "# 已消耗元素追踪\n\n";
+      await writeFile(path, `${header}${block}\n`, "utf-8");
+      return;
+    }
+    await writeFile(path, `${existing.trimEnd()}\n\n${block}\n`, "utf-8");
   }
 
   private buildUserPrompt(params: {

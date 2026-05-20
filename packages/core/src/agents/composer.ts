@@ -14,6 +14,11 @@ import {
   retrieveMemorySelection,
 } from "../utils/memory-retrieval.js";
 import {
+  readRoleCards,
+  parseECCMFromRole,
+  buildECCMContext,
+} from "../utils/outline-paths.js";
+import {
   buildGovernedRuleStack,
   buildGovernedTrace,
 } from "../utils/context-assembly.js";
@@ -189,6 +194,8 @@ async function collectSelectedContext(
       excerpt: `${summary.heading} | ${summary.content}`,
     }));
 
+    const eccmEntries = await buildECCMEntries(storyDir, language);
+
     return [
       ...chapterMemoEntry,
       ...entries.filter((entry): entry is NonNullable<typeof entry> => entry !== null),
@@ -198,6 +205,7 @@ async function collectSelectedContext(
       ...summaryEntries,
       ...volumeSummaryEntries,
       ...hookEntries,
+      ...eccmEntries,
     ];
 }
 
@@ -466,4 +474,28 @@ function renderHookDebtBeat(
   summary: ReturnType<typeof parseChapterSummariesMarkdown>[number],
 ): string {
   return `ch${summary.chapter} ${summary.title} - ${summary.events || summary.hookActivity || summary.stateChanges || "(none)"}`;
+}
+
+async function buildECCMEntries(
+  storyDir: string,
+  language: "zh" | "en",
+): Promise<ContextPackage["selectedContext"]> {
+  const bookDir = dirname(storyDir);
+  const cards = await readRoleCards(bookDir);
+  if (cards.length === 0) return [];
+
+  const entries: ContextPackage["selectedContext"] = [];
+  for (const card of cards) {
+    const eccm = parseECCMFromRole(card.content);
+    if (!eccm) continue;
+    const ctx = buildECCMContext(card.name, eccm);
+    entries.push({
+      source: `story/roles/${card.tier === "major" ? "主要角色" : "次要角色"}/${card.name}.md#eccm`,
+      reason: language === "en"
+        ? "ECCM causal-reasoning constraint: every action must trace back to formative events."
+        : "ECCM 因果推理约束：每个行为必须追溯到形成事件。",
+      excerpt: ctx,
+    });
+  }
+  return entries;
 }

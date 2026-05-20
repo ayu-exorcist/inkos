@@ -144,10 +144,17 @@ You will receive a chapter_memo composed of 7 markdown sections:
 - ## 日常/过渡承担什么任务 → function map for non-conflict passages ([passage location] → [function])
 - ## 关键抉择过三连问 → three-question check every key character choice must pass
 - ## 章尾必须发生的改变 → 1-3 concrete changes the ending must deliver (info / relation / physical / power)
+- ## Scene breakdown → if the memo contains a scene-breakdown section, each scene MUST be executed scene-by-scene: location/environment, POV, objective, conflict/obstacle, result, character-state constraint. Skipping scenes, adding unplanned scenes, or writing "conflict" as flat narration is forbidden. **Each scene's "result" must produce a concrete gap (info / relation / physical / power), not a smooth closure**. Transitions between scenes must have an explicit reason (time / location / POV shift); seamless teleportation is forbidden
 - ## 本章 hook 账 → **hard correspondence rule**: each hook_id listed under advance/resolve MUST have a **concretely locatable payoff scene** in the prose — explicit characters acting on or talking about a specific object/event/piece of information, with observable actions. No "sideways hints" or "deferred to next chapter". Example: if the memo says 'advance: H007 Huzi's IOU → planted → pressured', the prose must contain a scene where Lin Qiu actually touches / sees / picks up that specific IOU and does something. An inner mention like "he remembered the IOU was still in the drawer" does NOT count. Each advance/resolve payoff scene must be at least 60 chars. Entries under defer need no prose. Entries under open only need a natural new-hook seed near the chapter end
 - ## 不要做 → hard prohibitions for this chapter
 
-Address each section in order when drafting the chapter. Every section must leave a visible trace in the prose — if a section is not reflected, the chapter is incomplete. **After the first draft, self-check the hook ledger**: list each hook_id from advance/resolve and point each one to a specific prose span containing action / object / dialogue. If you cannot point to one, go back and add it; do not submit a draft where the ledger lives in the memo but nowhere in the prose — the downstream validator will flag it as critical.`;
+Address each section in order when drafting the chapter. Every section must leave a visible trace in the prose — if a section is not reflected, the chapter is incomplete. **After the first draft, self-check the hook ledger**: list each hook_id from advance/resolve and point each one to a specific prose span containing action / object / dialogue. If you cannot point to one, go back and add it; do not submit a draft where the ledger lives in the memo but nowhere in the prose — the downstream validator will flag it as critical.
+
+**If the memo contains a scene breakdown, perform an extra self-check**:
+1. List every scene number from the memo and verify each one appears in the prose (none skipped)
+2. Is each scene's "conflict/obstacle" concrete? If it reads as "they had a disagreement", expand it into specific actions and dialogue
+3. Does each scene's "result" produce a gap? If it reads as "the matter was settled", rewrite it as "the matter paused, leaving X gap"
+4. Do scene transitions have explicit reasons? Ban "previously at A, next at B" with no bridge`;
   }
 
   return `## 章节备忘对齐
@@ -160,10 +167,17 @@ Address each section in order when drafting the chapter. Every section must leav
 - ## 日常/过渡承担什么任务 → 非冲突段落的功能映射（[段落位置] → [承担功能]）
 - ## 关键抉择过三连问 → 关键人物选择必须过的检查
 - ## 章尾必须发生的改变 → 结尾落地的 1-3 条具体改变（信息/关系/物理/权力）
+- ## 场景分解 → 如果 memo 包含场景分解（## 场景分解），每个场景必须逐条执行：位置/环境、POV、目标、冲突/阻碍、结果、角色状态约束。禁止跳过场景、禁止擅自添加场景、禁止把"冲突/阻碍"写成平铺直叙。**每个场景的"结果"必须产生一个具体缺口（信息/关系/物理/权力），不能是平稳收尾**。场景之间的过渡必须有明确的过场理由（时间/地点/视角），禁止无缝瞬移
 - ## 本章 hook 账 → **硬对应规则**：advance/resolve 下面列出的每一个 hook_id 都必须在正文里有一个**具体可定位的兑现段**——写明人物对着什么物件/事件/信息做出什么可观察的动作或交谈。不允许"侧面暗示""留给下章"。举例：memo 写 'advance: H007 胖虎借条 → planted → pressured'，正文里必须出现一段林秋真的伸手摸到/看到/拿起那张胖虎借条并做出动作的场景；不能只写"他想起借条还在抽屉里"这种内心提及。每个 advance/resolve 的 hook 兑现段至少 60 字。defer 下的不用落，open 段只需要在章末附近安排一个自然引出的新悬念即可
 - ## 不要做 → 硬约束红线
 
-写作时按段落顺序落实，每一段都要在正文里有对应的兑现痕迹。如果某一段没有体现到正文里，本章不算完成。**写完初稿后自检一遍 hook 账**：把 advance 和 resolve 的 hook_id 列下来，对照正文，确认每一个都能指到一段带具体动作/物件/对话的 prose。如果指不到，回去补写；不要提交"账本在 memo 里、正文里没落"的稿子——下游 validator 会直接判 critical 退稿。`;
+写作时按段落顺序落实，每一段都要在正文里有对应的兑现痕迹。如果某一段没有体现到正文里，本章不算完成。**写完初稿后自检一遍 hook 账**：把 advance 和 resolve 的 hook_id 列下来，对照正文，确认每一个都能指到一段带具体动作/物件/对话的 prose。如果指不到，回去补写；不要提交"账本在 memo 里、正文里没落"的稿子——下游 validator 会直接判 critical 退稿。
+
+**如果 memo 包含场景分解，额外自检**：
+1. 列出 memo 中的每个场景编号，对照正文，确认每个场景都写了（没跳过）
+2. 每个场景的"冲突/阻碍"是否具体？如果写成"两人发生了争执"这种概括，必须扩写成具体动作和对话
+3. 每个场景的"结果"是否产生了缺口？如果写成"事情结束了"，必须改为"事情告一段落了，但留下了 X 缺口"
+4. 场景之间的过渡是否有过场理由？禁止"前一刻在 A，下一刻在 B"的无缝切换`;
 }
 
 function buildLengthGuidance(lengthSpec: LengthSpec, language: "zh" | "en"): string {

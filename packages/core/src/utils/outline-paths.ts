@@ -82,6 +82,181 @@ export interface RoleCard {
   readonly content: string;
 }
 
+// ---------------------------------------------------------------------------
+// ECCM (Environment-Causal Character Model) — migrated from xs/castor
+// ---------------------------------------------------------------------------
+
+export interface ECCMRoot {
+  readonly family: string;
+  readonly formativeEvents: ReadonlyArray<string>;
+  readonly socialImprint: string;
+}
+
+export interface ECCMStem {
+  readonly personality: string;
+  readonly values: string;
+  readonly abilities: string;
+}
+
+export interface ECCMBranch {
+  readonly decisionMatrix: ReadonlyArray<string>;
+  readonly currentPressure: string;
+  readonly physiologicalReactions: ReadonlyArray<string>;
+}
+
+export interface ECCMFruit {
+  readonly narrativeFunction: string;
+  readonly readerEmotionArc: string;
+  readonly absoluteTaboos: ReadonlyArray<string>;
+  readonly signatureActions: ReadonlyArray<string>;
+}
+
+export interface ECCMProfile {
+  readonly root: ECCMRoot;
+  readonly stem: ECCMStem;
+  readonly branch: ECCMBranch;
+  readonly fruit: ECCMFruit;
+}
+
+/**
+ * Parse ECCM sections from a role card markdown body.
+ * Looks for heading patterns like "## 根系" / "## 茎干" / "## Root" etc.
+ * Returns null when no ECCM structure is detected.
+ */
+export function parseECCMFromRole(content: string): ECCMProfile | null {
+  const root = extractSection(content, ["根系", "Root", "环境决定层"]);
+  if (!root) return null;
+
+  const stem = extractSection(content, ["茎干", "Stem", "当前状态层"]);
+  const branch = extractSection(content, ["枝叶", "Branch", "动态变化层"]);
+  const fruit = extractSection(content, ["花果", "Fruit", "叙事功能层"]);
+
+  return {
+    root: {
+      family: extractSubSection(root, ["原生家庭", "Family"]),
+      formativeEvents: extractListItems(root, ["早期形成事件", "形成事件", "Formative Events"]),
+      socialImprint: extractSubSection(root, ["社会环境烙印", "Social Imprint"]),
+    },
+    stem: {
+      personality: extractSubSection(stem ?? "", ["性格", "Personality"]),
+      values: extractSubSection(stem ?? "", ["三观", "价值观", "Values"]),
+      abilities: extractSubSection(stem ?? "", ["能力", "局限", "Abilities"]),
+    },
+    branch: {
+      decisionMatrix: extractTableRows(branch ?? ""),
+      currentPressure: extractSubSection(branch ?? "", ["当前压力", "Current Pressure"]),
+      physiologicalReactions: extractListItems(branch ?? "", ["身体反应", "Physiological"]),
+    },
+    fruit: {
+      narrativeFunction: extractSubSection(fruit ?? "", ["叙事功能", "Narrative Function"]),
+      readerEmotionArc: extractSubSection(fruit ?? "", ["读者情感", "Reader Emotion"]),
+      absoluteTaboos: extractListItems(fruit ?? "", ["绝对不能", "禁忌", "Taboos"]),
+      signatureActions: extractListItems(fruit ?? "", ["标志性动作", "Signature"]),
+    },
+  };
+}
+
+/**
+ * Build a causal-reasoning prompt block from an ECCM profile.
+ * Injected into the writer's context so every character action is rooted.
+ */
+export function buildECCMContext(name: string, eccm: ECCMProfile): string {
+  const parts: string[] = [`## 角色因果推理：${name}`];
+
+  if (eccm.root.formativeEvents.length > 0) {
+    parts.push("### 形成事件（根系）");
+    parts.push(...eccm.root.formativeEvents.map((e) => `- ${e}`));
+  }
+
+  if (eccm.branch.decisionMatrix.length > 0) {
+    parts.push("### 决策矩阵（枝叶）");
+    parts.push(...eccm.branch.decisionMatrix.map((d) => `- ${d}`));
+  }
+
+  if (eccm.branch.physiologicalReactions.length > 0) {
+    parts.push("### 身体反应模式");
+    parts.push(...eccm.branch.physiologicalReactions.map((r) => `- ${r}`));
+  }
+
+  if (eccm.fruit.absoluteTaboos.length > 0) {
+    parts.push("### 绝对禁忌");
+    parts.push(...eccm.fruit.absoluteTaboos.map((t) => `- ${t}`));
+  }
+
+  if (eccm.fruit.signatureActions.length > 0) {
+    parts.push("### 标志性动作");
+    parts.push(...eccm.fruit.signatureActions.map((a) => `- ${a}`));
+  }
+
+  parts.push("");
+  parts.push("**写作前必须回答**：");
+  parts.push(`1. 本章情境对${name}来说是安全区还是威胁区？`);
+  parts.push(`2. 他的反应应该激活哪个早期形成事件？`);
+  parts.push(`3. 这个反应是否符合他的决策矩阵中的默认模式？`);
+  parts.push(`4. 他的身体反应是什么？来源是什么？`);
+  parts.push(`5. 如果读者看到他的行为，能否倒推出他的过去？`);
+  parts.push("**禁止**：使用性格标签（\"他很固执\"），必须用具体动作展示。");
+
+  return parts.join("\n");
+}
+
+function extractSection(body: string, headings: ReadonlyArray<string>): string | null {
+  for (const h of headings) {
+    const pattern = new RegExp(`^##\\s*${escapeRegex(h)}[^\\n]*$`, "im");
+    const match = body.match(pattern);
+    if (match && match.index !== undefined) {
+      const after = body.slice(match.index + match[0].length);
+      const next = after.search(/^##\s/m);
+      const text = next >= 0 ? after.slice(0, next) : after;
+      return text.trim();
+    }
+  }
+  return null;
+}
+
+function extractSubSection(section: string, headings: ReadonlyArray<string>): string {
+  for (const h of headings) {
+    const pattern = new RegExp(`^###\\s*${escapeRegex(h)}[^\\n]*$`, "im");
+    const match = section.match(pattern);
+    if (match && match.index !== undefined) {
+      const after = section.slice(match.index + match[0].length);
+      const next = after.search(/^#{1,3}\s/m);
+      const text = next >= 0 ? after.slice(0, next) : after;
+      return text.trim();
+    }
+  }
+  return "";
+}
+
+function extractListItems(section: string, headings: ReadonlyArray<string>): string[] {
+  const text = extractSubSection(section, headings);
+  if (!text) return [];
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("-") || line.startsWith("*"))
+    .map((line) => line.replace(/^[-*]\s+/, "").trim());
+}
+
+function extractTableRows(section: string): string[] {
+  if (!section) return [];
+  const lines = section.split("\n").map((line) => line.trim()).filter(Boolean);
+  const rows: string[] = [];
+  for (const line of lines) {
+    if (!line.startsWith("|")) continue;
+    const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+    if (cells.some((c) => /^-+/.test(c))) continue; // separator
+    if (cells[0]?.toLowerCase().includes("情境")) continue; // header
+    const row = cells.filter(Boolean).join(" · ");
+    if (row) rows.push(row);
+  }
+  return rows;
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Read the roles/ directory. Returns [] when no roles are present (e.g. old
  * books still on character_matrix.md).
