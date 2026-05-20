@@ -1,14 +1,7 @@
-import type { LLMClient, OnStreamProgress } from "../llm/provider.js";
+import type { LLMClient } from "../llm/provider.js";
 import { chatCompletion, createLLMClient } from "../llm/provider.js";
-import type { Logger } from "../utils/logger.js";
 import type { BookConfig, FanficMode } from "../models/book.js";
 import type { ChapterMeta } from "../models/chapter.js";
-import type {
-  NotifyChannel,
-  LLMConfig,
-  AgentLLMOverride,
-  InputGovernanceMode,
-} from "../models/project.js";
 import type { GenreProfile } from "../models/genre-profile.js";
 import type { ArchitectOutput } from "../agents/architect.js";
 import { ArchitectAgent } from "../agents/architect.js";
@@ -20,18 +13,12 @@ import { LengthNormalizerAgent } from "../agents/length-normalizer.js";
 import { ChapterAnalyzerAgent } from "../agents/chapter-analyzer.js";
 import { ContinuityAuditor } from "../agents/continuity.js";
 import { ReviserAgent, DEFAULT_REVISE_MODE, type ReviseMode } from "../agents/reviser.js";
-import {
-  StateValidatorAgent,
-  type ValidationResult,
-  type ValidationWarning,
-} from "../agents/state-validator.js";
+import { StateValidatorAgent } from "../agents/state-validator.js";
 import { RadarAgent } from "../agents/radar.js";
-import type { RadarSource } from "../agents/radar-source.js";
 import { readGenreProfile } from "../agents/rules-reader.js";
 import { analyzeAITells } from "../agents/ai-tells.js";
 import { analyzeSensitiveWords } from "../agents/sensitive-words.js";
 import { StateManager } from "../state/manager.js";
-import { MemoryDB, type Fact } from "../state/memory-db.js";
 import { dispatchNotification, dispatchWebhookEvent } from "../notify/dispatcher.js";
 import type { WebhookEvent } from "../notify/webhook.js";
 import type { AgentContext, BaseAgent } from "../agents/base.js";
@@ -41,35 +28,20 @@ import { ExtensionRegistry, getBuiltInRegistry } from "../extension/registry.js"
 import { FoundationService } from "../services/foundation.js";
 import { AuditService } from "../services/audit.js";
 import { DraftService } from "../services/draft.js";
-import {
-  createWorkflowContext,
-  WriteNextChapterWorkflow,
-  type WriteNextChapterInput,
-} from "../workflow/index.js";
+
 import type { LengthSpec, LengthTelemetry } from "../models/length-governance.js";
-import type { ChapterMemo, ContextPackage, RuleStack } from "../models/input-governance.js";
+import type { ContextPackage, RuleStack } from "../models/input-governance.js";
 import {
   buildLengthSpec,
   countChapterLength,
   formatLengthCount,
-  isOutsideHardRange,
   resolveLengthCountingMode,
   type LengthLanguage,
 } from "../utils/length-metrics.js";
 import { analyzeLongSpanFatigue } from "../utils/long-span-fatigue.js";
 import { buildWritingMethodologySection } from "../utils/writing-methodology.js";
-import {
-  isNewLayoutBook,
-  readCharacterContext,
-  readStoryFrame,
-  readVolumeMap,
-} from "../utils/outline-paths.js";
-import {
-  loadNarrativeMemorySeed,
-  loadSnapshotCurrentStateFacts,
-} from "../state/runtime-state-store.js";
-import { rewriteStructuredStateFromMarkdown } from "../state/state-bootstrap.js";
-import { readFile, readdir, writeFile, mkdir, rename, rm, stat } from "node:fs/promises";
+import { readStoryFrame } from "../utils/outline-paths.js";
+import { readFile, readdir, writeFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
   parseStateDegradedReviewNote,
@@ -77,7 +49,6 @@ import {
   retrySettlementAfterValidationFailure,
 } from "./chapter-state-recovery.js";
 import { persistChapterArtifacts } from "./chapter-persistence.js";
-import { runChapterReviewCycle } from "./chapter-review-cycle.js";
 import { validateChapterTruthPersistence } from "./chapter-truth-validation.js";
 import {
   loadPersistedPlan,
@@ -106,20 +77,12 @@ import {
 
 export * from "./runner-helpers.js";
 
-interface MergedAuditEvaluation {
-  readonly auditResult: AuditResult;
-  readonly aiTellCount: number;
-  readonly blockingCount: number;
-  readonly criticalCount: number;
-  readonly revisionBlockingIssues: ReadonlyArray<AuditIssue>;
-}
 
 export class PipelineRunner {
   private readonly state: StateManager;
   private readonly config: PipelineConfig;
   private readonly agentClients = new Map<string, LLMClient>();
   private readonly registry: ExtensionRegistry;
-  private memoryIndexFallbackWarned = false;
 
   /** Service layer — extracted business logic decoupled from orchestration. */
   readonly foundation: FoundationService;
@@ -233,9 +196,6 @@ export class PipelineRunner {
     }
   }
 
-  private languageFromLengthSpec(lengthSpec: Pick<LengthSpec, "countingMode">): LengthLanguage {
-    return lengthSpec.countingMode === "en_words" ? "en" : "zh";
-  }
 
   private logStage(language: LengthLanguage, message: { zh: string; en: string }): void {
     this.config.logger?.info(
@@ -243,9 +203,6 @@ export class PipelineRunner {
     );
   }
 
-  private logInfo(language: LengthLanguage, message: { zh: string; en: string }): void {
-    this.config.logger?.info(this.localize(language, message));
-  }
 
   private logWarn(language: LengthLanguage, message: { zh: string; en: string }): void {
     this.config.logger?.warn(this.localize(language, message));
@@ -362,16 +319,6 @@ export class PipelineRunner {
       : ["## 总评", review.overallFeedback, "", "## 分项问题", dimensionLines || "- 无"].join("\n");
   }
 
-  private agentCtx(bookId?: string): AgentContext {
-    return {
-      client: this.config.client,
-      model: this.config.model,
-      projectRoot: this.config.projectRoot,
-      bookId,
-      logger: this.config.logger,
-      onStreamProgress: this.config.onStreamProgress,
-    };
-  }
 
   private resolveOverride(agentName: string): { model: string; client: LLMClient } {
     const override = this.config.modelOverrides?.[agentName];
@@ -438,15 +385,6 @@ export class PipelineRunner {
     return this.agentCtxFor(agent, bookId);
   }
 
-  private async pathExists(path: string): Promise<boolean> {
-    try {
-      await stat(path);
-      return true;
-    } catch {
-      // failure expected, safe to ignore
-      return false;
-    }
-  }
 
   private async loadGenreProfile(genre: string): Promise<{ profile: GenreProfile }> {
     const parsed = await readGenreProfile(this.config.projectRoot, genre);
@@ -482,47 +420,7 @@ export class PipelineRunner {
     return this.foundation.reviseFoundation(bookId, feedback);
   }
 
-  private async copyDirShallow(src: string, dest: string): Promise<void> {
-    try {
-      await mkdir(dest, { recursive: true });
-      const entries = await readdir(src);
-      await Promise.all(
-        entries.map(async (entry) => {
-          try {
-            const content = await readFile(join(src, entry), "utf-8");
-            await writeFile(join(dest, entry), content, "utf-8");
-          } catch {
-            // Skip unreadable files.
-          }
-        }),
-      );
-    } catch {
-      // Source directory does not exist.
-    }
-  }
 
-  private async copyDirRecursive(src: string, dest: string): Promise<void> {
-    try {
-      await mkdir(dest, { recursive: true });
-      const entries = await readdir(src, { withFileTypes: true });
-      for (const entry of entries) {
-        const srcPath = join(src, entry.name);
-        const destPath = join(dest, entry.name);
-        if (entry.isDirectory()) {
-          await this.copyDirRecursive(srcPath, destPath);
-        } else if (entry.isFile()) {
-          try {
-            const content = await readFile(srcPath, "utf-8");
-            await writeFile(destPath, content, "utf-8");
-          } catch {
-            // Skip unreadable files.
-          }
-        }
-      }
-    } catch {
-      // Source directory does not exist.
-    }
-  }
 
   /** Import external source material and generate fanfic_canon.md */
   async importFanficCanon(
@@ -653,20 +551,17 @@ export class PipelineRunner {
     }
 
     const content = await this.readChapterContent(bookDir, targetChapter);
-    const auditor = await this.resolveAgent<ContinuityAuditor>("auditor", bookId);
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const language = book.language ?? gp.language;
     this.logStage(language, {
       zh: `审计第${targetChapter}章`,
       en: `auditing chapter ${targetChapter}`,
     });
-    const evaluation = await this.evaluateMergedAudit({
-      auditor,
+    const evaluation = await this.audit.evaluateMergedAudit({
       book,
       bookDir,
       chapterContent: content,
       chapterNumber: targetChapter,
-      language,
     });
     const result = evaluation.auditResult;
 
@@ -741,7 +636,6 @@ export class PipelineRunner {
 
       // Re-audit to get structured issues (index only stores strings)
       const content = await this.readChapterContent(bookDir, targetChapter);
-      const auditor = await this.resolveAgent<ContinuityAuditor>("auditor", bookId);
       const { profile: gp } = await this.loadGenreProfile(book.genre);
       const language = book.language ?? gp.language;
       const countingMode = resolveLengthCountingMode(language);
@@ -755,13 +649,11 @@ export class PipelineRunner {
               this.config.externalContext,
               { reuseExistingIntentWhenContextMissing: true },
             );
-      const preRevision = await this.evaluateMergedAudit({
-        auditor,
+      const preRevision = await this.audit.evaluateMergedAudit({
         book,
         bookDir,
         chapterContent: content,
         chapterNumber: targetChapter,
-        language,
         auditOptions: reviseControlInput
           ? {
               chapterIntent: reviseControlInput.plan.intentMarkdown,
@@ -821,13 +713,11 @@ export class PipelineRunner {
         chapterContent: reviseOutput.revisedContent,
         lengthSpec,
       });
-      const postRevision = await this.evaluateMergedAudit({
-        auditor,
+      const postRevision = await this.audit.evaluateMergedAudit({
         book,
         bookDir,
         chapterContent: normalizedRevision.content,
         chapterNumber: targetChapter,
-        language,
         auditOptions: reviseControlInput
           ? {
               temperature: 0,
@@ -2589,44 +2479,7 @@ ${matrix}`,
 
 
 
-  private async withMemoryIndexRetry<T>(operation: () => Promise<T> | T): Promise<T> {
-    const retryDelaysMs = [0, 25, 75];
-    let lastError: unknown;
 
-    for (let attempt = 0; attempt < retryDelaysMs.length; attempt += 1) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error;
-        if (!this.isMemoryIndexBusyError(error) || attempt === retryDelaysMs.length - 1) {
-          throw error;
-        }
-        await new Promise((resolve) => setTimeout(resolve, retryDelaysMs[attempt + 1]!));
-      }
-    }
-
-    throw lastError;
-  }
-
-
-  private isMemoryIndexBusyError(error: unknown): boolean {
-    if (!error) return false;
-
-    const code =
-      typeof error === "object" && error !== null && "code" in error
-        ? String((error as { code?: unknown }).code ?? "")
-        : "";
-    const message = error instanceof Error ? error.message : String(error);
-
-    return (
-      code === "SQLITE_BUSY" ||
-      code === "SQLITE_LOCKED" ||
-      /\bSQLITE_BUSY\b/i.test(message) ||
-      /\bSQLITE_LOCKED\b/i.test(message) ||
-      /database is locked/i.test(message) ||
-      /database is busy/i.test(message)
-    );
-  }
 
 
   private buildLengthWarnings(
@@ -2748,7 +2601,13 @@ ${matrix}`,
       criticalCount: number;
       revisionBlockingIssues: ReadonlyArray<AuditIssue>;
     },
-  ): MergedAuditEvaluation {
+  ): {
+    auditResult: AuditResult;
+    aiTellCount: number;
+    blockingCount: number;
+    criticalCount: number;
+    revisionBlockingIssues: ReadonlyArray<AuditIssue>;
+  } {
     const auditResult = this.restoreLostAuditIssues(previous.auditResult, next.auditResult);
     if (auditResult === next.auditResult) {
       return next;
@@ -2763,76 +2622,6 @@ ${matrix}`,
     };
   }
 
-  private async evaluateMergedAudit(params: {
-    auditor: ContinuityAuditor;
-    book: BookConfig;
-    bookDir: string;
-    chapterContent: string;
-    chapterNumber: number;
-    language: LengthLanguage;
-    auditOptions?: {
-      temperature?: number;
-      chapterIntent?: string;
-      chapterMemo?: ChapterMemo;
-      contextPackage?: ContextPackage;
-      ruleStack?: RuleStack;
-      truthFileOverrides?: {
-        currentState?: string;
-        ledger?: string;
-        hooks?: string;
-      };
-    };
-  }): Promise<MergedAuditEvaluation> {
-    const llmAudit = await params.auditor.auditChapter(
-      params.bookDir,
-      params.chapterContent,
-      params.chapterNumber,
-      params.book.genre,
-      params.auditOptions,
-    );
-    const aiTells = analyzeAITells(params.chapterContent, params.language);
-    const sensitiveResult = analyzeSensitiveWords(
-      params.chapterContent,
-      undefined,
-      params.language,
-    );
-    const longSpanFatigue = await analyzeLongSpanFatigue({
-      bookDir: params.bookDir,
-      chapterNumber: params.chapterNumber,
-      chapterContent: params.chapterContent,
-      language: params.language,
-    });
-    const hasBlockedWords = sensitiveResult.found.some((f) => f.severity === "block");
-    const issues: ReadonlyArray<AuditIssue> = [
-      ...llmAudit.issues,
-      ...aiTells.issues,
-      ...sensitiveResult.issues,
-      ...longSpanFatigue.issues,
-    ];
-    // revisionBlockingIssues excludes long-span-fatigue issues by
-    // construction (not by category name) so that an LLM-reported issue
-    // sharing a category label with a long-span issue is still counted.
-    const revisionBlockingIssues: ReadonlyArray<AuditIssue> = [
-      ...llmAudit.issues,
-      ...aiTells.issues,
-      ...sensitiveResult.issues,
-    ];
-
-    return {
-      auditResult: {
-        passed: hasBlockedWords ? false : llmAudit.passed,
-        issues,
-        summary: llmAudit.summary,
-        tokenUsage: llmAudit.tokenUsage,
-      },
-      aiTellCount: aiTells.issues.length,
-      blockingCount: revisionBlockingIssues.filter(
-        (issue) => issue.severity === "warning" || issue.severity === "critical",
-      ).length,
-      criticalCount: revisionBlockingIssues.filter((issue) => issue.severity === "critical").length,
-      revisionBlockingIssues,
-    };
-  }
 
   private async markBookActiveIfNeeded(bookId: string): Promise<void> {
     const book = await this.state.loadBookConfig(bookId);
