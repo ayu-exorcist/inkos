@@ -16,9 +16,7 @@ export function parseSettlementOutput(
   genreProfile: GenreProfile,
 ): SettlementOutput {
   const extract = (tag: string): string => {
-    const regex = new RegExp(
-      `=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`,
-    );
+    const regex = new RegExp(`=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`);
     const match = content.match(regex);
     return match?.[1]?.trim() ?? "";
   };
@@ -26,9 +24,7 @@ export function parseSettlementOutput(
   return {
     postSettlement: extract("POST_SETTLEMENT"),
     updatedState: extract("UPDATED_STATE") || "(状态卡未更新)",
-    updatedLedger: genreProfile.numericalSystem
-      ? (extract("UPDATED_LEDGER") || "(账本未更新)")
-      : "",
+    updatedLedger: genreProfile.numericalSystem ? extract("UPDATED_LEDGER") || "(账本未更新)" : "",
     updatedHooks: extract("UPDATED_HOOKS") || "(伏笔池未更新)",
     chapterSummary: extract("CHAPTER_SUMMARY"),
     updatedSubplots: extract("UPDATED_SUBPLOTS"),

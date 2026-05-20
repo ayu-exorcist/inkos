@@ -79,8 +79,14 @@ export function ServiceConfigSourceCard({ onChange }: { onChange?: () => void })
 
   const { configSource, envConfig } = data;
   const storedConfigSource = data.storedConfigSource ?? configSource;
-  const activeEnvSummary = envConfig.effectiveSource === "project" ? envConfig.project : envConfig.global;
-  const envLabel = envConfig.effectiveSource === "project" ? "项目 .env" : envConfig.effectiveSource === "global" ? "全局 ~/.inkos/.env" : null;
+  const activeEnvSummary =
+    envConfig.effectiveSource === "project" ? envConfig.project : envConfig.global;
+  const envLabel =
+    envConfig.effectiveSource === "project"
+      ? "项目 .env"
+      : envConfig.effectiveSource === "global"
+        ? "全局 ~/.inkos/.env"
+        : null;
   const envDetected = envConfig.project.detected || envConfig.global.detected;
 
   return (
@@ -107,7 +113,8 @@ export function ServiceConfigSourceCard({ onChange }: { onChange?: () => void })
 
       {storedConfigSource === "env" ? (
         <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.04] p-3 text-xs text-muted-foreground/80">
-          检测到旧配置标记为 `.env` 优先。Studio 运行时不会使用它；CLI、daemon 和部署环境仍可按 env 覆盖层使用。
+          检测到旧配置标记为 `.env` 优先。Studio 运行时不会使用它；CLI、daemon 和部署环境仍可按 env
+          覆盖层使用。
         </div>
       ) : null}
 
@@ -117,12 +124,32 @@ export function ServiceConfigSourceCard({ onChange }: { onChange?: () => void })
             检测到 LLM 环境变量覆盖：
             <span className="font-medium"> {envLabel ?? "已检测到但未定位来源"}</span>
           </div>
-          {activeEnvSummary.baseUrl ? <div>Base URL: <span className="font-mono text-foreground">{activeEnvSummary.baseUrl}</span></div> : null}
-          {activeEnvSummary.model ? <div>Model: <span className="font-mono text-foreground">{activeEnvSummary.model}</span></div> : null}
-          {activeEnvSummary.provider ? <div>Provider: <span className="font-mono text-foreground">{activeEnvSummary.provider}</span></div> : null}
-          <div>API Key: <span className="text-foreground">{activeEnvSummary.hasApiKey ? "已设置" : "未设置"}</span></div>
+          {activeEnvSummary.baseUrl ? (
+            <div>
+              Base URL:{" "}
+              <span className="font-mono text-foreground">{activeEnvSummary.baseUrl}</span>
+            </div>
+          ) : null}
+          {activeEnvSummary.model ? (
+            <div>
+              Model: <span className="font-mono text-foreground">{activeEnvSummary.model}</span>
+            </div>
+          ) : null}
+          {activeEnvSummary.provider ? (
+            <div>
+              Provider:{" "}
+              <span className="font-mono text-foreground">{activeEnvSummary.provider}</span>
+            </div>
+          ) : null}
+          <div>
+            API Key:{" "}
+            <span className="text-foreground">
+              {activeEnvSummary.hasApiKey ? "已设置" : "未设置"}
+            </span>
+          </div>
           <div className="text-muted-foreground/70 pt-1">
-            当前虽然检测到 .env，但 Studio 和 Agent 请求会忽略这套 LLM 覆盖；CLI、daemon 和部署环境可以使用它。
+            当前虽然检测到 .env，但 Studio 和 Agent 请求会忽略这套 LLM 覆盖；CLI、daemon
+            和部署环境可以使用它。
           </div>
         </div>
       ) : (
@@ -131,9 +158,7 @@ export function ServiceConfigSourceCard({ onChange }: { onChange?: () => void })
         </div>
       )}
 
-      {error ? (
-        <div className="text-xs text-rose-500">{error}</div>
-      ) : null}
+      {error ? <div className="text-xs text-rose-500">{error}</div> : null}
     </div>
   );
 }

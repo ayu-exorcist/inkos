@@ -54,11 +54,16 @@ describe("interaction runtime", () => {
       }),
     });
 
-    expect(developBookDraft).toHaveBeenCalledWith("我想写个港风商战悬疑，主角从灰产洗白。", undefined);
-    expect(result.session.creationDraft).toEqual(expect.objectContaining({
-      title: "夜港账本",
-      genre: "urban",
-    }));
+    expect(developBookDraft).toHaveBeenCalledWith(
+      "我想写个港风商战悬疑，主角从灰产洗白。",
+      undefined,
+    );
+    expect(result.session.creationDraft).toEqual(
+      expect.objectContaining({
+        title: "夜港账本",
+        genre: "urban",
+      }),
+    );
     expect(result.responseText).toContain("港风商战悬疑");
   });
 
@@ -258,14 +263,16 @@ describe("interaction runtime", () => {
       status: "ready-for-review" as const,
       auditResult: { passed: true, issues: [], summary: "ok" },
       __interaction: {
-        events: [{
-          kind: "stage.changed",
-          timestamp: 1710000000000,
-          status: "writing" as const,
-          bookId: "harbor",
-          chapterNumber: 7,
-          detail: "writing chapter draft",
-        }],
+        events: [
+          {
+            kind: "stage.changed",
+            timestamp: 1710000000000,
+            status: "writing" as const,
+            bookId: "harbor",
+            chapterNumber: 7,
+            detail: "writing chapter draft",
+          },
+        ],
       },
     }));
 

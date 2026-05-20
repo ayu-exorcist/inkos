@@ -50,10 +50,7 @@ export function formatImportDiscoveryLine(
   return formatImportChaptersDiscovery(language, chapterCount, bookId);
 }
 
-export function formatImportResumeLine(
-  language: CliLanguage,
-  resumeFrom: number,
-): string {
+export function formatImportResumeLine(language: CliLanguage, resumeFrom: number): string {
   return formatImportChaptersResume(language, resumeFrom);
 }
 

@@ -154,75 +154,87 @@ describe("evaluateHookAdmission", () => {
 
 describe("classifyHookDisposition", () => {
   it("classifies mention, advance, resolve, and defer with strict priority", () => {
-    expect(classifyHookDisposition({
-      hookId: "H001",
-      delta: createDelta({
-        hookOps: {
-          upsert: [],
-          mention: ["H001"],
-          resolve: [],
-          defer: [],
-        },
+    expect(
+      classifyHookDisposition({
+        hookId: "H001",
+        delta: createDelta({
+          hookOps: {
+            upsert: [],
+            mention: ["H001"],
+            resolve: [],
+            defer: [],
+          },
+        }),
       }),
-    })).toBe("mention");
+    ).toBe("mention");
 
-    expect(classifyHookDisposition({
-      hookId: "H002",
-      delta: createDelta({
-        chapter: 12,
-        hookOps: {
-          upsert: [createHook({ hookId: "H002", lastAdvancedChapter: 12 })],
-          mention: [],
-          resolve: [],
-          defer: [],
-        },
+    expect(
+      classifyHookDisposition({
+        hookId: "H002",
+        delta: createDelta({
+          chapter: 12,
+          hookOps: {
+            upsert: [createHook({ hookId: "H002", lastAdvancedChapter: 12 })],
+            mention: [],
+            resolve: [],
+            defer: [],
+          },
+        }),
       }),
-    })).toBe("advance");
+    ).toBe("advance");
 
-    expect(classifyHookDisposition({
-      hookId: "H003",
-      delta: createDelta({
-        hookOps: {
-          upsert: [createHook({ hookId: "H003", lastAdvancedChapter: 12 })],
-          mention: ["H003"],
-          resolve: ["H003"],
-          defer: [],
-        },
+    expect(
+      classifyHookDisposition({
+        hookId: "H003",
+        delta: createDelta({
+          hookOps: {
+            upsert: [createHook({ hookId: "H003", lastAdvancedChapter: 12 })],
+            mention: ["H003"],
+            resolve: ["H003"],
+            defer: [],
+          },
+        }),
       }),
-    })).toBe("resolve");
+    ).toBe("resolve");
 
-    expect(classifyHookDisposition({
-      hookId: "H004",
-      delta: createDelta({
-        hookOps: {
-          upsert: [],
-          mention: ["H004"],
-          resolve: [],
-          defer: ["H004"],
-        },
+    expect(
+      classifyHookDisposition({
+        hookId: "H004",
+        delta: createDelta({
+          hookOps: {
+            upsert: [],
+            mention: ["H004"],
+            resolve: [],
+            defer: ["H004"],
+          },
+        }),
       }),
-    })).toBe("defer");
+    ).toBe("defer");
   });
 
   it("returns none when the hook is untouched in the chapter delta", () => {
-    expect(classifyHookDisposition({
-      hookId: "H099",
-      delta: createDelta(),
-    })).toBe("none");
+    expect(
+      classifyHookDisposition({
+        hookId: "H099",
+        delta: createDelta(),
+      }),
+    ).toBe("none");
   });
 
   it("reports defer when resolve and defer both target the same hook", () => {
-    expect(classifyHookDisposition({
-      hookId: "H021",
-      delta: createDelta({
-        chapter: 12,
-        hookOps: {
-          upsert: [createHook({ hookId: "H021", lastAdvancedChapter: 12 })],
-          mention: ["H021"],
-          resolve: ["H021"],
-          defer: ["H021"],
-        },
+    expect(
+      classifyHookDisposition({
+        hookId: "H021",
+        delta: createDelta({
+          chapter: 12,
+          hookOps: {
+            upsert: [createHook({ hookId: "H021", lastAdvancedChapter: 12 })],
+            mention: ["H021"],
+            resolve: ["H021"],
+            defer: ["H021"],
+          },
+        }),
       }),
-    })).toBe("defer");
+    ).toBe("defer");
   });
 });

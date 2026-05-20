@@ -16,7 +16,8 @@ function makeAgent(): PolisherAgent {
       defaults: {
         temperature: 0.7,
         maxTokens: 4096,
-        thinkingBudget: 0, maxTokensCap: null,
+        thinkingBudget: 0,
+        maxTokensCap: null,
         extra: {},
       },
     },
@@ -32,7 +33,7 @@ describe("PolisherAgent", () => {
 
   it("encodes file-layer scope boundary and six prose 雷点 in the zh system prompt", async () => {
     const agent = makeAgent();
-    const chatSpy = vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "润色后的正文。",
       usage: ZERO_USAGE,
     });
@@ -43,9 +44,7 @@ describe("PolisherAgent", () => {
       language: "zh",
     });
 
-    const messages = chatSpy.mock.calls[0]?.[0] as
-      | ReadonlyArray<{ content: string }>
-      | undefined;
+    const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
     const systemPrompt = messages?.[0]?.content ?? "";
 
     // Hard scope boundary.
@@ -64,7 +63,7 @@ describe("PolisherAgent", () => {
 
   it("routes plot/structure findings to [polisher-note] lines instead of rewriting", async () => {
     const agent = makeAgent();
-    const chatSpy = vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "润色后的正文。",
       usage: ZERO_USAGE,
     });
@@ -75,9 +74,7 @@ describe("PolisherAgent", () => {
       language: "zh",
     });
 
-    const messages = chatSpy.mock.calls[0]?.[0] as
-      | ReadonlyArray<{ content: string }>
-      | undefined;
+    const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
     const systemPrompt = messages?.[0]?.content ?? "";
 
     expect(systemPrompt).toContain("[polisher-note]");
@@ -85,7 +82,7 @@ describe("PolisherAgent", () => {
 
   it("injects the chapter memo so polish stays anchored to the memo goal", async () => {
     const agent = makeAgent();
-    const chatSpy = vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "润色后的正文。",
       usage: ZERO_USAGE,
     });
@@ -103,9 +100,7 @@ describe("PolisherAgent", () => {
       },
     });
 
-    const messages = chatSpy.mock.calls[0]?.[0] as
-      | ReadonlyArray<{ content: string }>
-      | undefined;
+    const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
     const userPrompt = messages?.[1]?.content ?? "";
 
     expect(userPrompt).toContain("## 章节备忘（润色不得偏离此目标）");
@@ -114,7 +109,7 @@ describe("PolisherAgent", () => {
 
   it("returns polished content and flags 'changed' when output differs", async () => {
     const agent = makeAgent();
-    vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "润色后的正文。",
       usage: ZERO_USAGE,
     });
@@ -131,7 +126,7 @@ describe("PolisherAgent", () => {
 
   it("preserves the original chapter when the model returns empty content", async () => {
     const agent = makeAgent();
-    vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "",
       usage: ZERO_USAGE,
     });
@@ -148,7 +143,7 @@ describe("PolisherAgent", () => {
 
   it("strips a surrounding fenced-code-block wrapper if the model adds one", async () => {
     const agent = makeAgent();
-    vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "```markdown\n润色后的正文。\n```",
       usage: ZERO_USAGE,
     });
@@ -165,7 +160,7 @@ describe("PolisherAgent", () => {
 
   it("builds the English system prompt when language is en", async () => {
     const agent = makeAgent();
-    const chatSpy = vi.spyOn(PolisherAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(PolisherAgent.prototype as any, "chat").mockResolvedValue({
       content: "Polished chapter body.",
       usage: ZERO_USAGE,
     });
@@ -176,9 +171,7 @@ describe("PolisherAgent", () => {
       language: "en",
     });
 
-    const messages = chatSpy.mock.calls[0]?.[0] as
-      | ReadonlyArray<{ content: string }>
-      | undefined;
+    const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
     const systemPrompt = messages?.[0]?.content ?? "";
 
     expect(systemPrompt).toContain("Polisher Scope");

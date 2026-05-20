@@ -39,7 +39,10 @@ export function attachSessionStreamListeners({
       set((state) => ({
         sessions: updateSession(state.sessions, sessionId, (runtime) => {
           const [messages, stream] = getOrCreateStream(runtime.messages, streamTs);
-          const parts = [...(stream.parts ?? []), { type: "thinking" as const, content: "", streaming: true }];
+          const parts = [
+            ...(stream.parts ?? []),
+            { type: "thinking" as const, content: "", streaming: true },
+          ];
           const flat = deriveFlat(parts);
           return { messages: replaceLast(messages, { ...stream, ...flat, parts }) };
         }),
@@ -139,10 +142,12 @@ export function attachSessionStreamListeners({
             }
           }
 
-          const agent = data.tool === "sub_agent" ? (data.args?.agent as string | undefined) : undefined;
-          const stages: PipelineStage[] | undefined = Array.isArray(data.stages) && data.stages.length > 0
-            ? (data.stages as string[]).map((label) => ({ label, status: "pending" as const }))
-            : undefined;
+          const agent =
+            data.tool === "sub_agent" ? (data.args?.agent as string | undefined) : undefined;
+          const stages: PipelineStage[] | undefined =
+            Array.isArray(data.stages) && data.stages.length > 0
+              ? (data.stages as string[]).map((label) => ({ label, status: "pending" as const }))
+              : undefined;
 
           parts.push({
             type: "tool",

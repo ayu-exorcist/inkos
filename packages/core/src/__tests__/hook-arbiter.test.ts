@@ -48,7 +48,8 @@ describe("arbitrateRuntimeStateDeltaHooks", () => {
         newHookCandidates: [
           {
             type: "source-risk",
-            expectedPayoff: "Reveal how much the anonymous source already knew about the route and address.",
+            expectedPayoff:
+              "Reveal how much the anonymous source already knew about the route and address.",
             notes: "This chapter adds the address angle to the anonymous source question.",
           },
         ],
@@ -112,12 +113,14 @@ describe("arbitrateRuntimeStateDeltaHooks", () => {
     });
 
     expect(result.resolvedDelta.hookOps.upsert).toHaveLength(1);
-    expect(result.resolvedDelta.hookOps.upsert[0]).toEqual(expect.objectContaining({
-      startChapter: 15,
-      lastAdvancedChapter: 15,
-      type: "artifact",
-      status: "open",
-    }));
+    expect(result.resolvedDelta.hookOps.upsert[0]).toEqual(
+      expect.objectContaining({
+        startChapter: 15,
+        lastAdvancedChapter: 15,
+        type: "artifact",
+        status: "open",
+      }),
+    );
     expect(result.resolvedDelta.hookOps.upsert[0]?.hookId).not.toBe("mentor-debt");
     expect(result.resolvedDelta.newHookCandidates).toEqual([]);
   });

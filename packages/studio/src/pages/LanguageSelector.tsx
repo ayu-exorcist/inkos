@@ -39,9 +39,7 @@ export function LanguageSelector({ onSelect }: { onSelect: (lang: "zh" | "en") =
           <div className="text-base text-foreground/70 leading-relaxed mb-6">
             玄幻 · 仙侠 · 都市 · 恐怖 · 通用
           </div>
-          <div className="text-sm text-muted-foreground">
-            番茄小说 · 起点中文网 · 飞卢
-          </div>
+          <div className="text-sm text-muted-foreground">番茄小说 · 起点中文网 · 飞卢</div>
         </button>
 
         <button

@@ -54,17 +54,22 @@ export interface BuildDashboardViewModelParams {
 
 export function buildDashboardViewModel(params: BuildDashboardViewModelParams): DashboardViewModel {
   const status = params.session.currentExecution?.status ?? "idle";
-  const executionLabel = normalizeStageLabel(params.session.currentExecution?.stageLabel ?? status, params.copy);
+  const executionLabel = normalizeStageLabel(
+    params.session.currentExecution?.stageLabel ?? status,
+    params.copy,
+  );
   const modeLabel = formatModeLabel(params.session.automationMode, params.copy);
-  const bookLabel = params.activeBookTitle ?? params.session.activeBookId ?? params.copy.labels.none;
+  const bookLabel =
+    params.activeBookTitle ?? params.session.activeBookId ?? params.copy.labels.none;
   const draftTitle = params.session.creationDraft?.title;
   const draftQuestion = params.session.creationDraft?.nextQuestion;
   const sinceTimestamp = params.sinceTimestamp ?? 0;
   const terminalRows = params.terminalRows ?? process.stdout.rows ?? 24;
   const conversationLimit = Math.max(4, terminalRows - 10);
 
-  const filteredMessages = params.session.messages
-    .filter((message) => message.timestamp >= sinceTimestamp);
+  const filteredMessages = params.session.messages.filter(
+    (message) => message.timestamp >= sinceTimestamp,
+  );
   const scrollOffset = params.scrollOffset ?? 0;
   const endIndex = filteredMessages.length - scrollOffset;
   const startIndex = Math.max(0, endIndex - conversationLimit);
@@ -102,21 +107,23 @@ export function buildDashboardViewModel(params: BuildDashboardViewModelParams): 
       `${params.copy.labels.depth} ${params.depthLabel ?? params.copy.depthLabels.normal}`,
       `${params.copy.labels.session} ${params.session.sessionId.slice(-4)}`,
       params.copy.labels.messageCount(params.session.messages.length),
-    ].filter(Boolean).join(" · "),
+    ]
+      .filter(Boolean)
+      .join(" · "),
     statusPrimaryLine: `${params.copy.labels.stage} ${executionLabel} · ${params.copy.labels.model} ${params.modelLabel}`,
     statusSecondaryLine: params.lastError
       ? `${params.copy.labels.error} · ${compactInline(params.lastError)}`
       : params.isSubmitting && latestEventSummary
         ? `${params.copy.labels.recent} · ${latestEventSummary}`
-      : params.session.pendingDecision?.summary
+        : params.session.pendingDecision?.summary
           ? `${params.copy.labels.pending} · ${compactInline(params.session.pendingDecision.summary)}`
-        : draftQuestion
-          ? `${params.copy.labels.draft} · ${compactInline(draftQuestion)}`
-        : draftTitle
-          ? `${params.copy.labels.draft} · ${draftTitle}`
-        : latestEventSummary
-            ? `${params.copy.labels.recent} · ${latestEventSummary}`
-            : `${params.copy.labels.ready} · ${bookLabel}`,
+          : draftQuestion
+            ? `${params.copy.labels.draft} · ${compactInline(draftQuestion)}`
+            : draftTitle
+              ? `${params.copy.labels.draft} · ${draftTitle}`
+              : latestEventSummary
+                ? `${params.copy.labels.recent} · ${latestEventSummary}`
+                : `${params.copy.labels.ready} · ${bookLabel}`,
     messageRows,
     eventRows,
     pendingDecisionSummary: params.session.pendingDecision?.summary,
@@ -147,9 +154,8 @@ function roleLabel(role: InteractionMessage["role"], copy: TuiCopy): string {
 function summarizeEvent(event: InteractionEvent, copy: TuiCopy): string {
   const base = compactInline(event.detail?.trim() || event.kind);
   if (event.bookId && event.chapterNumber !== undefined) {
-    const chapterLabel = copy.locale === "zh-CN"
-      ? `第 ${event.chapterNumber} 章`
-      : `ch.${event.chapterNumber}`;
+    const chapterLabel =
+      copy.locale === "zh-CN" ? `第 ${event.chapterNumber} 章` : `ch.${event.chapterNumber}`;
     return `${base} (${event.bookId} ${chapterLabel})`;
   }
   if (event.bookId) {

@@ -47,9 +47,7 @@ export class StateValidatorAgent extends BaseAgent {
       return { warnings: [], passed: true };
     }
 
-    const langInstruction = language === "en"
-      ? "Respond in English."
-      : "用中文回答。";
+    const langInstruction = language === "en" ? "Respond in English." : "用中文回答。";
 
     const systemPrompt = `You are a continuity validator for a novel writing system. ${langInstruction}
 
@@ -133,7 +131,8 @@ ${chapterContent.slice(0, 6000)}`;
   }
 
   private buildAuthorityContextBlock(authorityContext?: StateValidationAuthorityContext): string {
-    if (!authorityContext) return "## Authority / Cross-Truth Context\n(no authority context provided)";
+    if (!authorityContext)
+      return "## Authority / Cross-Truth Context\n(no authority context provided)";
 
     const storyFrame = this.truncateHead(authorityContext.storyFrame ?? "", 3500);
     const bookRules = this.truncateHead(authorityContext.bookRules ?? "", 2000);
@@ -177,7 +176,10 @@ ${chapterContent.slice(0, 6000)}`;
       return jsonResult;
     }
 
-    const lines = trimmed.split("\n").map((line) => line.trim()).filter(Boolean);
+    const lines = trimmed
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
     if (lines.length === 0) {
       throw new Error("LLM returned empty response");
     }
@@ -243,6 +245,7 @@ ${chapterContent.slice(0, 6000)}`;
         passed: parsed.passed,
       };
     } catch {
+      // failure expected, safe to ignore
       return null;
     }
   }
@@ -271,13 +274,13 @@ function extractBalancedJsonObject(text: string): string | null {
         escaped = true;
         continue;
       }
-      if (char === "\"") {
+      if (char === '"') {
         inString = false;
       }
       continue;
     }
 
-    if (char === "\"") {
+    if (char === '"') {
       inString = true;
       continue;
     }

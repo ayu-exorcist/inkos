@@ -143,11 +143,13 @@ export class Scheduler {
   }
 
   private get gates(): QualityGates {
-    return this.config.qualityGates ?? {
-      maxAuditRetries: 2,
-      pauseAfterConsecutiveFailures: 3,
-      retryTemperatureStep: 0.1,
-    };
+    return (
+      this.config.qualityGates ?? {
+        maxAuditRetries: 2,
+        pauseAfterConsecutiveFailures: 3,
+        retryTemperatureStep: 0.1,
+      }
+    );
   }
 
   /** Check if daily cap is reached across all books. */
@@ -189,9 +191,7 @@ export class Scheduler {
     const booksToWrite = activeBooks.slice(0, this.config.maxConcurrentBooks);
 
     // Parallel book processing
-    await Promise.all(
-      booksToWrite.map((book) => this.processBook(book.id, book.config)),
-    );
+    await Promise.all(booksToWrite.map((book) => this.processBook(book.id, book.config)));
   }
 
   /** Process a single book: write chaptersPerCycle chapters with retry + cooldown. */
@@ -227,9 +227,8 @@ export class Scheduler {
     try {
       // Compute temperature override: base 0.7 + failures * step
       const failures = this.consecutiveFailures.get(bookId) ?? 0;
-      const tempOverride = failures > 0
-        ? Math.min(1.2, 0.7 + failures * this.gates.retryTemperatureStep)
-        : undefined;
+      const tempOverride =
+        failures > 0 ? Math.min(1.2, 0.7 + failures * this.gates.retryTemperatureStep) : undefined;
 
       const result = await this.pipeline.writeNextChapter(bookId, undefined, tempOverride);
 
@@ -267,15 +266,15 @@ export class Scheduler {
     try {
       const bookDir = this.state.bookDir(bookId);
       const chapterContent = await this.readChapterContent(bookDir, chapterNumber);
-      const detResult = await detectChapter(
-        this.config.detection,
-        chapterContent,
-        chapterNumber,
-      );
+      const detResult = await detectChapter(this.config.detection, chapterContent, chapterNumber);
       if (!detResult.passed && this.config.detection.autoRewrite) {
         await detectAndRewrite(
           this.config.detection,
-          { client: this.config.client, model: this.config.model, projectRoot: this.config.projectRoot },
+          {
+            client: this.config.client,
+            model: this.config.model,
+            projectRoot: this.config.projectRoot,
+          },
           bookDir,
           chapterContent,
           chapterNumber,

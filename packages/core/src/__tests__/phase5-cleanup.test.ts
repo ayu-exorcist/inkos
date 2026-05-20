@@ -78,7 +78,7 @@ const SAMPLE_RESPONSE = [
   "",
   "=== SECTION: book_rules ===",
   "---",
-  "version: \"1.0\"",
+  'version: "1.0"',
   "protagonist:",
   "  name: 主角甲",
   "  personalityLock: [沉默, 执拗]",
@@ -152,15 +152,15 @@ describe("Phase 5 cleanup (1) — volume_outline.md mirror removed", () => {
 
   it("does not write volume_outline.md when running a fresh architect foundation", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const output = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, output, false, "zh");
 
-    await expect(
-      readFile(join(bookDir, "story/volume_outline.md"), "utf-8"),
-    ).rejects.toThrow();
+    await expect(readFile(join(bookDir, "story/volume_outline.md"), "utf-8")).rejects.toThrow();
 
     const newOutline = await readFile(join(bookDir, "story/outline/volume_map.md"), "utf-8");
     expect(newOutline).toContain("卷一压卷二放");
@@ -168,11 +168,7 @@ describe("Phase 5 cleanup (1) — volume_outline.md mirror removed", () => {
 
   it("readVolumeMap resolves the new path without needing the legacy mirror", async () => {
     await mkdir(join(bookDir, "story/outline"), { recursive: true });
-    await writeFile(
-      join(bookDir, "story/outline/volume_map.md"),
-      "NEW map content",
-      "utf-8",
-    );
+    await writeFile(join(bookDir, "story/outline/volume_map.md"), "NEW map content", "utf-8");
 
     const content = await readVolumeMap(bookDir, "(missing)");
     expect(content).toBe("NEW map content");
@@ -180,11 +176,7 @@ describe("Phase 5 cleanup (1) — volume_outline.md mirror removed", () => {
 
   it("readVolumeMap still falls back to legacy volume_outline.md for pre-cleanup books", async () => {
     await mkdir(join(bookDir, "story"), { recursive: true });
-    await writeFile(
-      join(bookDir, "story/volume_outline.md"),
-      "LEGACY outline content",
-      "utf-8",
-    );
+    await writeFile(join(bookDir, "story/volume_outline.md"), "LEGACY outline content", "utf-8");
 
     const content = await readVolumeMap(bookDir, "(missing)");
     expect(content).toBe("LEGACY outline content");
@@ -255,19 +247,17 @@ describe("Phase 5 cleanup (2) — architect no longer seeds runtime log files", 
 
   it("does not write particle_ledger.md or subplot_board.md even when the genre wants a numerical system", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const output = await agent.generateFoundation(baseBook());
     // numericalSystem=true would previously seed particle_ledger.md
     await agent.writeFoundationFiles(bookDir, output, true, "zh");
 
-    await expect(
-      readFile(join(bookDir, "story/particle_ledger.md"), "utf-8"),
-    ).rejects.toThrow();
-    await expect(
-      readFile(join(bookDir, "story/subplot_board.md"), "utf-8"),
-    ).rejects.toThrow();
+    await expect(readFile(join(bookDir, "story/particle_ledger.md"), "utf-8")).rejects.toThrow();
+    await expect(readFile(join(bookDir, "story/subplot_board.md"), "utf-8")).rejects.toThrow();
   });
 });
 
@@ -285,8 +275,10 @@ describe("Phase 5 cleanup (3) — book_rules YAML moved to story_frame.md frontm
 
   it("writes the YAML frontmatter onto story_frame.md (not book_rules.md)", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const output = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, output, false, "zh");
@@ -311,8 +303,10 @@ describe("Phase 5 cleanup (3) — book_rules YAML moved to story_frame.md frontm
 
   it("readBookRules() prefers story_frame.md frontmatter and parses the rules", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const output = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, output, false, "zh");
@@ -336,7 +330,7 @@ describe("Phase 5 cleanup (3) — book_rules YAML moved to story_frame.md frontm
     // Legacy book_rules.md carries the real frontmatter
     await writeFile(
       join(storyDir, "book_rules.md"),
-      "---\nversion: \"1.0\"\nprotagonist:\n  name: LegacyHero\n  personalityLock: [stoic]\n  behavioralConstraints: []\nprohibitions:\n  - No lazy tropes\n---\n",
+      '---\nversion: "1.0"\nprotagonist:\n  name: LegacyHero\n  personalityLock: [stoic]\n  behavioralConstraints: []\nprohibitions:\n  - No lazy tropes\n---\n',
       "utf-8",
     );
 
@@ -357,7 +351,7 @@ describe("Phase 5 cleanup (3) — book_rules YAML moved to story_frame.md frontm
       join(storyDir, "outline/story_frame.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: 林辞",
         "  personalityLock: [沉默, 执拗]",

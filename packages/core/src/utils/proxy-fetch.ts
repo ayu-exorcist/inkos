@@ -1,9 +1,12 @@
 import { ProxyAgent } from "undici";
 
 type ProxyEnv = Record<string, string | undefined>;
-type FetchInitWithDispatcher = RequestInit & { dispatcher?: unknown };
+type FetchInitWithDispatcher = RequestInit & { dispatcher?: any };
 
-export function resolveProxyUrl(explicitProxyUrl?: string, env: ProxyEnv = process.env): string | undefined {
+export function resolveProxyUrl(
+  explicitProxyUrl?: string,
+  env: ProxyEnv = process.env,
+): string | undefined {
   const candidate = [
     explicitProxyUrl,
     env.INKOS_LLM_PROXY_URL,
@@ -11,7 +14,9 @@ export function resolveProxyUrl(explicitProxyUrl?: string, env: ProxyEnv = proce
     env.https_proxy,
     env.HTTP_PROXY,
     env.http_proxy,
-  ].find((value) => typeof value === "string" && value.trim().length > 0)?.trim();
+  ]
+    .find((value) => typeof value === "string" && value.trim().length > 0)
+    ?.trim();
 
   if (!candidate) return undefined;
   const parsed = new URL(candidate);
@@ -28,10 +33,9 @@ export function buildProxyFetchInit(
 ): FetchInitWithDispatcher {
   const proxyUrl = resolveProxyUrl(explicitProxyUrl, env);
   if (!proxyUrl) return init;
-  return {
-    ...init,
-    dispatcher: new ProxyAgent(proxyUrl),
-  };
+  const result: FetchInitWithDispatcher = { ...init };
+  result.dispatcher = new ProxyAgent(proxyUrl) as unknown;
+  return result;
 }
 
 export function fetchWithProxy(

@@ -12,6 +12,7 @@ async function hasGlobalConfig(): Promise<boolean> {
     const content = await readFile(GLOBAL_ENV_PATH, "utf-8");
     return content.includes("INKOS_LLM_API_KEY=") && !content.includes("your-api-key-here");
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }
@@ -21,12 +22,13 @@ async function exists(path: string): Promise<boolean> {
     await access(path);
     return true;
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }
 
 async function writeMaybe(path: string, content: string, overwrite: boolean): Promise<void> {
-  if (!overwrite && await exists(path)) {
+  if (!overwrite && (await exists(path))) {
     return;
   }
   await writeFile(path, content, "utf-8");
@@ -129,7 +131,9 @@ export async function initializeProjectDirectory(
   const configPath = join(projectDir, "inkos.json");
 
   if (await exists(configPath)) {
-    throw new Error(`inkos.json already exists in ${projectDir}. Use a different directory or delete the existing project.`);
+    throw new Error(
+      `inkos.json already exists in ${projectDir}. Use a different directory or delete the existing project.`,
+    );
   }
 
   await mkdir(projectDir, { recursive: true });
@@ -145,7 +149,11 @@ export async function initializeProjectDirectory(
   const globalConfigured = await hasGlobalConfig();
 
   await Promise.all([
-    writeMaybe(join(projectDir, ".env"), buildProjectEnvTemplate(globalConfigured), overwriteSupportFiles),
+    writeMaybe(
+      join(projectDir, ".env"),
+      buildProjectEnvTemplate(globalConfigured),
+      overwriteSupportFiles,
+    ),
     ensureProjectGitignore(projectDir),
     writeMaybe(join(projectDir, ".nvmrc"), "22\n", overwriteSupportFiles),
     writeMaybe(join(projectDir, ".node-version"), "22\n", overwriteSupportFiles),

@@ -1,6 +1,21 @@
 import { readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { createLLMClient, StateManager, createLogger, createStderrSink, createJsonLineSink, resolveEffectiveLLMConfig, loadLLMEnvLayers, GLOBAL_CONFIG_DIR, GLOBAL_ENV_PATH, type EffectiveLLMConfigResult, type LLMConfigCliOverrides, type ProjectConfig, type PipelineConfig, type LogSink } from "@actalk/inkos-core";
+import {
+  createLLMClient,
+  StateManager,
+  createLogger,
+  createStderrSink,
+  createJsonLineSink,
+  resolveEffectiveLLMConfig,
+  loadLLMEnvLayers,
+  GLOBAL_CONFIG_DIR,
+  GLOBAL_ENV_PATH,
+  type EffectiveLLMConfigResult,
+  type LLMConfigCliOverrides,
+  type ProjectConfig,
+  type PipelineConfig,
+  type LogSink,
+} from "@actalk/inkos-core";
 import { formatSqliteMemorySupportWarning } from "./runtime-requirements.js";
 
 export { GLOBAL_CONFIG_DIR, GLOBAL_ENV_PATH };
@@ -108,7 +123,12 @@ export function parseLLMOverridesFromArgv(argv: readonly string[]): LLMConfigCli
 export function buildPipelineConfig(
   config: ProjectConfig,
   root: string,
-  extra?: Partial<Pick<PipelineConfig, "notifyChannels" | "radarSources" | "externalContext" | "inputGovernanceMode">> & {
+  extra?: Partial<
+    Pick<
+      PipelineConfig,
+      "notifyChannels" | "radarSources" | "externalContext" | "inputGovernanceMode"
+    >
+  > & {
     readonly quiet?: boolean;
     readonly logFile?: NodeJS.WritableStream;
   },
@@ -133,7 +153,12 @@ export function buildPipelineConfig(
   const logger = hasLogging ? createLogger({ tag: "inkos", sinks }) : undefined;
 
   const onStreamProgress = hasLogging
-    ? (progress: { readonly elapsedMs: number; readonly totalChars: number; readonly chineseChars: number; readonly status: string }) => {
+    ? (progress: {
+        readonly elapsedMs: number;
+        readonly totalChars: number;
+        readonly chineseChars: number;
+        readonly status: string;
+      }) => {
         if (progress.status === "streaming") {
           logger?.info(
             `streaming ${Math.round(progress.elapsedMs / 1000)}s, ${progress.totalChars} chars (${progress.chineseChars} CJK)`,
@@ -171,19 +196,14 @@ export function logError(message: string): void {
  * Resolve book-id: if provided use it, otherwise auto-detect when exactly one book exists.
  * Validates that the book actually exists.
  */
-export async function resolveBookId(
-  bookIdArg: string | undefined,
-  root: string,
-): Promise<string> {
+export async function resolveBookId(bookIdArg: string | undefined, root: string): Promise<string> {
   const state = new StateManager(root);
   const books = await state.listBooks();
 
   if (bookIdArg) {
     if (!books.includes(bookIdArg)) {
       const available = books.length > 0 ? books.join(", ") : "(none)";
-      throw new Error(
-        `Book "${bookIdArg}" not found. Available books: ${available}`,
-      );
+      throw new Error(`Book "${bookIdArg}" not found. Available books: ${available}`);
     }
     return bookIdArg;
   }
@@ -196,15 +216,10 @@ export async function resolveBookId(
   if (books.length === 1) {
     return books[0]!;
   }
-  throw new Error(
-    `Multiple books found: ${books.join(", ")}\nPlease specify a book-id.`,
-  );
+  throw new Error(`Multiple books found: ${books.join(", ")}\nPlease specify a book-id.`);
 }
 
-export async function getLegacyMigrationHint(
-  root: string,
-  bookId: string,
-): Promise<string | null> {
+export async function getLegacyMigrationHint(root: string, bookId: string): Promise<string | null> {
   const state = new StateManager(root);
   const stateDir = join(state.bookDir(bookId), "story", "state");
   try {
@@ -213,6 +228,7 @@ export async function getLegacyMigrationHint(
       return null;
     }
   } catch {
+    // failure expected, safe to ignore
     return `Book "${bookId}" uses legacy format (pre-v0.6). The next write will auto-migrate its state files.`;
   }
   return `Book "${bookId}" uses legacy format (pre-v0.6). The next write will auto-migrate its state files.`;

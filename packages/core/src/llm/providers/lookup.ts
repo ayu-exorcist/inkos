@@ -6,10 +6,20 @@ import { getAllEndpoints, getEndpoint } from "./index.js";
  * 保证结果确定性。白名单外的 provider 视同 999（排最后）。
  */
 const PROVIDER_PRIORITY: readonly string[] = [
-  "anthropic", "openai", "google", "deepseek", "bailian", "moonshot", "kimicode",
-  "zhipu", "minimax", "xai",
+  "anthropic",
+  "openai",
+  "google",
+  "deepseek",
+  "bailian",
+  "moonshot",
+  "kimicode",
+  "zhipu",
+  "minimax",
+  "xai",
   "siliconcloud",
-  "openrouter", "aihubmix", "novita",
+  "openrouter",
+  "aihubmix",
+  "novita",
 ];
 
 /**
@@ -21,10 +31,7 @@ const PROVIDER_PRIORITY: readonly string[] = [
  * 不做斜线前缀拆分。lobe 的 processModelList 证实了"靠调用入口带 provider 消歧"
  * 是对的做法，斜线拆分对 PPIO / SiliconCloud 原生命名会误匹配。
  */
-export function lookupModel(
-  serviceId: string,
-  modelId: string,
-): InkosModel | undefined {
+export function lookupModel(serviceId: string, modelId: string): InkosModel | undefined {
   const lowerId = modelId.toLowerCase();
 
   const provider = getEndpoint(serviceId);
@@ -57,7 +64,8 @@ export function listEnabledModels(serviceId: string): InkosModel[] {
 
 export function isActiveTextModel(model: InkosModel): boolean {
   if (model.enabled === false) return false;
-  if (model.status === "disabled" || model.status === "deprecated" || model.status === "nonText") return false;
+  if (model.status === "disabled" || model.status === "deprecated" || model.status === "nonText")
+    return false;
   if (model.capabilities?.text === false) return false;
   if (model.capabilities?.imageOutput === true && model.capabilities?.text !== true) return false;
   return true;

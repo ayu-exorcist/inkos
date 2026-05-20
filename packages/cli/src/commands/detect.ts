@@ -57,7 +57,9 @@ export const detectCommand = new Command("detect")
           if (stats.chapterBreakdown.length > 0) {
             log(`  Chapters:`);
             for (const ch of stats.chapterBreakdown) {
-              log(`    Ch.${ch.chapterNumber}: ${ch.originalScore.toFixed(3)} → ${ch.finalScore.toFixed(3)} (${ch.rewriteAttempts} rewrites)`);
+              log(
+                `    Ch.${ch.chapterNumber}: ${ch.originalScore.toFixed(3)} → ${ch.finalScore.toFixed(3)} (${ch.rewriteAttempts} rewrites)`,
+              );
             }
           }
         }
@@ -90,14 +92,20 @@ export const detectCommand = new Command("detect")
   });
 
 function printResult(
-  result: { chapterNumber: number; detection: { score: number; provider: string }; passed: boolean },
+  result: {
+    chapterNumber: number;
+    detection: { score: number; provider: string };
+    passed: boolean;
+  },
   json: boolean,
 ): void {
   if (json) {
     log(JSON.stringify(result, null, 2));
   } else {
     const icon = result.passed ? "✅" : "⚠️";
-    log(`  ${icon} Chapter ${result.chapterNumber}: score=${result.detection.score.toFixed(3)} (${result.detection.provider}) ${result.passed ? "PASS" : "FAIL"}`);
+    log(
+      `  ${icon} Chapter ${result.chapterNumber}: score=${result.detection.score.toFixed(3)} (${result.detection.provider}) ${result.passed ? "PASS" : "FAIL"}`,
+    );
   }
 }
 

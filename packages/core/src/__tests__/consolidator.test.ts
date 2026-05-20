@@ -20,9 +20,13 @@ describe("ConsolidatorAgent", () => {
       "",
     ].join("\n");
 
-    const boundaries = (agent as unknown as {
-      parseVolumeBoundaries: (input: string) => Array<{ name: string; startCh: number; endCh: number }>;
-    }).parseVolumeBoundaries(outline);
+    const boundaries = (
+      agent as unknown as {
+        parseVolumeBoundaries: (
+          input: string,
+        ) => Array<{ name: string; startCh: number; endCh: number }>;
+      }
+    ).parseVolumeBoundaries(outline);
 
     expect(boundaries).toEqual([
       { name: "第一卷：死而复生的实习期", startCh: 1, endCh: 20 },

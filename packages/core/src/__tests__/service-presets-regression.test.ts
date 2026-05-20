@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { guessServiceFromBaseUrl, resolveServicePreset, listModelsForService } from "../llm/service-presets.js";
+import {
+  guessServiceFromBaseUrl,
+  resolveServicePreset,
+  listModelsForService,
+} from "../llm/service-presets.js";
 
 describe("service-presets regression", () => {
   describe("Kimi Code preset", () => {
@@ -51,11 +55,9 @@ describe("service-presets regression", () => {
         baseUrl: "https://api.kkaiapi.com/v1",
       });
       const models = await listModelsForService("kkaiapi");
-      expect(models.map((m) => m.id)).toEqual(expect.arrayContaining([
-        "gpt-5.5",
-        "deepseek-v4-flash",
-        "deepseek-v4-pro",
-      ]));
+      expect(models.map((m) => m.id)).toEqual(
+        expect.arrayContaining(["gpt-5.5", "deepseek-v4-flash", "deepseek-v4-pro"]),
+      );
       expect(guessServiceFromBaseUrl("https://api.kkaiapi.com/v1")).toBe("kkaiapi");
     });
 

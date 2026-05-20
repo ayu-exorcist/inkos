@@ -1,9 +1,16 @@
 import { Command } from "commander";
 import { PipelineRunner } from "@actalk/inkos-core";
-import { buildPipelineConfig, findProjectRoot, loadConfig, log, logError, resolveBookId, resolveContext } from "../utils.js";
+import {
+  buildPipelineConfig,
+  findProjectRoot,
+  loadConfig,
+  log,
+  logError,
+  resolveBookId,
+  resolveContext,
+} from "../utils.js";
 
-export const planCommand = new Command("plan")
-  .description("Plan chapter input artifacts");
+export const planCommand = new Command("plan").description("Plan chapter input artifacts");
 
 planCommand
   .command("chapter")

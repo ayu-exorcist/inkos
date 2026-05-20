@@ -47,7 +47,11 @@ describe("analyzeHookHealth", () => {
       maxActiveHooks: 4,
     });
 
-    expect(issues.some((issue) => issue.category === "Hook Debt" && issue.description.includes("5 active hooks"))).toBe(true);
+    expect(
+      issues.some(
+        (issue) => issue.category === "Hook Debt" && issue.description.includes("5 active hooks"),
+      ),
+    ).toBe(true);
   });
 
   it("warns when a short-payoff hook is already under payoff pressure without real movement", () => {
@@ -107,7 +111,11 @@ describe("analyzeHookHealth", () => {
       staleAfterChapters: 10,
     });
 
-    expect(issues.some((issue) => issue.description.includes("H001") || issue.description.includes("H002"))).toBe(true);
+    expect(
+      issues.some(
+        (issue) => issue.description.includes("H001") || issue.description.includes("H002"),
+      ),
+    ).toBe(true);
   });
 
   it("warns when multiple new hooks open without resolving older debt", () => {
@@ -142,9 +150,7 @@ describe("analyzeHookHealth", () => {
     const issues = analyzeHookHealth({
       language: "en",
       chapterNumber: 20,
-      hooks: [
-        createHook({ hookId: "old-debt", lastAdvancedChapter: 20 }),
-      ],
+      hooks: [createHook({ hookId: "old-debt", lastAdvancedChapter: 20 })],
       delta: createDelta({
         chapter: 20,
         hookOps: {

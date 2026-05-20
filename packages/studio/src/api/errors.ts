@@ -14,4 +14,3 @@ export class ApiError extends Error {
     this.code = code;
   }
 }
-

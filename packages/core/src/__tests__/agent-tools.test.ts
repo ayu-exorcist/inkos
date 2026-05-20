@@ -36,18 +36,28 @@ describe("agent deterministic writing tools", () => {
 
     await mkdir(join(state.bookDir("harbor"), "story", "runtime"), { recursive: true });
     await mkdir(join(state.bookDir("harbor"), "chapters"), { recursive: true });
-    await writeFile(join(state.bookDir("harbor"), "story", "story_bible.md"), "# Story Bible\n\nLin Yue guards the jade seal.\n", "utf-8");
-    await writeFile(join(state.bookDir("harbor"), "chapters", "0003_Storm.md"), "# 第3章 风暴\n\nLin Yue kept the jade seal hidden.\n", "utf-8");
-    await state.saveChapterIndex("harbor", [{
-      number: 3,
-      title: "风暴",
-      status: "ready-for-review",
-      wordCount: 120,
-      createdAt: "2026-04-16T00:00:00.000Z",
-      updatedAt: "2026-04-16T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await writeFile(
+      join(state.bookDir("harbor"), "story", "story_bible.md"),
+      "# Story Bible\n\nLin Yue guards the jade seal.\n",
+      "utf-8",
+    );
+    await writeFile(
+      join(state.bookDir("harbor"), "chapters", "0003_Storm.md"),
+      "# 第3章 风暴\n\nLin Yue kept the jade seal hidden.\n",
+      "utf-8",
+    );
+    await state.saveChapterIndex("harbor", [
+      {
+        number: 3,
+        title: "风暴",
+        status: "ready-for-review",
+        wordCount: 120,
+        createdAt: "2026-04-16T00:00:00.000Z",
+        updatedAt: "2026-04-16T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
   });
 
   afterEach(async () => {
@@ -63,8 +73,9 @@ describe("agent deterministic writing tools", () => {
     });
 
     expect(result.content[0]?.type).toBe("text");
-    await expect(readFile(join(state.bookDir("harbor"), "story", "story_bible.md"), "utf-8"))
-      .resolves.toContain("distrusts the guild");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "story", "story_bible.md"), "utf-8"),
+    ).resolves.toContain("distrusts the guild");
   });
 
   it("renames entities through the deterministic edit controller", async () => {
@@ -75,10 +86,12 @@ describe("agent deterministic writing tools", () => {
       newValue: "Lin Yan",
     });
 
-    await expect(readFile(join(state.bookDir("harbor"), "story", "story_bible.md"), "utf-8"))
-      .resolves.toContain("Lin Yan");
-    await expect(readFile(join(state.bookDir("harbor"), "chapters", "0003_Storm.md"), "utf-8"))
-      .resolves.toContain("Lin Yan");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "story", "story_bible.md"), "utf-8"),
+    ).resolves.toContain("Lin Yan");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "chapters", "0003_Storm.md"), "utf-8"),
+    ).resolves.toContain("Lin Yan");
   });
 
   it("patches chapter text through the deterministic edit controller", async () => {
@@ -90,8 +103,9 @@ describe("agent deterministic writing tools", () => {
       replacementText: "jade seal locked beneath the altar",
     });
 
-    await expect(readFile(join(state.bookDir("harbor"), "chapters", "0003_Storm.md"), "utf-8"))
-      .resolves.toContain("locked beneath the altar");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "chapters", "0003_Storm.md"), "utf-8"),
+    ).resolves.toContain("locked beneath the altar");
     await expect(state.loadChapterIndex("harbor")).resolves.toEqual([
       expect.objectContaining({
         number: 3,
@@ -170,11 +184,13 @@ describe("agent deterministic writing tools", () => {
     };
     const tool = createSubAgentTool(pipeline as never, "harbor");
 
-    await expect(tool.execute("tool-writer-fails", {
-      agent: "writer",
-      bookId: "harbor",
-      instruction: "继续写下一章",
-    } as any)).rejects.toThrow("disk write failed");
+    await expect(
+      tool.execute("tool-writer-fails", {
+        agent: "writer",
+        bookId: "harbor",
+        instruction: "继续写下一章",
+      } as any),
+    ).rejects.toThrow("disk write failed");
   });
 
   it("uses the active book for writer when bookId is omitted", async () => {
@@ -375,8 +391,9 @@ describe("agent deterministic writing tools", () => {
     });
 
     expect(result.content[0]?.type).toBe("text");
-    await expect(readFile(join(state.bookDir("harbor"), "story", "runtime", "notes.md"), "utf-8"))
-      .resolves.toContain("Watch the harbor ledger");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "story", "runtime", "notes.md"), "utf-8"),
+    ).resolves.toContain("Watch the harbor ledger");
   });
 
   it("writes Phase 5 outline truth files through write_truth_file", async () => {
@@ -388,8 +405,9 @@ describe("agent deterministic writing tools", () => {
     });
 
     expect(result.content[0]?.type).toBe("text");
-    await expect(readFile(join(state.bookDir("harbor"), "story", "outline", "story_frame.md"), "utf-8"))
-      .resolves.toContain("central pressure");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "story", "outline", "story_frame.md"), "utf-8"),
+    ).resolves.toContain("central pressure");
   });
 
   it("writes Phase 5 role truth files through write_truth_file", async () => {
@@ -401,8 +419,9 @@ describe("agent deterministic writing tools", () => {
     });
 
     expect(result.content[0]?.type).toBe("text");
-    await expect(readFile(join(state.bookDir("harbor"), "story", "roles", "major", "Lin Yan.md"), "utf-8"))
-      .resolves.toContain("ledger hidden");
+    await expect(
+      readFile(join(state.bookDir("harbor"), "story", "roles", "major", "Lin Yan.md"), "utf-8"),
+    ).resolves.toContain("ledger hidden");
   });
 
   it("rejects unsafe truth file names", async () => {

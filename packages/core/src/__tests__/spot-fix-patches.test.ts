@@ -7,21 +7,23 @@ import {
 
 describe("spot-fix patches", () => {
   it("parses patch blocks from the PATCHES section", () => {
-    const patches = parseSpotFixPatches([
-      "=== PATCHES ===",
-      "--- PATCH 1 ---",
-      "TARGET_TEXT:",
-      "原句一。",
-      "REPLACEMENT_TEXT:",
-      "新句一。",
-      "--- END PATCH ---",
-      "--- PATCH 2 ---",
-      "TARGET_TEXT:",
-      "原句二。",
-      "REPLACEMENT_TEXT:",
-      "新句二。",
-      "--- END PATCH ---",
-    ].join("\n"));
+    const patches = parseSpotFixPatches(
+      [
+        "=== PATCHES ===",
+        "--- PATCH 1 ---",
+        "TARGET_TEXT:",
+        "原句一。",
+        "REPLACEMENT_TEXT:",
+        "新句一。",
+        "--- END PATCH ---",
+        "--- PATCH 2 ---",
+        "TARGET_TEXT:",
+        "原句二。",
+        "REPLACEMENT_TEXT:",
+        "新句二。",
+        "--- END PATCH ---",
+      ].join("\n"),
+    );
 
     expect(patches).toEqual<SpotFixPatch[]>([
       { targetText: "原句一。", replacementText: "新句一。" },
@@ -49,14 +51,16 @@ describe("spot-fix patches", () => {
     expect(result.applied).toBe(true);
     expect(result.appliedPatchCount).toBe(1);
     expect(result.skippedPatchCount).toBe(0);
-    expect(result.revisedContent).toBe([
-      "门轴轻轻响了一下。",
-      "林越先停在门槛外，侧耳听了一息。",
-      "",
-      "巷子尽头的风还在吹。",
-      "他把手按在潮冷的门框上，没有出声。",
-      "更远处传来极轻的脚步回响，又很快断掉。",
-    ].join("\n"));
+    expect(result.revisedContent).toBe(
+      [
+        "门轴轻轻响了一下。",
+        "林越先停在门槛外，侧耳听了一息。",
+        "",
+        "巷子尽头的风还在吹。",
+        "他把手按在潮冷的门框上，没有出声。",
+        "更远处传来极轻的脚步回响，又很快断掉。",
+      ].join("\n"),
+    );
   });
 
   it("skips non-unique patches instead of rejecting all", () => {

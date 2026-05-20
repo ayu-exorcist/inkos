@@ -43,7 +43,10 @@ const baseParams = {
     totalTokens: left.totalTokens + (right?.totalTokens ?? 0),
   }),
   analyzeAITells: () => ({ issues: [] as AuditIssue[] }),
-  analyzeSensitiveWords: () => ({ found: [] as Array<{ severity: "warn" | "block" }>, issues: [] as AuditIssue[] }),
+  analyzeSensitiveWords: () => ({
+    found: [] as Array<{ severity: "warn" | "block" }>,
+    issues: [] as AuditIssue[],
+  }),
   logWarn: () => undefined,
   logStage: () => undefined,
 } as const;
@@ -52,7 +55,8 @@ describe("runChapterReviewCycle v9", () => {
   it("feeds postWriteErrors as extra issues into first assessment", async () => {
     // postWriteErrors are critical → auditResult.passed forced false
     // even though LLM says passed=true. This triggers the repair loop.
-    const auditChapter = vi.fn()
+    const auditChapter = vi
+      .fn()
       .mockResolvedValueOnce(createAuditResult({ overallScore: 90, passed: true }))
       .mockResolvedValueOnce(createAuditResult({ overallScore: 92, passed: true }));
     const reviseChapter = vi.fn().mockResolvedValue({
@@ -64,25 +68,26 @@ describe("runChapterReviewCycle v9", () => {
       updatedHooks: "",
       tokenUsage: ZERO_USAGE,
     });
-    const normalizeDraftLengthIfNeeded = vi.fn()
-      .mockImplementation(async (content: string) => ({
-        content,
-        wordCount: content.length,
-        applied: false,
-        tokenUsage: ZERO_USAGE,
-      }));
+    const normalizeDraftLengthIfNeeded = vi.fn().mockImplementation(async (content: string) => ({
+      content,
+      wordCount: content.length,
+      applied: false,
+      tokenUsage: ZERO_USAGE,
+    }));
 
     const result = await runChapterReviewCycle({
       ...baseParams,
       initialOutput: {
         content: "b".repeat(200),
         wordCount: 200,
-        postWriteErrors: [{
-          rule: "chapter-number-reference",
-          description: "contains chapter ref",
-          suggestion: "remove it",
-          severity: "error",
-        }],
+        postWriteErrors: [
+          {
+            rule: "chapter-number-reference",
+            description: "contains chapter ref",
+            suggestion: "remove it",
+            severity: "error",
+          },
+        ],
       },
       createReviser: () => ({ reviseChapter }),
       auditor: { auditChapter },
@@ -90,58 +95,94 @@ describe("runChapterReviewCycle v9", () => {
       // Simulates: the reviser fixed the chapter-ref, so re-check returns empty
       runPostWriteChecks: (content) =>
         content === "b".repeat(200)
-          ? [{ severity: "critical" as const, category: "chapter-number-reference", description: "contains chapter ref", suggestion: "remove it" }]
+          ? [
+              {
+                severity: "critical" as const,
+                category: "chapter-number-reference",
+                description: "contains chapter ref",
+                suggestion: "remove it",
+              },
+            ]
           : [],
     });
 
     // After repair, postWriteChecks on the revised content returns empty → issue gone
-    expect(result.auditResult.issues.some(i => i.category === "chapter-number-reference")).toBe(false);
+    expect(result.auditResult.issues.some((i) => i.category === "chapter-number-reference")).toBe(
+      false,
+    );
     // The loop should have run at least once to fix the critical postWriteError
     expect(reviseChapter).toHaveBeenCalled();
     expect(reviseChapter.mock.calls[0]?.[4]).toBe("auto");
   });
 
   it("runs repair loop when score is below threshold, picks best version", async () => {
-    const auditChapter = vi.fn()
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 70,
-        issues: [{ severity: "critical", category: "continuity", description: "broken", suggestion: "fix" }],
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 80,
-        issues: [{ severity: "warning", category: "pacing", description: "slow", suggestion: "trim" }],
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 76,
-        issues: [{ severity: "warning", category: "pacing", description: "still slow", suggestion: "trim more" }],
-      }));
+    const auditChapter = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 70,
+          issues: [
+            {
+              severity: "critical",
+              category: "continuity",
+              description: "broken",
+              suggestion: "fix",
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 80,
+          issues: [
+            { severity: "warning", category: "pacing", description: "slow", suggestion: "trim" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 76,
+          issues: [
+            {
+              severity: "warning",
+              category: "pacing",
+              description: "still slow",
+              suggestion: "trim more",
+            },
+          ],
+        }),
+      );
 
-    const reviseChapter = vi.fn()
+    const reviseChapter = vi
+      .fn()
       .mockResolvedValueOnce({
         revisedContent: "a".repeat(200),
         wordCount: 200,
         fixedIssues: ["fixed continuity"],
-        updatedState: "", updatedLedger: "", updatedHooks: "",
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
         tokenUsage: ZERO_USAGE,
       })
       .mockResolvedValueOnce({
         revisedContent: "b".repeat(200),
         wordCount: 200,
         fixedIssues: ["trimmed pacing"],
-        updatedState: "", updatedLedger: "", updatedHooks: "",
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
         tokenUsage: ZERO_USAGE,
       });
 
-    const normalizeDraftLengthIfNeeded = vi.fn()
-      .mockImplementation(async (content: string) => ({
-        content,
-        wordCount: content.length,
-        applied: false,
-        tokenUsage: ZERO_USAGE,
-      }));
+    const normalizeDraftLengthIfNeeded = vi.fn().mockImplementation(async (content: string) => ({
+      content,
+      wordCount: content.length,
+      applied: false,
+      tokenUsage: ZERO_USAGE,
+    }));
 
     const result = await runChapterReviewCycle({
       ...baseParams,
@@ -169,45 +210,65 @@ describe("runChapterReviewCycle v9", () => {
   });
 
   it("defaults to one automatic repair pass", async () => {
-    const auditChapter = vi.fn()
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 70,
-        issues: [{ severity: "critical", category: "continuity", description: "broken", suggestion: "fix" }],
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 80,
-        issues: [{ severity: "warning", category: "pacing", description: "slow", suggestion: "trim" }],
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: true,
-        overallScore: 90,
-      }));
+    const auditChapter = vi
+      .fn()
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 70,
+          issues: [
+            {
+              severity: "critical",
+              category: "continuity",
+              description: "broken",
+              suggestion: "fix",
+            },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 80,
+          issues: [
+            { severity: "warning", category: "pacing", description: "slow", suggestion: "trim" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: true,
+          overallScore: 90,
+        }),
+      );
 
-    const reviseChapter = vi.fn()
+    const reviseChapter = vi
+      .fn()
       .mockResolvedValueOnce({
         revisedContent: "a".repeat(200),
         wordCount: 200,
         fixedIssues: ["fixed continuity"],
-        updatedState: "", updatedLedger: "", updatedHooks: "",
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
         tokenUsage: ZERO_USAGE,
       })
       .mockResolvedValueOnce({
         revisedContent: "b".repeat(200),
         wordCount: 200,
         fixedIssues: ["trimmed pacing"],
-        updatedState: "", updatedLedger: "", updatedHooks: "",
+        updatedState: "",
+        updatedLedger: "",
+        updatedHooks: "",
         tokenUsage: ZERO_USAGE,
       });
 
-    const normalizeDraftLengthIfNeeded = vi.fn()
-      .mockImplementation(async (content: string) => ({
-        content,
-        wordCount: content.length,
-        applied: false,
-        tokenUsage: ZERO_USAGE,
-      }));
+    const normalizeDraftLengthIfNeeded = vi.fn().mockImplementation(async (content: string) => ({
+      content,
+      wordCount: content.length,
+      applied: false,
+      tokenUsage: ZERO_USAGE,
+    }));
 
     const result = await runChapterReviewCycle({
       ...baseParams,
@@ -227,16 +288,14 @@ describe("runChapterReviewCycle v9", () => {
   });
 
   it("stops immediately when initial score passes threshold", async () => {
-    const auditChapter = vi.fn()
-      .mockResolvedValue(createAuditResult({ overallScore: 88 }));
+    const auditChapter = vi.fn().mockResolvedValue(createAuditResult({ overallScore: 88 }));
     const reviseChapter = vi.fn();
-    const normalizeDraftLengthIfNeeded = vi.fn()
-      .mockImplementation(async (content: string) => ({
-        content,
-        wordCount: content.length,
-        applied: false,
-        tokenUsage: ZERO_USAGE,
-      }));
+    const normalizeDraftLengthIfNeeded = vi.fn().mockImplementation(async (content: string) => ({
+      content,
+      wordCount: content.length,
+      applied: false,
+      tokenUsage: ZERO_USAGE,
+    }));
 
     const result = await runChapterReviewCycle({
       ...baseParams,
@@ -257,16 +316,16 @@ describe("runChapterReviewCycle v9", () => {
   });
 
   it("normalizes deterministic surface blockers before audit and repair", async () => {
-    const auditChapter = vi.fn()
+    const auditChapter = vi
+      .fn()
       .mockResolvedValue(createAuditResult({ overallScore: 90, passed: true }));
     const reviseChapter = vi.fn();
-    const normalizeDraftLengthIfNeeded = vi.fn()
-      .mockImplementation(async (content: string) => ({
-        content,
-        wordCount: content.length,
-        applied: false,
-        tokenUsage: ZERO_USAGE,
-      }));
+    const normalizeDraftLengthIfNeeded = vi.fn().mockImplementation(async (content: string) => ({
+      content,
+      wordCount: content.length,
+      applied: false,
+      tokenUsage: ZERO_USAGE,
+    }));
     const unsafe = `${"雨".repeat(100)}——${"夜".repeat(98)}`;
 
     const result = await runChapterReviewCycle({
@@ -282,7 +341,14 @@ describe("runChapterReviewCycle v9", () => {
       normalizePostWriteSurface: (content) => content.replace(/——+/g, "，"),
       runPostWriteChecks: (content) =>
         content.includes("——")
-          ? [{ severity: "critical" as const, category: "禁止破折号", description: "出现了破折号", suggestion: "用逗号断句" }]
+          ? [
+              {
+                severity: "critical" as const,
+                category: "禁止破折号",
+                description: "出现了破折号",
+                suggestion: "用逗号断句",
+              },
+            ]
           : [],
     });
 

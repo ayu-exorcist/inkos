@@ -23,10 +23,7 @@ export interface WebhookPayload {
   readonly data?: Record<string, unknown>;
 }
 
-export async function sendWebhook(
-  config: WebhookConfig,
-  payload: WebhookPayload,
-): Promise<void> {
+export async function sendWebhook(config: WebhookConfig, payload: WebhookPayload): Promise<void> {
   // Filter by subscribed events
   if (config.events && config.events.length > 0 && !config.events.includes(payload.event)) {
     return;
@@ -39,9 +36,7 @@ export async function sendWebhook(
 
   // HMAC-SHA256 signature if secret is configured
   if (config.secret) {
-    const signature = createHmac("sha256", config.secret)
-      .update(body)
-      .digest("hex");
+    const signature = createHmac("sha256", config.secret).update(body).digest("hex");
     headers["X-InkOS-Signature"] = `sha256=${signature}`;
   }
 

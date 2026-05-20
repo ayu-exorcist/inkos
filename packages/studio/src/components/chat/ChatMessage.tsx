@@ -1,9 +1,5 @@
 import type { Theme } from "../../hooks/use-theme";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "../ai-elements/message";
+import { Message, MessageContent, MessageResponse } from "../ai-elements/message";
 import { XCircle } from "lucide-react";
 
 export interface ChatMessageProps {
@@ -13,10 +9,7 @@ export interface ChatMessageProps {
   readonly theme: Theme;
 }
 
-export function ChatMessage({
-  role,
-  content,
-}: ChatMessageProps) {
+export function ChatMessage({ role, content }: ChatMessageProps) {
   const isUser = role === "user";
   const isError = content.startsWith("\u2717");
 

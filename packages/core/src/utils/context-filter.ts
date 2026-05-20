@@ -67,7 +67,12 @@ export function filterSubplots(board: string): string {
   if (!board || board === "(文件尚未创建)") return board;
   return filterTableRows(board, (row) => {
     const lower = row.toLowerCase();
-    return !lower.includes("已回收") && !lower.includes("closed") && !lower.includes("resolved") && !lower.includes("已完结");
+    return (
+      !lower.includes("已回收") &&
+      !lower.includes("closed") &&
+      !lower.includes("resolved") &&
+      !lower.includes("已完结")
+    );
   });
 }
 
@@ -116,7 +121,9 @@ export function filterCharacterMatrix(
 
   const result = filtered.join("\n");
   // Fallback: if filtering removed all data rows, return original
-  const dataRowCount = result.split("\n").filter((l) => l.startsWith("|") && !l.includes("---") && !isHeaderRow(l)).length;
+  const dataRowCount = result
+    .split("\n")
+    .filter((l) => l.startsWith("|") && !l.includes("---") && !isHeaderRow(l)).length;
   return dataRowCount > 0 ? result : matrix;
 }
 

@@ -11,16 +11,28 @@ export type StreamEvent =
   | { type: "tool:start"; id: string; tool: string; agent?: string; stages?: string[] }
   | { type: "tool:end"; id: string; isError?: boolean; result?: unknown; details?: unknown }
   | { type: "log:stage"; stageName: string }
-  | { type: "llm:progress"; status: string; elapsedMs: number; totalChars: number; chineseChars: number };
+  | {
+      type: "llm:progress";
+      status: string;
+      elapsedMs: number;
+      totalChars: number;
+      chineseChars: number;
+    };
 
 // -- Label helpers --
 
 const AGENT_LABELS: Record<string, string> = {
-  architect: "建书", writer: "写作", auditor: "审计",
-  reviser: "修订", exporter: "导出",
+  architect: "建书",
+  writer: "写作",
+  auditor: "审计",
+  reviser: "修订",
+  exporter: "导出",
 };
 const TOOL_LABELS: Record<string, string> = {
-  read: "读取文件", edit: "编辑文件", grep: "搜索", ls: "列目录",
+  read: "读取文件",
+  edit: "编辑文件",
+  grep: "搜索",
+  ls: "列目录",
   short_fiction_run: "短篇生产",
   generate_cover: "生成封面",
 };
@@ -140,12 +152,15 @@ export function buildPartsFromEvents(events: StreamEvent[]): MessagePart[] {
             const exec = p.execution;
             exec.status = event.isError ? "error" : "completed";
             exec.completedAt = Date.now();
-            if (event.isError) exec.error = localizeKnownRuntimeMessage(summarizeToolResult(event.result));
+            if (event.isError)
+              exec.error = localizeKnownRuntimeMessage(summarizeToolResult(event.result));
             else exec.result = summarizeToolResult(event.result);
             if (event.details !== undefined) exec.details = event.details;
             // Mark all remaining stages as completed
             exec.stages = exec.stages?.map((s) =>
-              s.status !== "completed" ? { ...s, status: "completed" as const, progress: undefined } : s
+              s.status !== "completed"
+                ? { ...s, status: "completed" as const, progress: undefined }
+                : s,
             );
             break;
           }
@@ -175,8 +190,16 @@ export function buildPartsFromEvents(events: StreamEvent[]): MessagePart[] {
         if (!exec?.stages) break;
         exec.stages = exec.stages.map((stage) =>
           stage.status === "active"
-            ? { ...stage, progress: { status: event.status, elapsedMs: event.elapsedMs, totalChars: event.totalChars, chineseChars: event.chineseChars } }
-            : stage
+            ? {
+                ...stage,
+                progress: {
+                  status: event.status,
+                  elapsedMs: event.elapsedMs,
+                  totalChars: event.totalChars,
+                  chineseChars: event.chineseChars,
+                },
+              }
+            : stage,
         );
         break;
       }

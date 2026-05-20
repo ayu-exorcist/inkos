@@ -19,7 +19,8 @@ export function analyzeHookHealth(params: {
   const maxActiveHooks = params.maxActiveHooks ?? HOOK_HEALTH_DEFAULTS.maxActiveHooks;
   const staleAfterChapters = params.staleAfterChapters ?? HOOK_HEALTH_DEFAULTS.staleAfterChapters;
   const noAdvanceWindow = params.noAdvanceWindow ?? HOOK_HEALTH_DEFAULTS.noAdvanceWindow;
-  const newHookBurstThreshold = params.newHookBurstThreshold ?? HOOK_HEALTH_DEFAULTS.newHookBurstThreshold;
+  const newHookBurstThreshold =
+    params.newHookBurstThreshold ?? HOOK_HEALTH_DEFAULTS.newHookBurstThreshold;
   const issues: AuditIssue[] = [];
 
   const activeHooks = params.hooks.filter((hook) => hook.status !== "resolved");
@@ -38,27 +39,30 @@ export function analyzeHookHealth(params: {
   }));
 
   if (activeHooks.length > maxActiveHooks) {
-    issues.push(warning(
-      params.language,
-      params.language === "en"
-        ? `There are ${activeHooks.length} active hooks, above the recommended cap of ${maxActiveHooks}.`
-        : `当前有 ${activeHooks.length} 个活跃伏笔，已经高于建议上限 ${maxActiveHooks} 个。`,
-      params.language === "en"
-        ? "Prefer advancing, resolving, or deferring existing debt before opening more hooks."
-        : "优先推进、回收或延后已有伏笔，再继续开新伏笔。",
-    ));
+    issues.push(
+      warning(
+        params.language,
+        params.language === "en"
+          ? `There are ${activeHooks.length} active hooks, above the recommended cap of ${maxActiveHooks}.`
+          : `当前有 ${activeHooks.length} 个活跃伏笔，已经高于建议上限 ${maxActiveHooks} 个。`,
+        params.language === "en"
+          ? "Prefer advancing, resolving, or deferring existing debt before opening more hooks."
+          : "优先推进、回收或延后已有伏笔，再继续开新伏笔。",
+      ),
+    );
   }
 
-  const staleHookIds = new Set(collectStaleHookDebt({
-    hooks: activeHooks,
-    chapterNumber: params.chapterNumber,
-    targetChapters: params.targetChapters,
-    staleAfterChapters,
-  }).map((hook) => hook.hookId));
-  const pressuredHooks = lifecycleEntries.filter(({ hook, lifecycle }) =>
-    staleHookIds.has(hook.hookId)
-    || lifecycle.readyToResolve
-    || lifecycle.overdue,
+  const staleHookIds = new Set(
+    collectStaleHookDebt({
+      hooks: activeHooks,
+      chapterNumber: params.chapterNumber,
+      targetChapters: params.targetChapters,
+      staleAfterChapters,
+    }).map((hook) => hook.hookId),
+  );
+  const pressuredHooks = lifecycleEntries.filter(
+    ({ hook, lifecycle }) =>
+      staleHookIds.has(hook.hookId) || lifecycle.readyToResolve || lifecycle.overdue,
   );
   const unresolvedPressure = pressuredHooks.filter(({ hook }) => {
     if (!params.delta) {
@@ -72,36 +76,40 @@ export function analyzeHookHealth(params: {
     return disposition === "none" || disposition === "mention";
   });
   if (unresolvedPressure.length > 0) {
-    issues.push(warning(
-      params.language,
-      buildPressureDescription({
-        language: params.language,
-        entries: unresolvedPressure,
-        mentionsCurrentChapter: Boolean(params.delta),
-      }),
-      params.language === "en"
-        ? "Move one pressured hook with a real payoff, escalation, or explicit defer before opening adjacent debt."
-        : "先让一个已进入压力区的伏笔发生真实推进、回收或明确延后，再继续扩展同类债务。",
-    ));
+    issues.push(
+      warning(
+        params.language,
+        buildPressureDescription({
+          language: params.language,
+          entries: unresolvedPressure,
+          mentionsCurrentChapter: Boolean(params.delta),
+        }),
+        params.language === "en"
+          ? "Move one pressured hook with a real payoff, escalation, or explicit defer before opening adjacent debt."
+          : "先让一个已进入压力区的伏笔发生真实推进、回收或明确延后，再继续扩展同类债务。",
+      ),
+    );
   } else {
     const latestRealAdvance = activeHooks.reduce(
       (max, hook) => Math.max(max, hook.lastAdvancedChapter),
       0,
     );
     if (
-      params.noAdvanceWindow !== undefined
-      && activeHooks.length > 0
-      && params.chapterNumber - latestRealAdvance >= noAdvanceWindow
+      params.noAdvanceWindow !== undefined &&
+      activeHooks.length > 0 &&
+      params.chapterNumber - latestRealAdvance >= noAdvanceWindow
     ) {
-      issues.push(warning(
-        params.language,
-        params.language === "en"
-          ? `No real hook advancement has landed for ${params.chapterNumber - latestRealAdvance} chapters.`
-          : `已经连续 ${params.chapterNumber - latestRealAdvance} 章没有真实伏笔推进。`,
-        params.language === "en"
-          ? "Schedule one old hook for real movement instead of opening parallel restatements."
-          : "下一章优先让一个旧伏笔发生真实推进，而不是继续平行重述。",
-      ));
+      issues.push(
+        warning(
+          params.language,
+          params.language === "en"
+            ? `No real hook advancement has landed for ${params.chapterNumber - latestRealAdvance} chapters.`
+            : `已经连续 ${params.chapterNumber - latestRealAdvance} 章没有真实伏笔推进。`,
+          params.language === "en"
+            ? "Schedule one old hook for real movement instead of opening parallel restatements."
+            : "下一章优先让一个旧伏笔发生真实推进，而不是继续平行重述。",
+        ),
+      );
     }
   }
 
@@ -113,15 +121,17 @@ export function analyzeHookHealth(params: {
       .filter((hookId) => !existingHookIds.has(hookId) && resultingHookIds.has(hookId));
 
     if (newHookIds.length >= newHookBurstThreshold && params.delta.hookOps.resolve.length === 0) {
-      issues.push(warning(
-        params.language,
-        params.language === "en"
-          ? `Opened ${newHookIds.length} new hooks without resolving any older debt.`
-          : `本章新开了 ${newHookIds.length} 个伏笔，但没有回收任何旧债。`,
-        params.language === "en"
-          ? "Keep the hook table from ballooning by pairing new openings with old payoffs."
-          : "控制伏笔膨胀，新开伏笔时尽量配套回收旧伏笔。",
-      ));
+      issues.push(
+        warning(
+          params.language,
+          params.language === "en"
+            ? `Opened ${newHookIds.length} new hooks without resolving any older debt.`
+            : `本章新开了 ${newHookIds.length} 个伏笔，但没有回收任何旧债。`,
+          params.language === "en"
+            ? "Keep the hook table from ballooning by pairing new openings with old payoffs."
+            : "控制伏笔膨胀，新开伏笔时尽量配套回收旧伏笔。",
+        ),
+      );
     }
   }
 
@@ -136,20 +146,19 @@ function buildPressureDescription(params: {
   }>;
   readonly mentionsCurrentChapter: boolean;
 }): string {
-  const summarized = params.entries
-    .slice(0, 3)
-    .map(({ hook, lifecycle }) => {
-      const timing = localizeHookPayoffTiming(lifecycle.timing, params.language);
-      const pressure = localizePressureLabel(lifecycle, params.language);
-      return params.language === "en"
-        ? `${hook.hookId} (${timing}, ${pressure})`
-        : `${hook.hookId}（${timing}，${pressure}）`;
-    });
-  const suffix = params.entries.length > summarized.length
-    ? params.language === "en"
-      ? `, +${params.entries.length - summarized.length} more`
-      : `，另有 ${params.entries.length - summarized.length} 条`
-    : "";
+  const summarized = params.entries.slice(0, 3).map(({ hook, lifecycle }) => {
+    const timing = localizeHookPayoffTiming(lifecycle.timing, params.language);
+    const pressure = localizePressureLabel(lifecycle, params.language);
+    return params.language === "en"
+      ? `${hook.hookId} (${timing}, ${pressure})`
+      : `${hook.hookId}（${timing}，${pressure}）`;
+  });
+  const suffix =
+    params.entries.length > summarized.length
+      ? params.language === "en"
+        ? `, +${params.entries.length - summarized.length} more`
+        : `，另有 ${params.entries.length - summarized.length} 条`
+      : "";
 
   if (params.language === "en") {
     return params.mentionsCurrentChapter
@@ -175,11 +184,7 @@ function localizePressureLabel(
   return language === "en" ? "stale" : "陈旧";
 }
 
-function warning(
-  language: "zh" | "en",
-  description: string,
-  suggestion: string,
-): AuditIssue {
+function warning(language: "zh" | "en", description: string, suggestion: string): AuditIssue {
   return {
     severity: "warning",
     category: language === "en" ? "Hook Debt" : "伏笔债务",

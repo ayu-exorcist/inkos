@@ -50,11 +50,8 @@ export const upCommand = new Command("up")
         cooldownAfterChapterMs: config.daemon.cooldownAfterChapterMs,
         maxChaptersPerDay: config.daemon.maxChaptersPerDay,
         onChapterComplete: (bookId, chapter, status) => {
-          const icon = status === "ready-for-review"
-            ? "+"
-            : status === "state-degraded"
-              ? "x"
-              : "!";
+          const icon =
+            status === "ready-for-review" ? "+" : status === "state-degraded" ? "x" : "!";
           log(`  [${icon}] ${bookId} Ch.${chapter} — ${status}`);
         },
         onError: (bookId, error) => {
@@ -112,10 +109,16 @@ export const downCommand = new Command("down")
         process.kill(parseInt(pid, 10), "SIGTERM");
         log(`Daemon (PID: ${pid}) stopped.`);
       } catch {
+        // failure expected, safe to ignore
         log(`Daemon (PID: ${pid}) not found. Cleaning up.`);
       }
-      try { await unlink(pidPath); } catch { /* already cleaned up by daemon */ }
+      try {
+        await unlink(pidPath);
+      } catch {
+        /* already cleaned up by daemon */
+      }
     } catch {
+      // failure expected, safe to ignore
       log("No daemon running.");
     }
   });

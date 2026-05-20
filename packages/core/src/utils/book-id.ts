@@ -12,14 +12,14 @@ export function deriveBookIdFromTitle(title: string): string {
 
 export function isSafeBookId(bookId: unknown): bookId is string {
   return (
-    typeof bookId === "string"
-    && bookId.length > 0
-    && bookId.length <= 120
-    && bookId.trim() === bookId
-    && bookId !== "."
-    && bookId !== ".."
-    && !bookId.includes("..")
-    && !UNSAFE_BOOK_ID_RE.test(bookId)
+    typeof bookId === "string" &&
+    bookId.length > 0 &&
+    bookId.length <= 120 &&
+    bookId.trim() === bookId &&
+    bookId !== "." &&
+    bookId !== ".." &&
+    !bookId.includes("..") &&
+    !UNSAFE_BOOK_ID_RE.test(bookId)
   );
 }
 

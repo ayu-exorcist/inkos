@@ -28,7 +28,8 @@ function formatRankingsForPrompt(rankings: ReadonlyArray<PlatformRankings>): str
     .filter((r) => r.entries.length > 0)
     .map((r) => {
       const lines = r.entries.map(
-        (e) => `- ${e.title}${e.author ? ` (${e.author})` : ""}${e.category ? ` [${e.category}]` : ""} ${e.extra}`,
+        (e) =>
+          `- ${e.title}${e.author ? ` (${e.author})` : ""}${e.category ? ` [${e.category}]` : ""} ${e.extra}`,
       );
       return `### ${r.platform}\n${lines.join("\n")}`;
     });

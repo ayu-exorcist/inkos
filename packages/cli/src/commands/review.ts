@@ -1,9 +1,13 @@
 import { Command } from "commander";
-import { StateManager, formatLengthCount, readGenreProfile, resolveLengthCountingMode } from "@actalk/inkos-core";
+import {
+  StateManager,
+  formatLengthCount,
+  readGenreProfile,
+  resolveLengthCountingMode,
+} from "@actalk/inkos-core";
 import { findProjectRoot, resolveBookId, log, logError } from "../utils.js";
 
-export const reviewCommand = new Command("review")
-  .description("Review and approve chapters");
+export const reviewCommand = new Command("review").description("Review and approve chapters");
 
 reviewCommand
   .command("list")
@@ -29,8 +33,7 @@ reviewCommand
       for (const id of bookIds) {
         const index = await state.loadChapterIndex(id);
         const pending = index.filter(
-          (ch) =>
-            ch.status === "ready-for-review" || ch.status === "audit-failed",
+          (ch) => ch.status === "ready-for-review" || ch.status === "audit-failed",
         );
 
         if (pending.length === 0) continue;
@@ -84,9 +87,10 @@ reviewCommand
  * Parse "[book-id] <chapter>" style arguments from variadic args.
  * Supports: "3" (auto-detect book) or "my-book 3"
  */
-function parseBookAndChapter(
-  args: ReadonlyArray<string>,
-): { readonly bookIdArg: string | undefined; readonly chapterNum: number } {
+function parseBookAndChapter(args: ReadonlyArray<string>): {
+  readonly bookIdArg: string | undefined;
+  readonly chapterNum: number;
+} {
   if (args.length === 1) {
     const num = parseInt(args[0]!, 10);
     if (isNaN(num)) {
@@ -229,17 +233,21 @@ reviewCommand
       const discarded = await state.rollbackToChapter(bookId, rollbackTarget);
 
       if (opts.json) {
-        log(JSON.stringify({
-          bookId,
-          chapter: chapterNum,
-          status: "rejected",
-          rolledBackTo: rollbackTarget,
-          discarded,
-        }));
+        log(
+          JSON.stringify({
+            bookId,
+            chapter: chapterNum,
+            status: "rejected",
+            rolledBackTo: rollbackTarget,
+            discarded,
+          }),
+        );
       } else {
         log(`Chapter ${chapterNum} rejected. State rolled back to chapter ${rollbackTarget}.`);
         if (discarded.length > 1) {
-          log(`  Also discarded ${discarded.length - 1} subsequent chapter(s): ${discarded.filter((n) => n !== chapterNum).join(", ")}`);
+          log(
+            `  Also discarded ${discarded.length - 1} subsequent chapter(s): ${discarded.filter((n) => n !== chapterNum).join(", ")}`,
+          );
         }
       }
     } catch (e) {

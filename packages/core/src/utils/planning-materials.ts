@@ -6,11 +6,7 @@ import {
   retrieveMemorySelection,
   type MemorySelection,
 } from "./memory-retrieval.js";
-import {
-  readStoryFrame,
-  readVolumeMap,
-  readCurrentStateWithFallback,
-} from "./outline-paths.js";
+import { readStoryFrame, readVolumeMap, readCurrentStateWithFallback } from "./outline-paths.js";
 
 export interface PlanningSeedMaterials {
   readonly storyDir: string;
@@ -38,6 +34,7 @@ async function readFileOrDefault(path: string): Promise<string> {
   try {
     return await readFile(path, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return "(文件尚未创建)";
   }
 }
@@ -46,6 +43,7 @@ async function readBriefFile(path: string): Promise<string> {
   try {
     return await readFile(path, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return "";
   }
 }
@@ -68,16 +66,13 @@ async function readPreviousEndingExcerpt(
       return undefined;
     }
     const markdown = await readFile(join(chaptersDir, match), "utf-8");
-    const body = markdown
-      .split("\n")
-      .slice(1)
-      .join("\n")
-      .trim();
+    const body = markdown.split("\n").slice(1).join("\n").trim();
     if (!body) {
       return undefined;
     }
     return body.slice(-320).trim();
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }
@@ -138,7 +133,9 @@ export async function loadPlanningSeedMaterials(params: {
     currentState,
     chapterSummariesRaw,
     brief,
-    recentSummaries: chapterSummaries.slice(0, 4).sort((left, right) => left.chapter - right.chapter),
+    recentSummaries: chapterSummaries
+      .slice(0, 4)
+      .sort((left, right) => left.chapter - right.chapter),
     previousEndingHook: chapterSummaries[0]?.hookActivity || undefined,
     previousEndingExcerpt,
   };
@@ -152,10 +149,12 @@ export async function gatherPlanningMaterials(params: {
   readonly mustKeep?: ReadonlyArray<string>;
   readonly seed?: PlanningSeedMaterials;
 }): Promise<PlanningMaterials> {
-  const seed = params.seed ?? await loadPlanningSeedMaterials({
-    bookDir: params.bookDir,
-    chapterNumber: params.chapterNumber,
-  });
+  const seed =
+    params.seed ??
+    (await loadPlanningSeedMaterials({
+      bookDir: params.bookDir,
+      chapterNumber: params.chapterNumber,
+    }));
 
   const memorySelection = await retrieveMemorySelection({
     bookDir: params.bookDir,

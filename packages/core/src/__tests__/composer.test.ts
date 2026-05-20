@@ -43,17 +43,49 @@ describe("ComposerAgent", () => {
     };
 
     await Promise.all([
-      writeFile(join(storyDir, "author_intent.md"), "# Author Intent\n\nKeep the pressure on the mentor conflict.\n", "utf-8"),
-      writeFile(join(storyDir, "current_focus.md"), "# Current Focus\n\nBring the focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 4\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
-      writeFile(join(storyDir, "style_guide.md"), "# Style Guide\n\n- Keep the prose restrained.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "author_intent.md"),
+        "# Author Intent\n\nKeep the pressure on the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# Current Focus\n\nBring the focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 4\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "style_guide.md"),
+        "# Style Guide\n\n- Keep the prose restrained.\n",
+        "utf-8",
+      ),
     ]);
 
     const runtimePath = join(storyDir, "runtime", "chapter-0004.intent.md");
-    await writeFile(runtimePath, "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor conflict.\n", "utf-8");
+    await writeFile(
+      runtimePath,
+      "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor conflict.\n",
+      "utf-8",
+    );
 
     plan = {
       intent: {
@@ -113,7 +145,9 @@ describe("ComposerAgent", () => {
       "story/story_bible.md",
       "story/volume_outline.md",
     ]);
-    expect(selectedSources.some((source) => source.startsWith("story/pending_hooks.md"))).toBe(true);
+    expect(selectedSources.some((source) => source.startsWith("story/pending_hooks.md"))).toBe(
+      true,
+    );
     expect(selectedSources).not.toContain("story/style_guide.md");
     await expect(readFile(result.contextPath, "utf-8")).resolves.toContain("current_focus.md");
   });
@@ -242,42 +276,74 @@ describe("ComposerAgent", () => {
     await mkdir(stateDir, { recursive: true });
 
     await Promise.all([
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 25,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 25,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [
+      writeFile(
+        join(stateDir, "manifest.json"),
+        JSON.stringify(
           {
-            hookId: "recent-route",
-            startChapter: 22,
-            type: "route",
-            status: "open",
-            lastAdvancedChapter: 24,
-            expectedPayoff: "Recent route payoff",
-            notes: "Recent but not critical.",
+            schemaVersion: 2,
+            language: "en",
+            lastAppliedChapter: 25,
+            projectionVersion: 1,
+            migrationWarnings: [],
           },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "current_state.json"),
+        JSON.stringify(
           {
-            hookId: "stale-debt",
-            startChapter: 3,
-            type: "relationship",
-            status: "open",
-            lastAdvancedChapter: 8,
-            expectedPayoff: "Mentor debt payoff",
-            notes: "Long-stale but still unresolved.",
+            chapter: 25,
+            facts: [],
           },
-        ],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [
+              {
+                hookId: "recent-route",
+                startChapter: 22,
+                type: "route",
+                status: "open",
+                lastAdvancedChapter: 24,
+                expectedPayoff: "Recent route payoff",
+                notes: "Recent but not critical.",
+              },
+              {
+                hookId: "stale-debt",
+                startChapter: 3,
+                type: "relationship",
+                status: "open",
+                lastAdvancedChapter: 8,
+                expectedPayoff: "Mentor debt payoff",
+                notes: "Long-stale but still unresolved.",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     const composer = new ComposerAgent({
@@ -345,8 +411,8 @@ describe("ComposerAgent", () => {
       },
     });
 
-    const factEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/current_state.md#current-conflict",
+    const factEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/current_state.md#current-conflict",
     );
 
     expect(factEntry).toBeDefined();
@@ -449,17 +515,17 @@ describe("ComposerAgent", () => {
     expect(selectedSources).toContain("story/parent_canon.md");
     expect(selectedSources).toContain("story/fanfic_canon.md");
 
-    const titleEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/chapter_summaries.md#recent_titles",
+    const titleEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/chapter_summaries.md#recent_titles",
     );
-    const moodEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/chapter_summaries.md#recent_mood_type_trail",
+    const moodEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/chapter_summaries.md#recent_mood_type_trail",
     );
-    const parentCanonEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/parent_canon.md",
+    const parentCanonEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/parent_canon.md",
     );
-    const fanficCanonEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/fanfic_canon.md",
+    const fanficCanonEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/fanfic_canon.md",
     );
 
     expect(titleEntry?.excerpt).toContain("Ledger in Rain");
@@ -495,8 +561,8 @@ describe("ComposerAgent", () => {
       plan,
     });
 
-    const driftEntry = result.contextPackage.selectedContext.find((entry) =>
-      entry.source === "story/audit_drift.md",
+    const driftEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "story/audit_drift.md",
     );
     expect(driftEntry).toBeDefined();
     expect(driftEntry?.excerpt).toContain("节奏单调");
@@ -558,7 +624,9 @@ describe("ComposerAgent", () => {
       },
     });
 
-    const hookDebtEntry = result.contextPackage.selectedContext.find((entry) => entry.source === "runtime/hook_debt#mentor-oath");
+    const hookDebtEntry = result.contextPackage.selectedContext.find(
+      (entry) => entry.source === "runtime/hook_debt#mentor-oath",
+    );
     expect(hookDebtEntry).toBeDefined();
     expect(hookDebtEntry?.excerpt).toContain("mentor-oath");
     expect(hookDebtEntry?.excerpt).toContain("备忘引用旧债");
@@ -622,6 +690,8 @@ describe("ComposerAgent", () => {
       },
     });
 
-    expect(result.contextPackage.selectedContext.map((entry) => entry.source)).toContain("runtime/hook_debt#black-ring");
+    expect(result.contextPackage.selectedContext.map((entry) => entry.source)).toContain(
+      "runtime/hook_debt#black-ring",
+    );
   });
 });

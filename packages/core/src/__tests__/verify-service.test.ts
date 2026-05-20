@@ -10,7 +10,8 @@ describe("verifyService (B9)", () => {
   });
 
   it("probe 成功 → probe.ok=true + chat 字段非 null（chat 步骤被执行）", async () => {
-    global.fetch = vi.fn()
+    global.fetch = vi
+      .fn()
       // probe /models 成功
       .mockResolvedValueOnce({
         ok: true,
@@ -48,7 +49,8 @@ describe("verifyService (B9)", () => {
   });
 
   it("probe 使用显式 proxyUrl 连接 /models", async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: [{ id: "gpt-4o" }] }),

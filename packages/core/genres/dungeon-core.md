@@ -3,13 +3,36 @@ name: Dungeon Core
 id: dungeon-core
 language: en
 chapterTypes: ["Strategy", "Adventurer POV", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: true
 powerScaling: false
 eraResearch: false
 pacingRule: "Alternate dungeon POV (planning/building) with adventurer POV (exploration/combat) every 1-2 chapters. Expansion milestone every 5-8 chapters."
-satisfactionTypes: ["Trap Success", "Floor Expansion", "Minion Evolution", "Adventurer Defeated", "Resource Milestone", "Core Upgrade"]
-auditDimensions: [1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Trap Success",
+    "Floor Expansion",
+    "Minion Evolution",
+    "Adventurer Defeated",
+    "Resource Milestone",
+    "Core Upgrade",
+  ]
+auditDimensions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

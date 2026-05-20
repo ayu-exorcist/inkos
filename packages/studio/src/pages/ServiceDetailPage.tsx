@@ -24,7 +24,10 @@ function DetailSkeleton() {
     <div className="max-w-xl mx-auto space-y-6 animate-pulse">
       <div className="h-4 w-16 bg-muted rounded" />
       <div className="h-7 w-40 bg-muted rounded" />
-      <div className="space-y-2"><div className="h-3 w-16 bg-muted/60 rounded" /><div className="h-10 w-full bg-muted/40 rounded-lg" /></div>
+      <div className="space-y-2">
+        <div className="h-3 w-16 bg-muted/60 rounded" />
+        <div className="h-10 w-full bg-muted/40 rounded-lg" />
+      </div>
       <div className="h-9 w-24 bg-muted/40 rounded-lg" />
     </div>
   );
@@ -39,11 +42,15 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
   const setStoreModels = useServiceStore((s) => s.setLiveModels);
   const clearStoreModels = useServiceStore((s) => s.clearModels);
 
-  useEffect(() => { void fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+    void fetchServices();
+  }, [fetchServices]);
 
   const svc = services.find((s) => s.service === serviceId);
   const isCustom = serviceId === "custom" || serviceId.startsWith("custom:");
-  const persistedCustomName = serviceId.startsWith("custom:") ? decodeURIComponent(serviceId.slice("custom:".length)) : "";
+  const persistedCustomName = serviceId.startsWith("custom:")
+    ? decodeURIComponent(serviceId.slice("custom:".length))
+    : "";
 
   // -- Local form state --
   const [apiKey, setApiKey] = useState("");
@@ -72,16 +79,21 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
           setBaseUrl(String(matched.baseUrl ?? ""));
         }
         if (typeof matched.temperature === "number") setTemperature(String(matched.temperature));
-        if (matched.apiFormat === "chat" || matched.apiFormat === "responses") setApiFormat(matched.apiFormat);
+        if (matched.apiFormat === "chat" || matched.apiFormat === "responses")
+          setApiFormat(matched.apiFormat);
         if (typeof matched.stream === "boolean") setStream(matched.stream);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isCustom, persistedCustomName, serviceId]);
 
   const resolvedCustomName = persistedCustomName || customName.trim() || "Custom";
   const effectiveServiceId = isCustom ? `custom:${resolvedCustomName}` : serviceId;
-  const label = isCustom ? (customName || persistedCustomName || "自定义服务") : (svc?.label ?? serviceId);
+  const label = isCustom
+    ? customName || persistedCustomName || "自定义服务"
+    : (svc?.label ?? serviceId);
   const storeModels = useServiceStore((s) => s.modelsByService[effectiveServiceId]);
 
   useEffect(() => {
@@ -108,16 +120,10 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
         if (cancelled) return;
         setStatus({ state: "idle" });
       });
-    return () => { cancelled = true; };
-  }, [
-    apiFormat,
-    baseUrl,
-    effectiveServiceId,
-    isCustom,
-    setStoreModels,
-    stream,
-    svc?.connected,
-  ]);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiFormat, baseUrl, effectiveServiceId, isCustom, setStoreModels, stream, svc?.connected]);
 
   if (loading) return <DetailSkeleton />;
 
@@ -149,7 +155,8 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
       if (result.ok) {
         const models = result.models ?? [];
         const verifiedApiFormat = result.detected?.apiFormat ?? apiFormat;
-        const verifiedStream = typeof result.detected?.stream === "boolean" ? result.detected.stream : stream;
+        const verifiedStream =
+          typeof result.detected?.stream === "boolean" ? result.detected.stream : stream;
         const verifiedBaseUrl = isCustom ? (result.detected?.baseUrl ?? baseUrl.trim()) : "";
         if (result.detected?.apiFormat) setApiFormat(result.detected.apiFormat);
         if (typeof result.detected?.stream === "boolean") setStream(result.detected.stream);
@@ -215,7 +222,8 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
       });
       if (result.status.state === "connected") {
         if (result.detectedConfig?.apiFormat) setApiFormat(result.detectedConfig.apiFormat);
-        if (typeof result.detectedConfig?.stream === "boolean") setStream(result.detectedConfig.stream);
+        if (typeof result.detectedConfig?.stream === "boolean")
+          setStream(result.detectedConfig.stream);
         if (isCustom && result.detectedConfig?.baseUrl) setBaseUrl(result.detectedConfig.baseUrl);
         setDetectedModel(result.detectedModel);
         setDetectedConfig(result.detectedConfig);
@@ -257,14 +265,24 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
       <div className="space-y-5">
         {/* Custom fields */}
         {isCustom && (
-        <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Field label="服务名称">
-              <input type="text" value={customName} onChange={(e) => setCustomName(e.target.value)}
-                placeholder="例如：本地 Ollama" className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm" />
+              <input
+                type="text"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="例如：本地 Ollama"
+                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
+              />
             </Field>
             <Field label="Base URL">
-              <input type="text" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="https://api.example.com/v1" className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm font-mono" />
+              <input
+                type="text"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="https://api.example.com/v1"
+                className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm font-mono"
+              />
             </Field>
           </div>
         )}
@@ -273,12 +291,17 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
         <Field label="API Key">
           <div className="relative">
             <input
-              type={showKey ? "text" : "password"} value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)} placeholder="sk-..."
+              type={showKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="sk-..."
               className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 pr-10 text-sm font-mono"
             />
-            <button type="button" onClick={() => setShowKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowKey((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
               {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
@@ -286,19 +309,28 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
 
         {/* Actions + feedback */}
         <div className="flex items-center gap-2">
-          <button onClick={handleTest} disabled={isBusy}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg border border-border/60 hover:bg-secondary/50 transition-colors disabled:opacity-50">
+          <button
+            onClick={handleTest}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg border border-border/60 hover:bg-secondary/50 transition-colors disabled:opacity-50"
+          >
             {status.state === "testing" && <Loader2 size={12} className="animate-spin" />}
             测试连接
           </button>
-          <button onClick={handleSave} disabled={isBusy}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+          <button
+            onClick={handleSave}
+            disabled={isBusy}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
             {status.state === "saving" && <Loader2 size={12} className="animate-spin" />}
             保存
           </button>
           {(isConnected || isCustom) && (
-            <button onClick={handleDelete} disabled={isBusy}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50">
+            <button
+              onClick={handleDelete}
+              disabled={isBusy}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+            >
               <Trash2 size={12} />
               删除配置
             </button>
@@ -307,15 +339,15 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
           {status.state === "connected" && (
             <span className="text-xs text-emerald-500">
               连接成功，{models.length} 个模型
-              {detectedModel ? `，已自动匹配 ${detectedModel}${detectedConfig ? ` / ${detectedConfig.apiFormat === "responses" ? "Responses" : "Chat"} / ${detectedConfig.stream ? "流式" : "非流式"}` : ""}` : ""}
+              {detectedModel
+                ? `，已自动匹配 ${detectedModel}${detectedConfig ? ` / ${detectedConfig.apiFormat === "responses" ? "Responses" : "Chat"} / ${detectedConfig.stream ? "流式" : "非流式"}` : ""}`
+                : ""}
             </span>
           )}
           {status.state === "error" && (
             <span className="text-xs text-destructive">{status.message}</span>
           )}
-          {status.state === "saved" && (
-            <span className="text-xs text-emerald-500">已保存</span>
-          )}
+          {status.state === "saved" && <span className="text-xs text-emerald-500">已保存</span>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -351,7 +383,10 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
             {models.length > 0 ? (
               <div className="flex gap-1.5 flex-wrap">
                 {models.map((m) => (
-                  <span key={m.id} className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400 border border-emerald-500/15">
+                  <span
+                    key={m.id}
+                    className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400 border border-emerald-500/15"
+                  >
                     {m.name ?? m.id}
                   </span>
                 ))}
@@ -370,10 +405,24 @@ export function ServiceDetailPage({ serviceId, nav }: { serviceId: string; nav: 
           <div className="space-y-4 pt-2">
             <Field label="temperature">
               <div className="flex items-center gap-3">
-                <input type="range" min="0" max="2" step="0.05" value={temperature}
-                  onChange={(e) => setTemperature(e.target.value)} className="flex-1 accent-primary h-1" />
-                <input type="number" value={temperature} onChange={(e) => setTemperature(e.target.value)}
-                  min="0" max="2" step="0.05" className="w-16 rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-right font-mono" />
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.05"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                  className="flex-1 accent-primary h-1"
+                />
+                <input
+                  type="number"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                  min="0"
+                  max="2"
+                  step="0.05"
+                  className="w-16 rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-right font-mono"
+                />
               </div>
             </Field>
           </div>

@@ -143,11 +143,11 @@ export async function saveServiceConfig(args: {
   const verifiedBaseUrl = args.isCustom ? trimmedBaseUrl : "";
   const verified = args.verifiedProbe;
   const canReuseVerifiedProbe = Boolean(
-    verified
-      && verified.apiKey === trimmedKey
-      && verified.baseUrl === verifiedBaseUrl
-      && verified.apiFormat === args.apiFormat
-      && verified.stream === args.stream,
+    verified &&
+    verified.apiKey === trimmedKey &&
+    verified.baseUrl === verifiedBaseUrl &&
+    verified.apiFormat === args.apiFormat &&
+    verified.stream === args.stream,
   );
 
   let probe: ServiceProbeResponse;
@@ -160,12 +160,16 @@ export async function saveServiceConfig(args: {
     };
   } else {
     try {
-      probe = await probeServiceForDetail(args.effectiveServiceId, {
-        apiKey: trimmedKey,
-        apiFormat: args.apiFormat,
-        stream: args.stream,
-        ...(args.isCustom ? { baseUrl: trimmedBaseUrl } : {}),
-      }, { fetchJsonImpl });
+      probe = await probeServiceForDetail(
+        args.effectiveServiceId,
+        {
+          apiKey: trimmedKey,
+          apiFormat: args.apiFormat,
+          stream: args.stream,
+          ...(args.isCustom ? { baseUrl: trimmedBaseUrl } : {}),
+        },
+        { fetchJsonImpl },
+      );
     } catch (error) {
       return {
         status: { state: "error", message: error instanceof Error ? error.message : "连接失败" },
@@ -186,7 +190,8 @@ export async function saveServiceConfig(args: {
   const detectedModel = probe.selectedModel ?? args.detectedModel;
   const detectedConfig = probe.detected ?? null;
   const savedApiFormat = detectedConfig?.apiFormat ?? args.apiFormat;
-  const savedStream = typeof detectedConfig?.stream === "boolean" ? detectedConfig.stream : args.stream;
+  const savedStream =
+    typeof detectedConfig?.stream === "boolean" ? detectedConfig.stream : args.stream;
   const savedBaseUrl = args.isCustom ? (detectedConfig?.baseUrl ?? trimmedBaseUrl) : undefined;
 
   await fetchJsonImpl(`/services/${encodeURIComponent(args.effectiveServiceId)}/secret`, {
@@ -207,10 +212,12 @@ export async function saveServiceConfig(args: {
           temperature: parseFloat(args.temperature),
           apiFormat: savedApiFormat,
           stream: savedStream,
-          ...(args.isCustom ? {
-            name: args.resolvedCustomName,
-            baseUrl: savedBaseUrl,
-          } : {}),
+          ...(args.isCustom
+            ? {
+                name: args.resolvedCustomName,
+                baseUrl: savedBaseUrl,
+              }
+            : {}),
         },
       ],
     }),

@@ -1,8 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { Agent } from "@mariozechner/pi-agent-core";
-import type { AgentEvent, AgentMessage } from "@mariozechner/pi-agent-core";
-import { streamSimple, getModel, getEnvApiKey } from "@mariozechner/pi-ai";
-import type { Model, Api, AssistantMessage, Message, ToolResultMessage, UserMessage } from "@mariozechner/pi-ai";
+import { Agent } from "@earendil-works/pi-agent-core";
+import type { AgentEvent, AgentMessage } from "@earendil-works/pi-agent-core";
+import { streamSimple, getModel, getEnvApiKey } from "@earendil-works/pi-ai";
+import type {
+  Model,
+  Api,
+  AssistantMessage,
+  Message,
+  ToolResultMessage,
+  UserMessage,
+} from "@earendil-works/pi-ai";
 import type { PipelineRunner } from "../pipeline/runner.js";
 import { buildAgentSystemPrompt } from "./agent-system-prompt.js";
 import {
@@ -17,10 +24,7 @@ import {
   createGenerateCoverTool,
 } from "./agent-tools.js";
 import { createBookContextTransform } from "./context-transform.js";
-import {
-  appendTranscriptEvents,
-  readTranscriptEvents,
-} from "../interaction/session-transcript.js";
+import { appendTranscriptEvents, readTranscriptEvents } from "../interaction/session-transcript.js";
 import {
   TOOL_RESULT_BRIDGE_TEXT,
   adaptRestoredAgentMessagesForModel,
@@ -137,12 +141,7 @@ function envFlagEnabled(value: string | undefined, defaultValue: boolean): boole
 }
 
 function agentModelIdentity(model: Model<Api>): string {
-  return [
-    model.api,
-    model.provider,
-    model.baseUrl ?? "",
-    model.id,
-  ].join("::");
+  return [model.api, model.provider, model.baseUrl ?? "", model.id].join("::");
 }
 
 function sessionQueueKey(projectRoot: string, sessionId: string): string {
@@ -235,17 +234,19 @@ async function ensureSessionCreatedEvent(
     if (events.some((event) => event.type === "session_created")) return [];
 
     const now = Date.now();
-    return [{
-      type: "session_created",
-      version: 1,
-      sessionId,
-      seq: nextSeq,
-      timestamp: now,
-      bookId,
-      title: null,
-      createdAt: now,
-      updatedAt: now,
-    }];
+    return [
+      {
+        type: "session_created",
+        version: 1,
+        sessionId,
+        seq: nextSeq,
+        timestamp: now,
+        bookId,
+        title: null,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
   });
 }
 
@@ -276,7 +277,12 @@ function extractTextFromAssistant(msg: AssistantMessage): string {
 function lastAssistantMessage(messages: AgentMessage[]): AssistantMessage | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-    if (msg && typeof msg === "object" && "role" in msg && (msg as { role?: unknown }).role === "assistant") {
+    if (
+      msg &&
+      typeof msg === "object" &&
+      "role" in msg &&
+      (msg as { role?: unknown }).role === "assistant"
+    ) {
       return msg as AssistantMessage;
     }
   }
@@ -287,8 +293,8 @@ function assistantErrorMessage(message: AssistantMessage | undefined): string | 
   return message &&
     (message.stopReason === "error" || message.stopReason === "aborted") &&
     message.errorMessage
-      ? message.errorMessage
-      : undefined;
+    ? message.errorMessage
+    : undefined;
 }
 
 function convertAgentMessagesForModel(messages: AgentMessage[], model: Model<Api>): Message[] {
@@ -298,21 +304,21 @@ function convertAgentMessagesForModel(messages: AgentMessage[], model: Model<Api
   });
 
   const candidate = model as { api?: unknown; baseUrl?: unknown };
-  const isGoogleOpenAICompatible = (
+  const isGoogleOpenAICompatible =
     candidate.api === "openai-completions" &&
     typeof candidate.baseUrl === "string" &&
-    candidate.baseUrl.includes("generativelanguage.googleapis.com")
-  );
+    candidate.baseUrl.includes("generativelanguage.googleapis.com");
   if (!isGoogleOpenAICompatible) return llmMessages;
 
   const converted: Message[] = [];
   const pushToolResultsAsUser = (toolResults: ToolResultMessage[]) => {
     const lines = toolResults.flatMap((result) => {
-      const content = result.content
-        .map((block) => block.type === "text" ? block.text : "[image]")
-        .filter(Boolean)
-        .join("\n")
-        .trim() || "(empty tool result)";
+      const content =
+        result.content
+          .map((block) => (block.type === "text" ? block.text : "[image]"))
+          .filter(Boolean)
+          .join("\n")
+          .trim() || "(empty tool result)";
       return [`- ${result.toolName} (${result.toolCallId}):`, content];
     });
     converted.push({
@@ -322,10 +328,11 @@ function convertAgentMessagesForModel(messages: AgentMessage[], model: Model<Api
         ...lines,
         "Use these tool results to answer the active user request. If a tool failed, explain the failure and choose the next useful action.",
       ].join("\n"),
-      timestamp: toolResults.reduce(
-        (max, result) => Math.max(max, messageTimestamp(result as AgentMessage)),
-        0,
-      ) || Date.now(),
+      timestamp:
+        toolResults.reduce(
+          (max, result) => Math.max(max, messageTimestamp(result as AgentMessage)),
+          0,
+        ) || Date.now(),
     });
   };
 
@@ -401,9 +408,7 @@ function extractThinkingFromAssistant(msg: AssistantMessage): string {
  * Convert plain `{ role, content }` messages (from BookSession disk storage)
  * back into pi-agent AgentMessage format so they can be loaded into an Agent.
  */
-function plainToAgentMessages(
-  plain: Array<{ role: string; content: string }>,
-): AgentMessage[] {
+function plainToAgentMessages(plain: Array<{ role: string; content: string }>): AgentMessage[] {
   return plain.map((m) => {
     const ts = Date.now();
     if (m.role === "user") {
@@ -417,7 +422,14 @@ function plainToAgentMessages(
       api: "anthropic-messages",
       provider: "anthropic",
       model: "unknown",
-      usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+      usage: {
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        totalTokens: 0,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+      },
       stopReason: "stop",
       timestamp: ts,
     } satisfies AssistantMessage;
@@ -438,20 +450,24 @@ function agentMessagesToPlain(
     const m = msg as { role: string; [k: string]: any };
 
     if (m.role === "user") {
-      const content = typeof m.content === "string"
-        ? m.content
-        : Array.isArray(m.content)
+      const content =
+        typeof m.content === "string"
           ? m.content
-              .filter((c: any) => c.type === "text")
-              .map((c: any) => c.text)
-              .join("")
-          : "";
+          : Array.isArray(m.content)
+            ? m.content
+                .filter((c: any) => c.type === "text")
+                .map((c: any) => c.text)
+                .join("")
+            : "";
       if (content) out.push({ role: "user", content });
     } else if (m.role === "assistant") {
       const text = extractTextFromAssistant(m as AssistantMessage);
       const thinking = extractThinkingFromAssistant(m as AssistantMessage);
       if (text || thinking) {
-        const entry: { role: string; content: string; thinking?: string } = { role: "assistant", content: text };
+        const entry: { role: string; content: string; thinking?: string } = {
+          role: "assistant",
+          content: text,
+        };
         if (thinking) entry.thinking = thinking;
         out.push(entry);
       }
@@ -504,7 +520,7 @@ export async function runAgentSession(
   initialMessages?: Array<{ role: string; content: string }>,
 ): Promise<AgentSessionResult> {
   return runInAgentSessionQueue(config.projectRoot, config.sessionId, () =>
-    runAgentSessionUnlocked(config, userMessage, initialMessages)
+    runAgentSessionUnlocked(config, userMessage, initialMessages),
   );
 }
 
@@ -522,7 +538,8 @@ async function runAgentSessionUnlocked(
   const bookId: string | null = config.bookId ? assertSafeBookId(config.bookId) : null;
   const model = resolveModel(config.model);
   const requestedModelIdentity = agentModelIdentity(model);
-  const allowSystemFileRead = config.allowSystemFileRead ?? envFlagEnabled(process.env.INKOS_AGENT_ALLOW_SYSTEM_READ, false);
+  const allowSystemFileRead =
+    config.allowSystemFileRead ?? envFlagEnabled(process.env.INKOS_AGENT_ALLOW_SYSTEM_READ, false);
   const cacheKey = agentCacheKey(projectRoot, sessionId);
 
   // ----- Resolve or create Agent -----
@@ -562,11 +579,12 @@ async function runAgentSessionUnlocked(
       await restoreAgentMessagesFromTranscript(projectRoot, sessionId),
       model,
     );
-    const initialAgentMessages = restoredMessages.length > 0
-      ? restoredMessages
-      : initialMessages && initialMessages.length > 0
-        ? plainToAgentMessages(initialMessages)
-        : [];
+    const initialAgentMessages =
+      restoredMessages.length > 0
+        ? restoredMessages
+        : initialMessages && initialMessages.length > 0
+          ? plainToAgentMessages(initialMessages)
+          : [];
     const agent = new Agent({
       initialState: {
         model,
@@ -592,7 +610,7 @@ async function runAgentSessionUnlocked(
       modelIdentity: requestedModelIdentity,
       apiKey: config.apiKey,
       allowSystemFileRead,
-      lastCommittedSeq: currentCommittedSeq ?? await latestCommittedSeq(projectRoot, sessionId),
+      lastCommittedSeq: currentCommittedSeq ?? (await latestCommittedSeq(projectRoot, sessionId)),
       lastActive: Date.now(),
     };
     agentCache.set(cacheKey, cached);
@@ -644,9 +662,7 @@ async function runAgentSessionUnlocked(
       timestamp: messageTimestamp(event.message),
       piTurnIndex,
       ...(toolCallId ? { toolCallId } : {}),
-      ...(isToolResult && lastAssistantUuid
-        ? { sourceToolAssistantUuid: lastAssistantUuid }
-        : {}),
+      ...(isToolResult && lastAssistantUuid ? { sourceToolAssistantUuid: lastAssistantUuid } : {}),
       message: event.message,
     }));
 

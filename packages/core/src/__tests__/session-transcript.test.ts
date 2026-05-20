@@ -136,15 +136,17 @@ describe("session transcript codec", () => {
   it("atomically assigns unique seq for concurrent generated events", async () => {
     await Promise.all(
       Array.from({ length: 10 }, (_, index) =>
-        appendTranscriptEvents(projectRoot, "s-concurrent", ({ nextSeq }) => [{
-          type: "request_started",
-          version: 1,
-          sessionId: "s-concurrent",
-          requestId: `r-${index}`,
-          seq: nextSeq,
-          timestamp: 100 + index,
-          input: `input-${index}`,
-        }]),
+        appendTranscriptEvents(projectRoot, "s-concurrent", ({ nextSeq }) => [
+          {
+            type: "request_started",
+            version: 1,
+            sessionId: "s-concurrent",
+            requestId: `r-${index}`,
+            seq: nextSeq,
+            timestamp: 100 + index,
+            input: `input-${index}`,
+          },
+        ]),
       ),
     );
 
@@ -154,23 +156,30 @@ describe("session transcript codec", () => {
   });
 
   it("appendManualSessionMessages 写入 committed request 并保留 raw assistant message", async () => {
-    await appendManualSessionMessages(projectRoot, "s1", [{
-      role: "assistant",
-      content: [{ type: "text", text: "fallback" }],
-      api: "anthropic-messages",
-      provider: "anthropic",
-      model: "fake",
-      usage: {
-        input: 0,
-        output: 0,
-        cacheRead: 0,
-        cacheWrite: 0,
-        totalTokens: 0,
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-      },
-      stopReason: "stop",
-      timestamp: 10,
-    }], "fallback-input");
+    await appendManualSessionMessages(
+      projectRoot,
+      "s1",
+      [
+        {
+          role: "assistant",
+          content: [{ type: "text", text: "fallback" }],
+          api: "anthropic-messages",
+          provider: "anthropic",
+          model: "fake",
+          usage: {
+            input: 0,
+            output: 0,
+            cacheRead: 0,
+            cacheWrite: 0,
+            totalTokens: 0,
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+          },
+          stopReason: "stop",
+          timestamp: 10,
+        },
+      ],
+      "fallback-input",
+    );
 
     const events = await readTranscriptEvents(projectRoot, "s1");
     expect(events.map((event) => event.type)).toEqual([

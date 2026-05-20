@@ -11,7 +11,9 @@ import {
 
 export const DEFAULT_HOOK_LOOKAHEAD_CHAPTERS = 3;
 
-function normalizeStoredHookStatus(status: string): "resolved" | "deferred" | "progressing" | "open" {
+function normalizeStoredHookStatus(
+  status: string,
+): "resolved" | "deferred" | "progressing" | "open" {
   if (/^(resolved|closed|done|已回收|已解决)$/i.test(status.trim())) return "resolved";
   if (/^(deferred|paused|hold|延后|延期|搁置|暂缓)$/i.test(status.trim())) return "deferred";
   if (/^(progressing|advanced|重大推进|持续推进)$/i.test(status.trim())) return "progressing";
@@ -75,10 +77,19 @@ const LABELS: Record<"zh" | "en", Record<HookPayoffTiming, string>> = {
 };
 
 const TIMING_ALIASES: Array<[HookPayoffTiming, RegExp]> = [
-  ["immediate", /^(?:立即|马上|当章|本章|下一章|immediate|instant|next(?:\s+chapter|\s+beat)?|right\s+away)$/i],
-  ["near-term", /^(?:近期|近几章|短线|soon|short(?:\s+run)?|near(?:\s*-\s*|\s+)term|current\s+sequence)$/i],
+  [
+    "immediate",
+    /^(?:立即|马上|当章|本章|下一章|immediate|instant|next(?:\s+chapter|\s+beat)?|right\s+away)$/i,
+  ],
+  [
+    "near-term",
+    /^(?:近期|近几章|短线|soon|short(?:\s+run)?|near(?:\s*-\s*|\s+)term|current\s+sequence)$/i,
+  ],
   ["mid-arc", /^(?:中程|中期|卷中|mid(?:\s*-\s*|\s+)arc|mid(?:\s*-\s*|\s+)book|middle)$/i],
-  ["slow-burn", /^(?:慢烧|长线|后续|later|late(?:r)?|long(?:\s*-\s*|\s+)arc|slow(?:\s*-\s*|\s+)burn)$/i],
+  [
+    "slow-burn",
+    /^(?:慢烧|长线|后续|later|late(?:r)?|long(?:\s*-\s*|\s+)arc|slow(?:\s*-\s*|\s+)burn)$/i,
+  ],
   ["endgame", /^(?:终局|终章|大结局|最终|climax|finale|endgame|late\s+book)$/i],
 ];
 
@@ -90,7 +101,9 @@ const SIGNAL_PATTERNS: Array<[HookPayoffTiming, RegExp]> = [
   ["slow-burn", /(长线|慢烧|后续发酵|慢慢揭开|later|slow burn|long arc|long tail)/i],
 ];
 
-export function normalizeHookPayoffTiming(value: string | undefined | null): HookPayoffTiming | undefined {
+export function normalizeHookPayoffTiming(
+  value: string | undefined | null,
+): HookPayoffTiming | undefined {
   const normalized = value?.trim();
   if (!normalized) return undefined;
 
@@ -127,17 +140,16 @@ export function resolveHookPayoffTiming(params: {
   readonly expectedPayoff?: string;
   readonly notes?: string;
 }): HookPayoffTiming {
-  return normalizeHookPayoffTiming(params.payoffTiming)
-    ?? inferHookPayoffTiming({
+  return (
+    normalizeHookPayoffTiming(params.payoffTiming) ??
+    inferHookPayoffTiming({
       expectedPayoff: params.expectedPayoff,
       notes: params.notes,
-    });
+    })
+  );
 }
 
-export function localizeHookPayoffTiming(
-  timing: HookPayoffTiming,
-  language: "zh" | "en",
-): string {
+export function localizeHookPayoffTiming(timing: HookPayoffTiming, language: "zh" | "en"): string {
   return LABELS[language][timing];
 }
 
@@ -167,24 +179,25 @@ export function describeHookLifecycle(params: {
   const age = Math.max(0, params.chapterNumber - Math.max(1, params.startChapter));
   const lastTouchChapter = Math.max(params.startChapter, params.lastAdvancedChapter);
   const dormancy = Math.max(0, params.chapterNumber - Math.max(1, lastTouchChapter));
-  const explicitProgressing = /^(progressing|advanced|重大推进|持续推进)$/i.test(params.status.trim());
+  const explicitProgressing = /^(progressing|advanced|重大推进|持续推进)$/i.test(
+    params.status.trim(),
+  );
   const phaseReady = HOOK_PHASE_WEIGHT[phase] >= HOOK_PHASE_WEIGHT[profile.minimumPhase];
   const recentlyTouched = dormancy <= HOOK_ACTIVITY_THRESHOLDS.recentlyTouchedDormancy;
   const overdue = phaseReady && age >= profile.overdueAge;
-  const cadenceReady = timing === "slow-burn"
-    ? phase === "late" || overdue
-    : timing === "endgame"
-      ? phase === "late"
-      : true;
+  const cadenceReady =
+    timing === "slow-burn"
+      ? phase === "late" || overdue
+      : timing === "endgame"
+        ? phase === "late"
+        : true;
   const momentum = explicitProgressing || recentlyTouched;
-  const stale = phaseReady && (
-    dormancy >= profile.staleDormancy
-    || (overdue && !momentum)
-  );
-  const readyToResolve = phaseReady
-    && cadenceReady
-    && age >= profile.earliestResolveAge
-    && (momentum || (overdue && explicitProgressing));
+  const stale = phaseReady && (dormancy >= profile.staleDormancy || (overdue && !momentum));
+  const readyToResolve =
+    phaseReady &&
+    cadenceReady &&
+    age >= profile.earliestResolveAge &&
+    (momentum || (overdue && explicitProgressing));
 
   return {
     timing,
@@ -194,18 +207,19 @@ export function describeHookLifecycle(params: {
     readyToResolve,
     stale,
     overdue,
-    advancePressure: age
-      + dormancy
-      + (stale ? HOOK_PRESSURE_WEIGHTS.staleAdvanceBonus : 0)
-      + (overdue ? HOOK_PRESSURE_WEIGHTS.overdueAdvanceBonus : 0),
+    advancePressure:
+      age +
+      dormancy +
+      (stale ? HOOK_PRESSURE_WEIGHTS.staleAdvanceBonus : 0) +
+      (overdue ? HOOK_PRESSURE_WEIGHTS.overdueAdvanceBonus : 0),
     resolvePressure: readyToResolve
-      ? profile.resolveBias * HOOK_PRESSURE_WEIGHTS.resolveBiasMultiplier
-        + (explicitProgressing ? HOOK_PRESSURE_WEIGHTS.progressingResolveBonus : 0)
-        + Math.min(
+      ? profile.resolveBias * HOOK_PRESSURE_WEIGHTS.resolveBiasMultiplier +
+        (explicitProgressing ? HOOK_PRESSURE_WEIGHTS.progressingResolveBonus : 0) +
+        Math.min(
           HOOK_PRESSURE_WEIGHTS.maxDormancyResolveBonus,
           dormancy * HOOK_PRESSURE_WEIGHTS.dormancyResolveMultiplier,
-        )
-        + (overdue ? HOOK_PRESSURE_WEIGHTS.overdueResolveBonus : 0)
+        ) +
+        (overdue ? HOOK_PRESSURE_WEIGHTS.overdueResolveBonus : 0)
       : 0,
   };
 }

@@ -1,11 +1,25 @@
 import { Command } from "commander";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join, resolve, basename } from "node:path";
-import { deriveBookIdFromTitle, normalizePlatformOrOther, PipelineRunner, type BookConfig, type FanficMode } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  deriveBookIdFromTitle,
+  normalizePlatformOrOther,
+  PipelineRunner,
+  type BookConfig,
+  type FanficMode,
+} from "@actalk/inkos-core";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 
-export const fanficCommand = new Command("fanfic")
-  .description("Fan fiction writing tools (同人创作)");
+export const fanficCommand = new Command("fanfic").description(
+  "Fan fiction writing tools (同人创作)",
+);
 
 fanficCommand
   .command("init")
@@ -35,7 +49,9 @@ fanficCommand
       const sourceName = basename(sourcePath);
 
       if (!sourceText || sourceText.length < 100) {
-        throw new Error(`源素材文件内容过短（${sourceText.length} 字符）。请提供至少 100 字符的原作素材。`);
+        throw new Error(
+          `源素材文件内容过短（${sourceText.length} 字符）。请提供至少 100 字符的原作素材。`,
+        );
       }
 
       const bookId = deriveBookIdFromTitle(opts.title) || `book-${Date.now().toString(36)}`;
@@ -62,15 +78,21 @@ fanficCommand
       await pipeline.initFanficBook(book, sourceText, sourceName, mode);
 
       if (opts.json) {
-        log(JSON.stringify({
-          bookId,
-          title: book.title,
-          genre: book.genre,
-          fanficMode: mode,
-          source: sourceName,
-          location: `books/${bookId}/`,
-          nextStep: `inkos write next ${bookId}`,
-        }, null, 2));
+        log(
+          JSON.stringify(
+            {
+              bookId,
+              title: book.title,
+              genre: book.genre,
+              fanficMode: mode,
+              source: sourceName,
+              location: `books/${bookId}/`,
+              nextStep: `inkos write next ${bookId}`,
+            },
+            null,
+            2,
+          ),
+        );
       } else {
         log(`Fanfic created: ${bookId}`);
         log(`  Mode: ${mode}`);
@@ -107,6 +129,7 @@ fanficCommand
       try {
         canon = await readFile(join(bookDir, "story/fanfic_canon.md"), "utf-8");
       } catch {
+        // failure expected, safe to ignore
         throw new Error(`该书没有同人正典文件。用 inkos fanfic init 创建同人书。`);
       }
 

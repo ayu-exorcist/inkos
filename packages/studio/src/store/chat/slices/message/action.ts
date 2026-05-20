@@ -19,8 +19,7 @@ import {
 } from "./runtime";
 
 export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions> = (set, get) => ({
-  activateSession: (sessionId) =>
-    set({ activeSessionId: sessionId }),
+  activateSession: (sessionId) => set({ activeSessionId: sessionId }),
 
   setInput: (text) => set({ input: text }),
 
@@ -42,7 +41,10 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
           };
         }
         return {
-          messages: [...session.messages, { role: "assistant", content: text, timestamp: streamTs }],
+          messages: [
+            ...session.messages,
+            { role: "assistant", content: text, timestamp: streamTs },
+          ],
         };
       }),
     })),
@@ -82,7 +84,10 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
   addErrorMessage: (sessionId, errorMsg) =>
     set((state) => ({
       sessions: updateSession(state.sessions, sessionId, (session) => ({
-        messages: [...session.messages, { role: "assistant", content: `\u2717 ${errorMsg}`, timestamp: Date.now() }],
+        messages: [
+          ...session.messages,
+          { role: "assistant", content: `\u2717 ${errorMsg}`, timestamp: Date.now() },
+        ],
         lastError: errorMsg,
       })),
     })),
@@ -100,7 +105,9 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
   loadSessionList: async (bookId) => {
     const query = bookId === null ? "null" : encodeURIComponent(bookId);
     try {
-      const data = await fetchJson<{ sessions: ReadonlyArray<SessionSummary> }>(`/sessions?bookId=${query}`);
+      const data = await fetchJson<{ sessions: ReadonlyArray<SessionSummary> }>(
+        `/sessions?bookId=${query}`,
+      );
       set((state) => {
         let sessions = state.sessions;
         for (const summary of data.sessions) {
@@ -116,6 +123,7 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
       });
       return data.sessions;
     } catch {
+      // failure expected, safe to ignore
       return [];
     }
   },
@@ -193,6 +201,7 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
         body: JSON.stringify({ title }),
       });
     } catch {
+      // failure expected, safe to ignore
       set((state) => ({
         sessions: updateSession(state.sessions, sessionId, () => ({ title: previous })),
       }));
@@ -257,11 +266,12 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
           sessions: {
             ...state.sessions,
             [detailSessionId]: {
-              ...(runtime ?? createSessionRuntime({
-                sessionId: detailSessionId,
-                bookId: nextBookId,
-                title: detail.title ?? null,
-              })),
+              ...(runtime ??
+                createSessionRuntime({
+                  sessionId: detailSessionId,
+                  bookId: nextBookId,
+                  title: detail.title ?? null,
+                })),
               bookId: nextBookId,
               title: detail.title ?? runtime?.title ?? null,
               messages,
@@ -269,10 +279,9 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
           },
           sessionIdsByBook: {
             ...state.sessionIdsByBook,
-            [bookKey(nextBookId)]: mergeSessionIds(
-              state.sessionIdsByBook[bookKey(nextBookId)],
-              [detailSessionId],
-            ),
+            [bookKey(nextBookId)]: mergeSessionIds(state.sessionIdsByBook[bookKey(nextBookId)], [
+              detailSessionId,
+            ]),
           },
         };
       });
@@ -387,7 +396,8 @@ export const createMessageSlice: StateCreator<ChatStore, [], [], MessageActions>
           }));
         }
       } else {
-        const emptyMessage = "模型未返回文本内容。请检查协议类型（chat/responses）、流式开关或上游服务兼容性。";
+        const emptyMessage =
+          "模型未返回文本内容。请检查协议类型（chat/responses）、流式开关或上游服务兼容性。";
         if (hasStream) {
           get().replaceStreamWithError(sessionId, streamTs, emptyMessage);
         } else {

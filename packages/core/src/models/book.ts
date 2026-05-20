@@ -16,7 +16,12 @@ export function normalizePlatformId(platform: unknown): Platform | undefined {
   const lowered = raw.toLowerCase();
   const compact = lowered.replace(/[\s_-]+/g, "");
 
-  if (compact === "tomato" || compact === "fanqie" || compact === "fanqienovel" || raw.includes("番茄")) {
+  if (
+    compact === "tomato" ||
+    compact === "fanqie" ||
+    compact === "fanqienovel" ||
+    raw.includes("番茄")
+  ) {
     return "tomato";
   }
   if (compact === "qidian" || compact === "qidianzhongwenwang" || raw.includes("起点")) {

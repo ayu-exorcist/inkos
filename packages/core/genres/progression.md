@@ -3,13 +3,36 @@ name: Progression Fantasy
 id: progression
 language: en
 chapterTypes: ["Training", "Breakthrough", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: false
 powerScaling: true
 eraResearch: false
 pacingRule: "Tier advancement every 2-4 chapters early, every 8-15 mid-story, every 20+ late-story. Each tier must feel fundamentally different."
-satisfactionTypes: ["Tier Breakthrough", "Technique Mastery", "Rival Surpassed", "Mentor Transcended", "Power Combination Discovered", "Impossible Challenge Overcome"]
-auditDimensions: [1,2,3,4,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Tier Breakthrough",
+    "Technique Mastery",
+    "Rival Surpassed",
+    "Mentor Transcended",
+    "Power Combination Discovered",
+    "Impossible Challenge Overcome",
+  ]
+auditDimensions: [1, 2, 3, 4, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

@@ -16,7 +16,11 @@ import { renderMarkdown } from "./markdown.js";
 import { buildDashboardViewModel, type DashboardMessageRow } from "./dashboard-model.js";
 import { buildInputHistory, moveHistoryCursor } from "./input-history.js";
 import { formatModeLabel, getTuiCopy, normalizeStageLabel, type TuiLocale } from "./i18n.js";
-import { loadProjectSession, persistProjectSession, resolveSessionActiveBook } from "./session-store.js";
+import {
+  loadProjectSession,
+  persistProjectSession,
+  resolveSessionActiveBook,
+} from "./session-store.js";
 import { classifyLocalTuiCommand, parseDepthCommand } from "./local-commands.js";
 import {
   applySlashSuggestion,
@@ -25,9 +29,16 @@ import {
   SLASH_COMMANDS,
 } from "./slash-autocomplete.js";
 import {
-  WARM_ACCENT, WARM_BORDER, WARM_MUTED, WARM_REPLY,
-  STATUS_SUCCESS, STATUS_ERROR, STATUS_ACTIVE, STATUS_IDLE,
-  ROLE_USER, ROLE_SYSTEM,
+  WARM_ACCENT,
+  WARM_BORDER,
+  WARM_MUTED,
+  WARM_REPLY,
+  STATUS_SUCCESS,
+  STATUS_ERROR,
+  STATUS_ACTIVE,
+  STATUS_IDLE,
+  ROLE_USER,
+  ROLE_SYSTEM,
   isAppleTerminal,
 } from "./theme.js";
 
@@ -80,7 +91,11 @@ export function InkTuiDashboard(props: InkTuiDashboardProps): React.JSX.Element 
     scrollOffset: props.scrollOffset,
   });
   const activeAccent = props.isSubmitting ? WARM_ACCENT : statusColor(model.executionStatus);
-  const composer = renderComposerDisplay(props.inputValue, model.composerPlaceholder, props.showComposerCursor ?? false);
+  const composer = renderComposerDisplay(
+    props.inputValue,
+    model.composerPlaceholder,
+    props.showComposerCursor ?? false,
+  );
 
   const separatorWidth = Math.max(20, (process.stdout.columns ?? 60) - 8);
   const thinRule = "─".repeat(separatorWidth);
@@ -97,7 +112,10 @@ export function InkTuiDashboard(props: InkTuiDashboardProps): React.JSX.Element 
           model.messageRows.map((row) => <ConversationRow key={row.key} row={row} />)
         ) : (
           <Box marginY={1}>
-            <Text color={WARM_MUTED} italic>  {copy.composer.emptyConversation}</Text>
+            <Text color={WARM_MUTED} italic>
+              {" "}
+              {copy.composer.emptyConversation}
+            </Text>
           </Box>
         )}
       </Box>
@@ -142,7 +160,9 @@ export function InkTuiDashboard(props: InkTuiDashboardProps): React.JSX.Element 
                 const isSelected = index === (props.selectedSlashIndex ?? 0);
                 return (
                   <Box key={suggestion}>
-                    <Text color={isSelected ? WARM_ACCENT : WARM_BORDER}>{isSelected ? "› " : "  "}</Text>
+                    <Text color={isSelected ? WARM_ACCENT : WARM_BORDER}>
+                      {isSelected ? "› " : "  "}
+                    </Text>
                     <Text color={isSelected ? WARM_REPLY : WARM_MUTED} bold={isSelected}>
                       {suggestion}
                     </Text>
@@ -175,7 +195,9 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
     cursor: null,
     draft: "",
   });
-  const [activityIntent, setActivityIntent] = useState<InteractionIntentType | "unknown">("unknown");
+  const [activityIntent, setActivityIntent] = useState<InteractionIntentType | "unknown">(
+    "unknown",
+  );
   const [activityFrameIndex, setActivityFrameIndex] = useState(0);
   const [chatDepth, setChatDepth] = useState<ChatDepth>("normal");
   const assistantDraftTimestampRef = useRef<number | null>(null);
@@ -209,14 +231,15 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
     });
   }
 
-  props.chatStreamBridge && (props.chatStreamBridge.onTextDelta = (text: string) => {
-    const timestamp = assistantDraftTimestampRef.current;
-    if (timestamp === null) {
-      return;
-    }
+  props.chatStreamBridge &&
+    (props.chatStreamBridge.onTextDelta = (text: string) => {
+      const timestamp = assistantDraftTimestampRef.current;
+      if (timestamp === null) {
+        return;
+      }
 
-    setSession((current) => appendStreamingAssistantChunk(current, text, timestamp));
-  });
+      setSession((current) => appendStreamingAssistantChunk(current, text, timestamp));
+    });
 
   useInput((_input, key) => {
     if (key.escape) {
@@ -242,12 +265,16 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
     }
 
     if (slashSuggestions.length > 0 && key.downArrow) {
-      setSelectedSlashIndex((current) => getNextSlashSelection(current, slashSuggestions.length, "down"));
+      setSelectedSlashIndex((current) =>
+        getNextSlashSelection(current, slashSuggestions.length, "down"),
+      );
       return;
     }
 
     if (slashSuggestions.length > 0 && key.upArrow) {
-      setSelectedSlashIndex((current) => getNextSlashSelection(current, slashSuggestions.length, "up"));
+      setSelectedSlashIndex((current) =>
+        getNextSlashSelection(current, slashSuggestions.length, "up"),
+      );
       return;
     }
 
@@ -290,11 +317,13 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
 
   const appendSystemNote = (content: string) => {
     setLastError(undefined);
-    setSession((current) => appendInteractionMessage(current, {
-      role: "system",
-      content,
-      timestamp: Date.now(),
-    }));
+    setSession((current) =>
+      appendInteractionMessage(current, {
+        role: "system",
+        content,
+        timestamp: Date.now(),
+      }),
+    );
   };
 
   const handleSubmit = async (rawValue: string) => {
@@ -423,7 +452,9 @@ export function InkTuiApp(props: InkTuiAppProps): React.JSX.Element {
       onInputChange={(value) => {
         setInputValue(value);
         setSelectedSlashIndex(0);
-        setHistoryState((current) => current.cursor === null ? current : { cursor: null, draft: value });
+        setHistoryState((current) =>
+          current.cursor === null ? current : { cursor: null, draft: value },
+        );
       }}
       onSubmit={(value) => {
         void handleSubmit(value);
@@ -451,8 +482,12 @@ function ConversationRow(props: { readonly row: DashboardMessageRow }): React.JS
   if (role === "user") {
     return (
       <Box flexDirection="row" marginBottom={1}>
-        <Box minWidth={2}><Text color={ROLE_USER}>│</Text></Box>
-        <Box flexDirection="column" flexShrink={1}><Text color={ROLE_USER}>{content}</Text></Box>
+        <Box minWidth={2}>
+          <Text color={ROLE_USER}>│</Text>
+        </Box>
+        <Box flexDirection="column" flexShrink={1}>
+          <Text color={ROLE_USER}>{content}</Text>
+        </Box>
       </Box>
     );
   }
@@ -460,8 +495,12 @@ function ConversationRow(props: { readonly row: DashboardMessageRow }): React.JS
   if (role === "system") {
     return (
       <Box flexDirection="row" marginBottom={1}>
-        <Box minWidth={2}><Text color={ROLE_SYSTEM}>·</Text></Box>
-        <Box flexDirection="column" flexShrink={1}><Text color={ROLE_SYSTEM}>{content}</Text></Box>
+        <Box minWidth={2}>
+          <Text color={ROLE_SYSTEM}>·</Text>
+        </Box>
+        <Box flexDirection="column" flexShrink={1}>
+          <Text color={ROLE_SYSTEM}>{content}</Text>
+        </Box>
       </Box>
     );
   }
@@ -469,13 +508,20 @@ function ConversationRow(props: { readonly row: DashboardMessageRow }): React.JS
   // assistant — render markdown (bold, tables, code, etc.)
   return (
     <Box flexDirection="row" marginBottom={1}>
-      <Box minWidth={2}><Text color={WARM_ACCENT}>◆</Text></Box>
-      <Box flexDirection="column" flexShrink={1}><Text color={WARM_REPLY}>{renderMarkdown(content)}</Text></Box>
+      <Box minWidth={2}>
+        <Text color={WARM_ACCENT}>◆</Text>
+      </Box>
+      <Box flexDirection="column" flexShrink={1}>
+        <Text color={WARM_REPLY}>{renderMarkdown(content)}</Text>
+      </Box>
     </Box>
   );
 }
 
-function ExecutionBadge(props: { readonly status: string; readonly color?: string }): React.JSX.Element {
+function ExecutionBadge(props: {
+  readonly status: string;
+  readonly color?: string;
+}): React.JSX.Element {
   const icon = statusIcon(props.status);
   return (
     <Text color={props.color ?? statusColor(props.status)} bold>

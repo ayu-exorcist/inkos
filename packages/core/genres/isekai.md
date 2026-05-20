@@ -3,13 +3,36 @@ name: Isekai / Portal Fantasy
 id: isekai
 language: en
 chapterTypes: ["Exploration", "Adaptation", "Setup", "Transition", "Payoff", "Combat"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: false
 powerScaling: true
 eraResearch: false
 pacingRule: "Establish new world rules by chapter 3. Cultural adaptation and fish-out-of-water moments every 2-3 chapters early. Skip tutorial-town syndrome — no 50 pages hitting rats."
-satisfactionTypes: ["World Rule Discovered", "Cultural Clash Resolved", "Real-World Skill Applied", "New Ability Gained", "Relationship Formed", "Identity Established in New World"]
-auditDimensions: [1,2,3,4,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "World Rule Discovered",
+    "Cultural Clash Resolved",
+    "Real-World Skill Applied",
+    "New Ability Gained",
+    "Relationship Formed",
+    "Identity Established in New World",
+  ]
+auditDimensions: [1, 2, 3, 4, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

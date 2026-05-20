@@ -77,13 +77,33 @@ describe("deriveActiveBookIds", () => {
 
 describe("shouldRefetchBookView", () => {
   it("refreshes the book detail view after terminal background jobs for that book", () => {
-    expect(shouldRefetchBookView(msg("write:complete", { bookId: "alpha" }, 1), "alpha")).toBe(true);
-    expect(shouldRefetchBookView(msg("draft:error", { bookId: "alpha", error: "quota" }, 1), "alpha")).toBe(true);
-    expect(shouldRefetchBookView(msg("rewrite:complete", { bookId: "alpha", chapterNumber: 3 }, 1), "alpha")).toBe(true);
-    expect(shouldRefetchBookView(msg("revise:error", { bookId: "alpha", error: "bad" }, 1), "alpha")).toBe(true);
-    expect(shouldRefetchBookView(msg("audit:complete", { bookId: "alpha", chapter: 3, passed: true }, 1), "alpha")).toBe(true);
-    expect(shouldRefetchBookView(msg("audit:start", { bookId: "alpha", chapter: 3 }, 1), "alpha")).toBe(false);
-    expect(shouldRefetchBookView(msg("rewrite:complete", { bookId: "beta" }, 1), "alpha")).toBe(false);
+    expect(shouldRefetchBookView(msg("write:complete", { bookId: "alpha" }, 1), "alpha")).toBe(
+      true,
+    );
+    expect(
+      shouldRefetchBookView(msg("draft:error", { bookId: "alpha", error: "quota" }, 1), "alpha"),
+    ).toBe(true);
+    expect(
+      shouldRefetchBookView(
+        msg("rewrite:complete", { bookId: "alpha", chapterNumber: 3 }, 1),
+        "alpha",
+      ),
+    ).toBe(true);
+    expect(
+      shouldRefetchBookView(msg("revise:error", { bookId: "alpha", error: "bad" }, 1), "alpha"),
+    ).toBe(true);
+    expect(
+      shouldRefetchBookView(
+        msg("audit:complete", { bookId: "alpha", chapter: 3, passed: true }, 1),
+        "alpha",
+      ),
+    ).toBe(true);
+    expect(
+      shouldRefetchBookView(msg("audit:start", { bookId: "alpha", chapter: 3 }, 1), "alpha"),
+    ).toBe(false);
+    expect(shouldRefetchBookView(msg("rewrite:complete", { bookId: "beta" }, 1), "alpha")).toBe(
+      false,
+    );
   });
 });
 
@@ -93,7 +113,9 @@ describe("shouldRefetchBookCollections", () => {
     expect(shouldRefetchBookCollections(msg("book:deleted", { bookId: "alpha" }, 1))).toBe(true);
     expect(shouldRefetchBookCollections(msg("write:complete", { bookId: "alpha" }, 1))).toBe(true);
     expect(shouldRefetchBookCollections(msg("draft:error", { bookId: "alpha" }, 1))).toBe(true);
-    expect(shouldRefetchBookCollections(msg("rewrite:complete", { bookId: "alpha" }, 1))).toBe(true);
+    expect(shouldRefetchBookCollections(msg("rewrite:complete", { bookId: "alpha" }, 1))).toBe(
+      true,
+    );
     expect(shouldRefetchBookCollections(msg("audit:start", { bookId: "alpha" }, 1))).toBe(false);
     expect(shouldRefetchBookCollections(undefined)).toBe(false);
   });
@@ -114,10 +136,25 @@ describe("applyBookCollectionEvent", () => {
       { id: "alpha", title: "Alpha", genre: "urban", status: "active", chaptersWritten: 3 },
     ];
 
-    expect(applyBookCollectionEvent(books, msg("book:created", {
-      bookId: "beta",
-      book: { id: "beta", title: "Beta", genre: "xuanhuan", status: "outlining", chaptersWritten: 0 },
-    }, 1))).toEqual([
+    expect(
+      applyBookCollectionEvent(
+        books,
+        msg(
+          "book:created",
+          {
+            bookId: "beta",
+            book: {
+              id: "beta",
+              title: "Beta",
+              genre: "xuanhuan",
+              status: "outlining",
+              chaptersWritten: 0,
+            },
+          },
+          1,
+        ),
+      ),
+    ).toEqual([
       { id: "alpha", title: "Alpha", genre: "urban", status: "active", chaptersWritten: 3 },
       { id: "beta", title: "Beta", genre: "xuanhuan", status: "outlining", chaptersWritten: 0 },
     ]);

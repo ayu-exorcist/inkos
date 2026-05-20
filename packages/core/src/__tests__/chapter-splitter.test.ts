@@ -27,11 +27,7 @@ describe("splitChapters", () => {
   });
 
   it("uses a 第N回 fallback title when a classical Chinese heading has no title text", () => {
-    const input = [
-      "第一回",
-      "",
-      "天下大勢，分久必合，合久必分。",
-    ].join("\n");
+    const input = ["第一回", "", "天下大勢，分久必合，合久必分。"].join("\n");
 
     const chapters = splitChapters(input);
 
@@ -88,11 +84,7 @@ describe("splitChapters", () => {
   });
 
   it("uses an English fallback title when the chapter heading has no title text", () => {
-    const input = [
-      "Chapter 1",
-      "",
-      "The harbor bells rang before dawn.",
-    ].join("\n");
+    const input = ["Chapter 1", "", "The harbor bells rang before dawn."].join("\n");
 
     const chapters = splitChapters(input);
 
@@ -125,11 +117,7 @@ describe("splitChapters", () => {
   });
 
   it("keeps English fallback titles when a custom regex matches Roman numeral headings", () => {
-    const input = [
-      "CHAPTER I.",
-      "",
-      "The harbor bells rang before dawn.",
-    ].join("\n");
+    const input = ["CHAPTER I.", "", "The harbor bells rang before dawn."].join("\n");
 
     const chapters = splitChapters(input, "^CHAPTER\\s+[IVXLCDM]+\\.$");
 

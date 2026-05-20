@@ -41,9 +41,7 @@ describe("renderMarkdown", () => {
   });
 
   it("renders tables with box-drawing characters", () => {
-    const result = renderMarkdown(
-      "| 属性 | 值 |\n|------|----|\n| 住所 | 桥洞 |",
-    );
+    const result = renderMarkdown("| 属性 | 值 |\n|------|----|\n| 住所 | 桥洞 |");
     expect(result).toContain("┌");
     expect(result).toContain("│");
     expect(result).toContain("└");

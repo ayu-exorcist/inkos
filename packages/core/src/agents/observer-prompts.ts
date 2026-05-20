@@ -13,15 +13,15 @@ export function buildObserverSystemPrompt(
 ): string {
   const isEnglish = (language ?? genreProfile.language) === "en";
 
-  const langPrefix = isEnglish
-    ? "【LANGUAGE OVERRIDE】ALL output MUST be in English.\n\n"
-    : "";
+  const langPrefix = isEnglish ? "【LANGUAGE OVERRIDE】ALL output MUST be in English.\n\n" : "";
 
   return `${langPrefix}${isEnglish ? "You are" : "你是"}${isEnglish ? " a fact extraction specialist" : "一个事实提取专家"}。${isEnglish ? "Read the chapter text and extract EVERY observable fact change." : "阅读章节正文，提取每一个可观察到的事实变化。"}
 
 ${isEnglish ? "## Extraction Categories" : "## 提取类别"}
 
-${isEnglish ? `1. **Character actions**: Who did what, to whom, why
+${
+  isEnglish
+    ? `1. **Character actions**: Who did what, to whom, why
 2. **Location changes**: Who moved where, from where
 3. **Resource changes**: Items gained, lost, consumed, quantities
 4. **Relationship changes**: New encounters, trust/distrust shifts, alliances, betrayals
@@ -29,7 +29,8 @@ ${isEnglish ? `1. **Character actions**: Who did what, to whom, why
 6. **Information flow**: Who learned what, who is still unaware
 7. **Plot threads**: New mysteries planted, existing threads advanced, threads resolved
 8. **Time progression**: How much time passed, time markers mentioned
-9. **Physical state**: Injuries, healing, fatigue, power changes` : `1. **角色行为**：谁做了什么，对谁，为什么
+9. **Physical state**: Injuries, healing, fatigue, power changes`
+    : `1. **角色行为**：谁做了什么，对谁，为什么
 2. **位置变化**：谁去了哪里，从哪里来
 3. **资源变化**：获得、失去、消耗了什么，具体数量
 4. **关系变化**：新相遇、信任/不信任转变、结盟、背叛
@@ -37,25 +38,32 @@ ${isEnglish ? `1. **Character actions**: Who did what, to whom, why
 6. **信息流动**：谁知道了什么新信息，谁仍然不知情
 7. **剧情线索**：新埋下的悬念、已有线索的推进、线索的解答
 8. **时间推进**：过了多少时间，提到的时间标记
-9. **身体状态**：受伤、恢复、疲劳、战力变化`}
+9. **身体状态**：受伤、恢复、疲劳、战力变化`
+}
 
 ${isEnglish ? "## Rules" : "## 规则"}
 
-${isEnglish ? `- Extract from the TEXT ONLY — do not infer what might happen
+${
+  isEnglish
+    ? `- Extract from the TEXT ONLY — do not infer what might happen
 - Over-extract: if unsure whether something is significant, include it
 - Be specific: "Lin Chen's left arm fractured" not "Lin Chen got hurt"
 - Include chapter-internal time markers
-- Note which characters are present in each scene` : `- 只从正文提取——不推测可能发生的事
+- Note which characters are present in each scene`
+    : `- 只从正文提取——不推测可能发生的事
 - 宁多勿少：不确定是否重要时也要记录
 - 具体化："陆承烬左肩旧伤开裂" 而非 "陆承烬受伤了"
 - 记录章节内的时间标记
-- 标注每个场景中在场的角色`}
+- 标注每个场景中在场的角色`
+}
 
 ${isEnglish ? "## Output Format" : "## 输出格式"}
 
 === OBSERVATIONS ===
 
-${isEnglish ? `[CHARACTERS]
+${
+  isEnglish
+    ? `[CHARACTERS]
 - <name>: <action/state change> (scene: <location>)
 
 [LOCATIONS]
@@ -83,7 +91,8 @@ ${isEnglish ? `[CHARACTERS]
 - <time markers, duration>
 
 [PHYSICAL_STATE]
-- <character>: <injury/healing/fatigue/power change>` : `[角色行为]
+- <character>: <injury/healing/fatigue/power change>`
+    : `[角色行为]
 - <角色名>: <行为/状态变化> (场景: <地点>)
 
 [位置变化]
@@ -111,7 +120,8 @@ ${isEnglish ? `[CHARACTERS]
 - <时间标记、时长>
 
 [身体状态]
-- <角色>: <受伤/恢复/疲劳/战力变化>`}`;
+- <角色>: <受伤/恢复/疲劳/战力变化>`
+}`;
 }
 
 export function buildObserverUserPrompt(

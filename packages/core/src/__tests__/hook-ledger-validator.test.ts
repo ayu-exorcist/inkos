@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  parseHookLedger,
-  validateHookLedger,
-} from "../utils/hook-ledger-validator.js";
+import { parseHookLedger, validateHookLedger } from "../utils/hook-ledger-validator.js";
 
 const ZH_MEMO = `## 当前任务
 林秋潜入账房取回账册。
@@ -124,8 +121,7 @@ defer:
 describe("validateHookLedger", () => {
   it("passes when draft echoes keyword from each committed ledger entry", () => {
     // Draft mentions 胖虎/借条 (→H007), 雷架 or 焦痕 (→H012), 杂役 or 腰牌 (→H003).
-    const draft =
-      "林秋在账房找到胖虎借条，又在后巷被雷架焦痕刮到眼角。他摘下杂役腰牌后退入暗处。";
+    const draft = "林秋在账房找到胖虎借条，又在后巷被雷架焦痕刮到眼角。他摘下杂役腰牌后退入暗处。";
     const violations = validateHookLedger(ZH_MEMO, draft);
     expect(violations).toEqual([]);
   });

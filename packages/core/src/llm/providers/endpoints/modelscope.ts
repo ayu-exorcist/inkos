@@ -20,7 +20,12 @@ export const MODELSCOPE: InkosEndpoint = {
   models: [
     { id: "Qwen/Qwen3-Next-80B-A3B-Thinking", maxOutput: 4096, contextWindowTokens: 131072 },
     { id: "Qwen/Qwen3-Next-80B-A3B-Instruct", maxOutput: 4096, contextWindowTokens: 131072 },
-    { id: "deepseek-ai/DeepSeek-V3.2", maxOutput: 4096, contextWindowTokens: 131072, enabled: true },
+    {
+      id: "deepseek-ai/DeepSeek-V3.2",
+      maxOutput: 4096,
+      contextWindowTokens: 131072,
+      enabled: true,
+    },
     { id: "deepseek-ai/DeepSeek-V3.2-Exp", maxOutput: 4096, contextWindowTokens: 131072 },
     { id: "deepseek-ai/DeepSeek-V3.1", maxOutput: 4096, contextWindowTokens: 131072 },
     { id: "deepseek-ai/DeepSeek-R1-0528", maxOutput: 4096, contextWindowTokens: 131072 },

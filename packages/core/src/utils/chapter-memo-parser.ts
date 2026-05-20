@@ -32,10 +32,22 @@ interface RequiredSection {
 
 const REQUIRED_SECTIONS: ReadonlyArray<RequiredSection> = [
   { zh: "## 当前任务", en: "## Current task", minContentChars: 20 },
-  { zh: "## 读者此刻在等什么", en: "## What the reader is waiting for right now", minContentChars: 20 },
+  {
+    zh: "## 读者此刻在等什么",
+    en: "## What the reader is waiting for right now",
+    minContentChars: 20,
+  },
   { zh: "## 该兑现的 / 暂不掀的", en: "## To pay off / to keep buried", minContentChars: 20 },
-  { zh: "## 日常/过渡承担什么任务", en: "## What the slow / transitional beats carry", minContentChars: 20 },
-  { zh: "## 关键抉择过三连问", en: "## Three-question check on the key choice", minContentChars: 20 },
+  {
+    zh: "## 日常/过渡承担什么任务",
+    en: "## What the slow / transitional beats carry",
+    minContentChars: 20,
+  },
+  {
+    zh: "## 关键抉择过三连问",
+    en: "## Three-question check on the key choice",
+    minContentChars: 20,
+  },
   { zh: "## 章尾必须发生的改变", en: "## Required end-of-chapter change", minContentChars: 20 },
   { zh: "## 本章 hook 账", en: "## Hook ledger for this chapter", minContentChars: 20 },
   { zh: "## 不要做", en: "## Do not", minContentChars: 1 },
@@ -53,9 +65,7 @@ function extractSectionContent(body: string, heading: string): string {
   // Find the next H2 heading on its own line. The leading newline + ## guards
   // against false matches inside the current section's prose.
   const nextHeadingMatch = after.match(/\n##\s/);
-  const sectionRaw = nextHeadingMatch
-    ? after.slice(0, nextHeadingMatch.index)
-    : after;
+  const sectionRaw = nextHeadingMatch ? after.slice(0, nextHeadingMatch.index) : after;
   return sectionRaw.replace(/\s+/g, " ").trim();
 }
 
@@ -102,18 +112,14 @@ export function parseMemo(
     throw new PlannerParseError("chapter must be an integer");
   }
   if (f.chapter !== expectedChapter) {
-    throw new PlannerParseError(
-      `chapter mismatch: expected ${expectedChapter}, got ${f.chapter}`,
-    );
+    throw new PlannerParseError(`chapter mismatch: expected ${expectedChapter}, got ${f.chapter}`);
   }
 
   if (typeof f.goal !== "string" || f.goal.length === 0) {
     throw new PlannerParseError("goal must be a non-empty string");
   }
   if (f.goal.length > 50) {
-    throw new PlannerParseError(
-      `goal too long: ${f.goal.length} chars (max 50)`,
-    );
+    throw new PlannerParseError(`goal too long: ${f.goal.length} chars (max 50)`);
   }
 
   const missing = REQUIRED_SECTIONS.filter(
@@ -121,9 +127,7 @@ export function parseMemo(
   );
   if (missing.length > 0) {
     // Report by zh heading (canonical) so the LLM-feedback loop stays stable.
-    throw new PlannerParseError(
-      `missing sections: ${missing.map((s) => s.zh).join(", ")}`,
-    );
+    throw new PlannerParseError(`missing sections: ${missing.map((s) => s.zh).join(", ")}`);
   }
 
   // Phase hotfix 7: each section's payload must be non-empty (≥ minContentChars).
@@ -137,9 +141,7 @@ export function parseMemo(
     return content.length < section.minContentChars;
   });
   if (empty.length > 0) {
-    const detail = empty
-      .map((s) => `${s.zh} (need ≥ ${s.minContentChars} chars)`)
-      .join(", ");
+    const detail = empty.map((s) => `${s.zh} (need ≥ ${s.minContentChars} chars)`).join(", ");
     throw new PlannerParseError(`empty sections: ${detail}`);
   }
 

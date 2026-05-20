@@ -72,7 +72,11 @@ export function arbitrateRuntimeStateDeltaHooks(params: {
         }
 
         if (isPureRestatement(candidate, matched)) {
-          if (!upsertsById.has(matched.hookId) && !resolves.includes(matched.hookId) && !defers.includes(matched.hookId)) {
+          if (
+            !upsertsById.has(matched.hookId) &&
+            !resolves.includes(matched.hookId) &&
+            !defers.includes(matched.hookId)
+          ) {
             mentions.add(matched.hookId);
           }
           decisions.push({
@@ -109,10 +113,7 @@ export function arbitrateRuntimeStateDeltaHooks(params: {
     const created = createCanonicalHook({
       candidate,
       chapter: delta.chapter,
-      existingIds: new Set([
-        ...workingHooks.map((hook) => hook.hookId),
-        ...upsertsById.keys(),
-      ]),
+      existingIds: new Set([...workingHooks.map((hook) => hook.hookId), ...upsertsById.keys()]),
     });
     upsertsById.set(created.hookId, created);
     workingHooks.push(created);
@@ -191,11 +192,9 @@ function buildCanonicalHookId(
     return preferred;
   }
 
-  const base = slugifyHookStem([
-    candidate.type,
-    candidate.expectedPayoff,
-    candidate.notes,
-  ].join(" "));
+  const base = slugifyHookStem(
+    [candidate.type, candidate.expectedPayoff, candidate.notes].join(" "),
+  );
   let next = base;
   let suffix = 2;
 
@@ -223,16 +222,12 @@ function slugifyHookStem(value: string): string {
 }
 
 function isPureRestatement(candidate: NewHookCandidate, existing: HookRecord): boolean {
-  const candidateText = normalizeText([
-    candidate.type,
-    candidate.expectedPayoff,
-    candidate.notes,
-  ].join(" "));
-  const existingText = normalizeText([
-    existing.type,
-    existing.expectedPayoff,
-    existing.notes,
-  ].join(" "));
+  const candidateText = normalizeText(
+    [candidate.type, candidate.expectedPayoff, candidate.notes].join(" "),
+  );
+  const existingText = normalizeText(
+    [existing.type, existing.expectedPayoff, existing.notes].join(" "),
+  );
 
   if (!candidateText) return true;
   if (candidateText === existingText) return true;
@@ -259,9 +254,11 @@ function replaceWorkingHook(workingHooks: HookRecord[], hook: HookRecord): void 
 }
 
 function sortHooks(left: HookRecord, right: HookRecord): number {
-  return left.startChapter - right.startChapter
-    || left.lastAdvancedChapter - right.lastAdvancedChapter
-    || left.hookId.localeCompare(right.hookId);
+  return (
+    left.startChapter - right.startChapter ||
+    left.lastAdvancedChapter - right.lastAdvancedChapter ||
+    left.hookId.localeCompare(right.hookId)
+  );
 }
 
 function uniqueStrings(values: ReadonlyArray<string>): string[] {

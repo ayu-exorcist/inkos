@@ -51,7 +51,9 @@ describe("buildImportFoundationSource", () => {
         content: `OPEN-${n}\n${"正文".repeat(3000)}\nTAIL-${n}`,
       };
     });
-    const fullText = chapters.map((chapter, index) => `第${index + 1}章 ${chapter.title}\n\n${chapter.content}`).join("\n\n---\n\n");
+    const fullText = chapters
+      .map((chapter, index) => `第${index + 1}章 ${chapter.title}\n\n${chapter.content}`)
+      .join("\n\n---\n\n");
 
     const source = buildImportFoundationSource(chapters, "zh", {
       maxFullTextChars: 20_000,
@@ -263,7 +265,10 @@ describe("PipelineRunner", () => {
       const runtimeDir = join(input.bookDir, "story", "runtime");
       const { mkdir: mkdirFs, writeFile: writeFileFs } = await import("node:fs/promises");
       await mkdirFs(runtimeDir, { recursive: true });
-      const runtimePath = join(runtimeDir, `chapter-${String(chapterNumber).padStart(4, "0")}.intent.md`);
+      const runtimePath = join(
+        runtimeDir,
+        `chapter-${String(chapterNumber).padStart(4, "0")}.intent.md`,
+      );
       await writeFileFs(runtimePath, intentMarkdown, "utf-8");
       return {
         intent: {
@@ -416,7 +421,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundation").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: "# Current State\n",
       pendingHooks: "# Pending Hooks\n",
     });
@@ -466,13 +471,15 @@ describe("PipelineRunner", () => {
       projectRoot: root,
     });
 
-    const generateFoundationSpy = vi.spyOn(ArchitectAgent.prototype, "generateFoundation").mockResolvedValue({
-      storyBible: "# Story Bible\n",
-      volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
-      currentState: "# Current State\n",
-      pendingHooks: "# Pending Hooks\n",
-    });
+    const generateFoundationSpy = vi
+      .spyOn(ArchitectAgent.prototype, "generateFoundation")
+      .mockResolvedValue({
+        storyBible: "# Story Bible\n",
+        volumeOutline: "# Volume Outline\n",
+        bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
+        currentState: "# Current State\n",
+        pendingHooks: "# Pending Hooks\n",
+      });
 
     try {
       await runner.initBook(book, {
@@ -488,12 +495,15 @@ describe("PipelineRunner", () => {
       );
 
       const storyDir = join(root, "books", bookId, "story");
-      await expect(readFile(join(storyDir, "author_intent.md"), "utf-8"))
-        .resolves.toContain("冷硬、克制、利益驱动");
-      await expect(readFile(join(storyDir, "current_focus.md"), "utf-8"))
-        .resolves.toContain("旧账线和港口势力网");
-      await expect(readFile(join(storyDir, "brief.md"), "utf-8"))
-        .resolves.toContain("近未来港口城");
+      await expect(readFile(join(storyDir, "author_intent.md"), "utf-8")).resolves.toContain(
+        "冷硬、克制、利益驱动",
+      );
+      await expect(readFile(join(storyDir, "current_focus.md"), "utf-8")).resolves.toContain(
+        "旧账线和港口势力网",
+      );
+      await expect(readFile(join(storyDir, "brief.md"), "utf-8")).resolves.toContain(
+        "近未来港口城",
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -518,7 +528,7 @@ describe("PipelineRunner", () => {
     const foundation = {
       storyBible: "# Story Bible",
       volumeOutline: "# Volume Outline",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules',
       currentState: "# Current State",
       pendingHooks: "# Pending Hooks",
     };
@@ -552,16 +562,18 @@ describe("PipelineRunner", () => {
       });
 
     try {
-      const result = await (runner as unknown as {
-        generateAndReviewFoundation: (params: {
-          readonly generate: (reviewFeedback?: string) => Promise<typeof foundation>;
-          readonly reviewer: FoundationReviewerAgent;
-          readonly mode: "original";
-          readonly language: "zh";
-          readonly stageLanguage: "zh";
-          readonly maxRetries: number;
-        }) => Promise<typeof foundation>;
-      }).generateAndReviewFoundation({
+      const result = await (
+        runner as unknown as {
+          generateAndReviewFoundation: (params: {
+            readonly generate: (reviewFeedback?: string) => Promise<typeof foundation>;
+            readonly reviewer: FoundationReviewerAgent;
+            readonly mode: "original";
+            readonly language: "zh";
+            readonly stageLanguage: "zh";
+            readonly maxRetries: number;
+          }) => Promise<typeof foundation>;
+        }
+      ).generateAndReviewFoundation({
         generate,
         reviewer,
         mode: "original",
@@ -603,7 +615,7 @@ describe("PipelineRunner", () => {
     const foundation = {
       storyBible: "# Story Bible",
       volumeOutline: "# Volume Outline",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules',
       currentState: "# Current State",
       pendingHooks: "# Pending Hooks",
     };
@@ -619,15 +631,17 @@ describe("PipelineRunner", () => {
     });
 
     try {
-      await (runner as unknown as {
-        generateAndReviewFoundation: (params: {
-          readonly generate: (reviewFeedback?: string) => Promise<typeof foundation>;
-          readonly reviewer: FoundationReviewerAgent;
-          readonly mode: "original";
-          readonly language: "zh";
-          readonly stageLanguage: "zh";
-        }) => Promise<typeof foundation>;
-      }).generateAndReviewFoundation({
+      await (
+        runner as unknown as {
+          generateAndReviewFoundation: (params: {
+            readonly generate: (reviewFeedback?: string) => Promise<typeof foundation>;
+            readonly reviewer: FoundationReviewerAgent;
+            readonly mode: "original";
+            readonly language: "zh";
+            readonly stageLanguage: "zh";
+          }) => Promise<typeof foundation>;
+        }
+      ).generateAndReviewFoundation({
         generate,
         reviewer,
         mode: "original",
@@ -644,32 +658,36 @@ describe("PipelineRunner", () => {
     }
   });
 
-  it("bootstraps missing control documents for legacy books before writing", async () => {
-    const { root, runner, bookId } = await createRunnerFixture();
+  it(
+    "bootstraps missing control documents for legacy books before writing",
+    async () => {
+      const { root, runner, bookId } = await createRunnerFixture();
 
-    vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
-      createWriterOutput({
-        chapterNumber: 1,
-        content: "Legacy chapter body.",
-        wordCount: "Legacy chapter body.".length,
-      }),
-    );
+      vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
+        createWriterOutput({
+          chapterNumber: 1,
+          content: "Legacy chapter body.",
+          wordCount: "Legacy chapter body.".length,
+        }),
+      );
 
-    try {
-      await runner.writeDraft(bookId);
+      try {
+        await runner.writeDraft(bookId);
 
-      const storyDir = join(root, "books", bookId, "story");
-      const authorIntent = await readFile(join(storyDir, "author_intent.md"), "utf-8");
-      const currentFocus = await readFile(join(storyDir, "current_focus.md"), "utf-8");
-      const runtimeDir = await stat(join(storyDir, "runtime"));
+        const storyDir = join(root, "books", bookId, "story");
+        const authorIntent = await readFile(join(storyDir, "author_intent.md"), "utf-8");
+        const currentFocus = await readFile(join(storyDir, "current_focus.md"), "utf-8");
+        const runtimeDir = await stat(join(storyDir, "runtime"));
 
-      expect(authorIntent).toContain("Author Intent");
-      expect(currentFocus).toContain("Current Focus");
-      expect(runtimeDir.isDirectory()).toBe(true);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  }, SLOW_PIPELINE_TEST_TIMEOUT_MS);
+        expect(authorIntent).toContain("Author Intent");
+        expect(currentFocus).toContain("Current Focus");
+        expect(runtimeDir.isDirectory()).toBe(true);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+    SLOW_PIPELINE_TEST_TIMEOUT_MS,
+  );
 
   it("cleans staged files when initBook fails before foundation is complete", async () => {
     const root = await mkdtemp(join(tmpdir(), "inkos-init-rollback-"));
@@ -718,76 +736,101 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
-    const planChapter = vi.spyOn(PlannerAgent.prototype, "planChapter").mockImplementation(async (input) => {
-      const runtimeDir = join(input.bookDir, "story", "runtime");
-      await mkdir(runtimeDir, { recursive: true });
-      const goal = "Ignore the guild chase and bring focus back to mentor conflict.";
-      const memo = {
-        chapter: input.chapterNumber,
-        goal,
-        isGoldenOpening: true,
-        body: "",
-        threadRefs: [] as string[],
-      };
-      const intentMarkdown = [
-        "# Chapter Intent",
-        "",
-        "## Goal",
-        goal,
-        "",
-        "## Outline Node",
-        "Track the merchant guild trail.",
-        "",
-        "## Must Keep",
-        "- Lin Yue still hides the broken oath token.",
-        "",
-        "## Must Avoid",
-        "- none",
-        "",
-        "## Style Emphasis",
-        "- none",
-        "",
-        "## Conflicts",
-        "- outline_vs_request: allow local outline deferral",
-        "",
-        "## Chapter Brief",
-        "- chapterType: confrontation",
-        "- isGoldenOpening: true",
-        "",
-        "### Beat Outline",
-        "- opening: Open on the conflict.",
-        "",
-        "### Hook Plan",
-        "- none",
-        "",
-        "### Props And Setting",
-        "- broken oath token",
-        "",
-      ].join("\n");
-      const runtimePath = join(runtimeDir, `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`);
-      await writeFile(runtimePath, intentMarkdown, "utf-8");
-      return {
-        intent: {
+    const planChapter = vi
+      .spyOn(PlannerAgent.prototype, "planChapter")
+      .mockImplementation(async (input) => {
+        const runtimeDir = join(input.bookDir, "story", "runtime");
+        await mkdir(runtimeDir, { recursive: true });
+        const goal = "Ignore the guild chase and bring focus back to mentor conflict.";
+        const memo = {
           chapter: input.chapterNumber,
           goal,
-          outlineNode: "Track the merchant guild trail.",
-          mustKeep: ["Lin Yue still hides the broken oath token."],
-          mustAvoid: [],
-          styleEmphasis: [],
-        },
-        memo,
-        intentMarkdown,
-        plannerInputs: [runtimePath],
-        runtimePath,
-      };
-    });
+          isGoldenOpening: true,
+          body: "",
+          threadRefs: [] as string[],
+        };
+        const intentMarkdown = [
+          "# Chapter Intent",
+          "",
+          "## Goal",
+          goal,
+          "",
+          "## Outline Node",
+          "Track the merchant guild trail.",
+          "",
+          "## Must Keep",
+          "- Lin Yue still hides the broken oath token.",
+          "",
+          "## Must Avoid",
+          "- none",
+          "",
+          "## Style Emphasis",
+          "- none",
+          "",
+          "## Conflicts",
+          "- outline_vs_request: allow local outline deferral",
+          "",
+          "## Chapter Brief",
+          "- chapterType: confrontation",
+          "- isGoldenOpening: true",
+          "",
+          "### Beat Outline",
+          "- opening: Open on the conflict.",
+          "",
+          "### Hook Plan",
+          "- none",
+          "",
+          "### Props And Setting",
+          "- broken oath token",
+          "",
+        ].join("\n");
+        const runtimePath = join(
+          runtimeDir,
+          `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`,
+        );
+        await writeFile(runtimePath, intentMarkdown, "utf-8");
+        return {
+          intent: {
+            chapter: input.chapterNumber,
+            goal,
+            outlineNode: "Track the merchant guild trail.",
+            mustKeep: ["Lin Yue still hides the broken oath token."],
+            mustAvoid: [],
+            styleEmphasis: [],
+          },
+          memo,
+          intentMarkdown,
+          plannerInputs: [runtimePath],
+          runtimePath,
+        };
+      });
     const composeChapter = vi.spyOn(ComposerModule, "composeGovernedChapter");
     const writeChapter = vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
       createWriterOutput({
@@ -807,9 +850,11 @@ describe("PipelineRunner", () => {
       const writeInput = writeChapter.mock.calls[0]?.[0];
       expect(writeInput?.externalContext).toBe(chapterContext);
       expect(writeInput?.chapterIntent).toContain("# Chapter Intent");
-      expect(writeInput?.chapterMemo).toEqual(expect.objectContaining({
-        chapter: 1,
-      }));
+      expect(writeInput?.chapterMemo).toEqual(
+        expect.objectContaining({
+          chapter: 1,
+        }),
+      );
       expect(writeInput?.contextPackage?.selectedContext.length).toBeGreaterThan(0);
 
       const runtimeDir = join(state.bookDir(bookId), "story", "runtime");
@@ -829,11 +874,31 @@ describe("PipelineRunner", () => {
 
     await Promise.all([
       mkdir(join(state.bookDir(bookId), "story", "runtime"), { recursive: true }),
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
       writeFile(
         join(state.bookDir(bookId), "story", "runtime", "chapter-0001.intent.md"),
         [
@@ -913,7 +978,11 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n",
+        "utf-8",
+      ),
       writeFile(
         join(state.bookDir(bookId), "story", "current_state.md"),
         createStateCard({
@@ -980,110 +1049,147 @@ describe("PipelineRunner", () => {
     }
   });
 
-  sqliteIt("syncs narrative memory from structured runtime state instead of stale markdown projections", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
-    const storyDir = join(state.bookDir(bookId), "story");
-    const stateDir = join(storyDir, "state");
-    const chaptersDir = join(state.bookDir(bookId), "chapters");
-    await mkdir(stateDir, { recursive: true });
-    await writeFile(
-      join(chaptersDir, "index.json"),
-      JSON.stringify([
-        { number: 1, title: "Ch1", status: "approved" },
-        { number: 2, title: "Ch2", status: "approved" },
-        { number: 3, title: "Ch3", status: "approved" },
-      ]),
-      "utf-8",
-    );
-
-    await Promise.all([
-      writeFile(
-        join(storyDir, "chapter_summaries.md"),
-        [
-          "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
-          "| --- | --- | --- | --- | --- | --- | --- | --- |",
-          "| 1 | Markdown Summary | Lin Yue | Old markdown event | Old markdown state | markdown-hook advanced | tense | fallback |",
-          "",
-        ].join("\n"),
+  sqliteIt(
+    "syncs narrative memory from structured runtime state instead of stale markdown projections",
+    async () => {
+      const { root, runner, state, bookId } = await createRunnerFixture();
+      const storyDir = join(state.bookDir(bookId), "story");
+      const stateDir = join(storyDir, "state");
+      const chaptersDir = join(state.bookDir(bookId), "chapters");
+      await mkdir(stateDir, { recursive: true });
+      await writeFile(
+        join(chaptersDir, "index.json"),
+        JSON.stringify([
+          { number: 1, title: "Ch1", status: "approved" },
+          { number: 2, title: "Ch2", status: "approved" },
+          { number: 3, title: "Ch3", status: "approved" },
+        ]),
         "utf-8",
-      ),
-      writeFile(
-        join(storyDir, "pending_hooks.md"),
-        [
-          "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | notes |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| markdown-hook | 1 | mystery | open | 1 | 4 | Old markdown hook |",
-          "",
-        ].join("\n"),
-        "utf-8",
-      ),
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 3,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 3,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [
-          {
-            hookId: "structured-hook",
-            startChapter: 2,
-            type: "relationship",
-            status: "progressing",
-            lastAdvancedChapter: 3,
-            expectedPayoff: "Reveal the mentor ledger.",
-            notes: "Structured hook should win.",
-          },
-        ],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [
-          {
-            chapter: 3,
-            title: "Structured Summary",
-            characters: "Lin Yue",
-            events: "Structured runtime state event.",
-            stateChanges: "Structured runtime state shift.",
-            hookActivity: "structured-hook advanced",
-            mood: "grim",
-            chapterType: "mainline",
-          },
-        ],
-      }, null, 2), "utf-8"),
-    ]);
+      );
 
-    try {
-      await (runner as unknown as {
-        syncNarrativeMemoryIndex: (targetBookId: string) => Promise<void>;
-      }).syncNarrativeMemoryIndex(bookId);
+      await Promise.all([
+        writeFile(
+          join(storyDir, "chapter_summaries.md"),
+          [
+            "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+            "| 1 | Markdown Summary | Lin Yue | Old markdown event | Old markdown state | markdown-hook advanced | tense | fallback |",
+            "",
+          ].join("\n"),
+          "utf-8",
+        ),
+        writeFile(
+          join(storyDir, "pending_hooks.md"),
+          [
+            "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | notes |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| markdown-hook | 1 | mystery | open | 1 | 4 | Old markdown hook |",
+            "",
+          ].join("\n"),
+          "utf-8",
+        ),
+        writeFile(
+          join(stateDir, "manifest.json"),
+          JSON.stringify(
+            {
+              schemaVersion: 2,
+              language: "en",
+              lastAppliedChapter: 3,
+              projectionVersion: 1,
+              migrationWarnings: [],
+            },
+            null,
+            2,
+          ),
+          "utf-8",
+        ),
+        writeFile(
+          join(stateDir, "current_state.json"),
+          JSON.stringify(
+            {
+              chapter: 3,
+              facts: [],
+            },
+            null,
+            2,
+          ),
+          "utf-8",
+        ),
+        writeFile(
+          join(stateDir, "hooks.json"),
+          JSON.stringify(
+            {
+              hooks: [
+                {
+                  hookId: "structured-hook",
+                  startChapter: 2,
+                  type: "relationship",
+                  status: "progressing",
+                  lastAdvancedChapter: 3,
+                  expectedPayoff: "Reveal the mentor ledger.",
+                  notes: "Structured hook should win.",
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+          "utf-8",
+        ),
+        writeFile(
+          join(stateDir, "chapter_summaries.json"),
+          JSON.stringify(
+            {
+              rows: [
+                {
+                  chapter: 3,
+                  title: "Structured Summary",
+                  characters: "Lin Yue",
+                  events: "Structured runtime state event.",
+                  stateChanges: "Structured runtime state shift.",
+                  hookActivity: "structured-hook advanced",
+                  mood: "grim",
+                  chapterType: "mainline",
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+          "utf-8",
+        ),
+      ]);
 
-      const memoryDb = new MemoryDB(state.bookDir(bookId));
       try {
-        expect(memoryDb.getSummaries(1, 10)).toEqual([
-          expect.objectContaining({
-            chapter: 3,
-            title: "Structured Summary",
-            events: "Structured runtime state event.",
-          }),
-        ]);
-        expect(memoryDb.getActiveHooks()).toEqual([
-          expect.objectContaining({
-            hookId: "structured-hook",
-            status: "progressing",
-          }),
-        ]);
+        await (
+          runner as unknown as {
+            syncNarrativeMemoryIndex: (targetBookId: string) => Promise<void>;
+          }
+        ).syncNarrativeMemoryIndex(bookId);
+
+        const memoryDb = new MemoryDB(state.bookDir(bookId));
+        try {
+          expect(memoryDb.getSummaries(1, 10)).toEqual([
+            expect.objectContaining({
+              chapter: 3,
+              title: "Structured Summary",
+              events: "Structured runtime state event.",
+            }),
+          ]);
+          expect(memoryDb.getActiveHooks()).toEqual([
+            expect.objectContaining({
+              hookId: "structured-hook",
+              status: "progressing",
+            }),
+          ]);
+        } finally {
+          memoryDb.close();
+        }
       } finally {
-        memoryDb.close();
+        await rm(root, { recursive: true, force: true });
       }
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
+    },
+  );
 
   it("uses a friendly fallback warning when sqlite memory indexing is unavailable", async () => {
     const { logger, warnings } = createCaptureLogger();
@@ -1092,7 +1198,11 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n",
+        "utf-8",
+      ),
       writeFile(
         join(state.bookDir(bookId), "story", "current_state.md"),
         createStateCard({
@@ -1106,7 +1216,7 @@ describe("PipelineRunner", () => {
       ),
     ]);
 
-    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(() => {
+    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(function () {
       const error = new Error("No such built-in module: node:sqlite");
       (error as Error & { code?: string }).code = "ERR_UNKNOWN_BUILTIN_MODULE";
       throw error;
@@ -1142,7 +1252,11 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n",
+        "utf-8",
+      ),
       writeFile(
         join(state.bookDir(bookId), "story", "current_state.md"),
         createStateCard({
@@ -1156,7 +1270,7 @@ describe("PipelineRunner", () => {
       ),
     ]);
 
-    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(() => {
+    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(function () {
       throw new Error("sync failed while handling cached node:sqlite telemetry text");
     });
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1178,81 +1292,91 @@ describe("PipelineRunner", () => {
     }
   });
 
-  sqliteIt("recovers when sqlite-unavailable signature is transient and probe succeeds", async () => {
-    const { logger, warnings } = createCaptureLogger();
-    const { root, runner, state, bookId } = await createRunnerFixture({
-      logger,
-      inputGovernanceMode: "legacy",
-    });
+  sqliteIt(
+    "recovers when sqlite-unavailable signature is transient and probe succeeds",
+    async () => {
+      const { logger, warnings } = createCaptureLogger();
+      const { root, runner, state, bookId } = await createRunnerFixture({
+        logger,
+        inputGovernanceMode: "legacy",
+      });
 
-    await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
-      writeFile(
-        join(state.bookDir(bookId), "story", "current_state.md"),
-        createStateCard({
-          chapter: 0,
-          location: "Shrine outskirts",
-          protagonistState: "Lin Yue begins with the oath token hidden.",
-          goal: "Reach the trial city.",
-          conflict: "The trial deadline is closing in.",
-        }),
-        "utf-8",
-      ),
-    ]);
+      await Promise.all([
+        writeFile(
+          join(state.bookDir(bookId), "story", "pending_hooks.md"),
+          "# Pending Hooks\n",
+          "utf-8",
+        ),
+        writeFile(
+          join(state.bookDir(bookId), "story", "current_state.md"),
+          createStateCard({
+            chapter: 0,
+            location: "Shrine outskirts",
+            protagonistState: "Lin Yue begins with the oath token hidden.",
+            goal: "Reach the trial city.",
+            conflict: "The trial deadline is closing in.",
+          }),
+          "utf-8",
+        ),
+      ]);
 
-    const RealMemoryDB = memoryDbModule.MemoryDB;
-    let constructorCalls = 0;
-    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation((...args: ConstructorParameters<typeof memoryDbModule.MemoryDB>) => {
-      if (constructorCalls === 0) {
+      const RealMemoryDB = memoryDbModule.MemoryDB;
+      let constructorCalls = 0;
+      vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(function (
+        ...args: ConstructorParameters<typeof memoryDbModule.MemoryDB>
+      ) {
+        if (constructorCalls === 0) {
+          constructorCalls += 1;
+          const error = new Error("No such built-in module: node:sqlite");
+          (error as Error & { code?: string }).code = "ERR_UNKNOWN_BUILTIN_MODULE";
+          throw error;
+        }
         constructorCalls += 1;
-        const error = new Error("No such built-in module: node:sqlite");
-        (error as Error & { code?: string }).code = "ERR_UNKNOWN_BUILTIN_MODULE";
-        throw error;
-      }
-      constructorCalls += 1;
-      return new RealMemoryDB(...args);
-    });
-    vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
-      createWriterOutput({
-        chapterNumber: 1,
-        content: "Draft body.",
-        wordCount: "Draft body.".length,
-        chapterSummary: "| 1 | Draft summary | Lin Yue | Draft event | Draft shift | hook advanced | tense | transition |",
-        updatedHooks: [
-          "# Pending Hooks",
-          "",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| mentor-debt | 1 | relationship | open | 1 | 3 | Draft hook |",
-        ].join("\n"),
-      }),
-    );
+        return new RealMemoryDB(...args);
+      });
+      vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
+        createWriterOutput({
+          chapterNumber: 1,
+          content: "Draft body.",
+          wordCount: "Draft body.".length,
+          chapterSummary:
+            "| 1 | Draft summary | Lin Yue | Draft event | Draft shift | hook advanced | tense | transition |",
+          updatedHooks: [
+            "# Pending Hooks",
+            "",
+            "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| mentor-debt | 1 | relationship | open | 1 | 3 | Draft hook |",
+          ].join("\n"),
+        }),
+      );
 
-    try {
-      const result = await runner.writeDraft(bookId);
-
-      expect(result.chapterNumber).toBe(1);
-      expect(warnings.join("\n")).not.toContain("当前 Node 运行时不支持 SQLite 记忆索引");
-      expect(warnings.join("\n")).not.toContain("叙事记忆同步已跳过");
-
-      const memoryDb = new MemoryDB(state.bookDir(bookId));
       try {
-        expect(memoryDb.getChapterCount()).toBe(1);
-        expect(memoryDb.getActiveHooks()).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              hookId: "mentor-debt",
-              status: "open",
-            }),
-          ]),
-        );
+        const result = await runner.writeDraft(bookId);
+
+        expect(result.chapterNumber).toBe(1);
+        expect(warnings.join("\n")).not.toContain("当前 Node 运行时不支持 SQLite 记忆索引");
+        expect(warnings.join("\n")).not.toContain("叙事记忆同步已跳过");
+
+        const memoryDb = new MemoryDB(state.bookDir(bookId));
+        try {
+          expect(memoryDb.getChapterCount()).toBe(1);
+          expect(memoryDb.getActiveHooks()).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                hookId: "mentor-debt",
+                status: "open",
+              }),
+            ]),
+          );
+        } finally {
+          memoryDb.close();
+        }
       } finally {
-        memoryDb.close();
+        await rm(root, { recursive: true, force: true });
       }
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
+    },
+  );
 
   sqliteIt("retries transient sqlite busy errors during narrative memory sync", async () => {
     const { logger, warnings } = createCaptureLogger();
@@ -1262,7 +1386,11 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n",
+        "utf-8",
+      ),
       writeFile(
         join(state.bookDir(bookId), "story", "current_state.md"),
         createStateCard({
@@ -1278,7 +1406,9 @@ describe("PipelineRunner", () => {
 
     const RealMemoryDB = memoryDbModule.MemoryDB;
     let constructorCalls = 0;
-    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation((...args: ConstructorParameters<typeof memoryDbModule.MemoryDB>) => {
+    vi.spyOn(memoryDbModule, "MemoryDB").mockImplementation(function (
+      ...args: ConstructorParameters<typeof memoryDbModule.MemoryDB>
+    ) {
       if (constructorCalls === 0) {
         constructorCalls += 1;
         const error = new Error("database is locked");
@@ -1293,7 +1423,8 @@ describe("PipelineRunner", () => {
         chapterNumber: 1,
         content: "Draft body.",
         wordCount: "Draft body.".length,
-        chapterSummary: "| 1 | Draft summary | Lin Yue | Draft event | Draft shift | hook advanced | tense | transition |",
+        chapterSummary:
+          "| 1 | Draft summary | Lin Yue | Draft event | Draft shift | hook advanced | tense | transition |",
         updatedHooks: [
           "# Pending Hooks",
           "",
@@ -1338,7 +1469,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundation").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Ashen ferry crossing",
@@ -1352,13 +1483,15 @@ describe("PipelineRunner", () => {
     try {
       await runner.initBook(book);
 
-      expect(infos).toEqual(expect.arrayContaining([
-        "阶段：保存书籍配置",
-        "阶段：生成基础设定",
-        "阶段：写入基础设定文件",
-        "阶段：初始化控制文档",
-        "阶段：创建初始快照",
-      ]));
+      expect(infos).toEqual(
+        expect.arrayContaining([
+          "阶段：保存书籍配置",
+          "阶段：生成基础设定",
+          "阶段：写入基础设定文件",
+          "阶段：初始化控制文档",
+          "阶段：创建初始快照",
+        ]),
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -1393,16 +1526,40 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
-    const originalPlanChapter = PlannerAgent.prototype.planChapter;
-    const planChapter = vi.spyOn(PlannerAgent.prototype, "planChapter").mockImplementation(async function (this: PlannerAgent, input) {
-      const result = await originalPlanChapter.call(this, input);
+    const planChapter = vi.mocked(PlannerAgent.prototype.planChapter);
+    const defaultPlanChapter = planChapter.getMockImplementation();
+    if (!defaultPlanChapter) {
+      throw new Error("planChapter default mock is missing");
+    }
+    planChapter.mockImplementation(async function (this: PlannerAgent, input) {
+      const result = await defaultPlanChapter.call(this, input);
       return {
         ...result,
         memo: {
@@ -1438,9 +1595,11 @@ describe("PipelineRunner", () => {
       const writeInput = writeChapter.mock.calls[0]?.[0];
       expect(writeInput?.chapterIntent).toContain("# Chapter Intent");
       expect(writeInput?.externalContext).toBeUndefined();
-      expect(writeInput?.chapterMemo).toEqual(expect.objectContaining({
-        chapter: 1,
-      }));
+      expect(writeInput?.chapterMemo).toEqual(
+        expect.objectContaining({
+          chapter: 1,
+        }),
+      );
       expect(writeInput?.contextPackage?.selectedContext.length).toBeGreaterThan(0);
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -1455,11 +1614,31 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
     const planChapter = vi.spyOn(PlannerAgent.prototype, "planChapter");
@@ -1501,7 +1680,11 @@ describe("PipelineRunner", () => {
     await mkdir(runtimeDir, { recursive: true });
 
     await Promise.all([
-      writeFile(join(storyDir, "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
       writeFile(
         join(storyDir, "volume_outline.md"),
         [
@@ -1515,9 +1698,21 @@ describe("PipelineRunner", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
       writeFile(
         join(runtimeDir, "chapter-0001.intent.md"),
         [
@@ -1546,67 +1741,72 @@ describe("PipelineRunner", () => {
       ),
     ]);
 
-    const planChapter = vi.spyOn(PlannerAgent.prototype, "planChapter").mockImplementation(async (input) => {
-      const rDir = join(input.bookDir, "story", "runtime");
-      await mkdir(rDir, { recursive: true });
-      const goal = "Track the merchant guild trail.";
-      const intentMd = [
-        "# Chapter Intent",
-        "",
-        "## Goal",
-        goal,
-        "",
-        "## Outline Node",
-        "(not found)",
-        "",
-        "## Must Keep",
-        "- none",
-        "",
-        "## Must Avoid",
-        "- none",
-        "",
-        "## Style Emphasis",
-        "- none",
-        "",
-        "## Conflicts",
-        "- none",
-        "",
-        "## Chapter Brief",
-        "- chapterType: 推进",
-        "- isGoldenOpening: false",
-        "",
-        "### Beat Outline",
-        "- opening: test",
-        "",
-        "### Hook Plan",
-        "- none",
-        "",
-        "### Props And Setting",
-        "- none",
-        "",
-      ].join("\n");
-      const runtimePath = join(rDir, `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`);
-      await writeFile(runtimePath, intentMd, "utf-8");
-      return {
-        intent: {
-          chapter: input.chapterNumber,
+    const planChapter = vi
+      .spyOn(PlannerAgent.prototype, "planChapter")
+      .mockImplementation(async (input) => {
+        const rDir = join(input.bookDir, "story", "runtime");
+        await mkdir(rDir, { recursive: true });
+        const goal = "Track the merchant guild trail.";
+        const intentMd = [
+          "# Chapter Intent",
+          "",
+          "## Goal",
           goal,
-          mustKeep: [],
-          mustAvoid: [],
-          styleEmphasis: [],
-        },
-        memo: {
-          chapter: input.chapterNumber,
-          goal,
-          isGoldenOpening: false,
-          body: "",
-          threadRefs: [],
-        },
-        intentMarkdown: intentMd,
-        plannerInputs: [runtimePath],
-        runtimePath,
-      };
-    });
+          "",
+          "## Outline Node",
+          "(not found)",
+          "",
+          "## Must Keep",
+          "- none",
+          "",
+          "## Must Avoid",
+          "- none",
+          "",
+          "## Style Emphasis",
+          "- none",
+          "",
+          "## Conflicts",
+          "- none",
+          "",
+          "## Chapter Brief",
+          "- chapterType: 推进",
+          "- isGoldenOpening: false",
+          "",
+          "### Beat Outline",
+          "- opening: test",
+          "",
+          "### Hook Plan",
+          "- none",
+          "",
+          "### Props And Setting",
+          "- none",
+          "",
+        ].join("\n");
+        const runtimePath = join(
+          rDir,
+          `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`,
+        );
+        await writeFile(runtimePath, intentMd, "utf-8");
+        return {
+          intent: {
+            chapter: input.chapterNumber,
+            goal,
+            mustKeep: [],
+            mustAvoid: [],
+            styleEmphasis: [],
+          },
+          memo: {
+            chapter: input.chapterNumber,
+            goal,
+            isGoldenOpening: false,
+            body: "",
+            threadRefs: [],
+          },
+          intentMarkdown: intentMd,
+          plannerInputs: [runtimePath],
+          runtimePath,
+        };
+      });
     const writeChapter = vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
       createWriterOutput({
         chapterNumber: 1,
@@ -1642,11 +1842,31 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1667,16 +1887,18 @@ describe("PipelineRunner", () => {
     try {
       await runner.writeNextChapter(bookId, 220);
 
-      expect(infos).toEqual(expect.arrayContaining([
-        "阶段：准备章节输入",
-        "阶段：撰写章节草稿",
-        "阶段：审计草稿",
-        "阶段：落盘最终章节",
-        "阶段：生成最终真相文件",
-        "阶段：校验真相文件变更",
-        "阶段：同步记忆索引",
-        "阶段：更新章节索引与快照",
-      ]));
+      expect(infos).toEqual(
+        expect.arrayContaining([
+          "阶段：准备章节输入",
+          "阶段：撰写章节草稿",
+          "阶段：审计草稿",
+          "阶段：落盘最终章节",
+          "阶段：生成最终真相文件",
+          "阶段：校验真相文件变更",
+          "阶段：同步记忆索引",
+          "阶段：更新章节索引与快照",
+        ]),
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -1697,11 +1919,31 @@ describe("PipelineRunner", () => {
 
     await state.saveBookConfig(bookId, englishBook);
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1722,16 +1964,18 @@ describe("PipelineRunner", () => {
     try {
       await runner.writeNextChapter(bookId, 220);
 
-      expect(infos).toEqual(expect.arrayContaining([
-        "Stage: preparing chapter inputs",
-        "Stage: writing chapter draft",
-        "Stage: auditing draft",
-        "Stage: persisting final chapter",
-        "Stage: rebuilding final truth files",
-        "Stage: validating truth file updates",
-        "Stage: syncing memory indexes",
-        "Stage: updating chapter index and snapshots",
-      ]));
+      expect(infos).toEqual(
+        expect.arrayContaining([
+          "Stage: preparing chapter inputs",
+          "Stage: writing chapter draft",
+          "Stage: auditing draft",
+          "Stage: persisting final chapter",
+          "Stage: rebuilding final truth files",
+          "Stage: validating truth file updates",
+          "Stage: syncing memory indexes",
+          "Stage: updating chapter index and snapshots",
+        ]),
+      );
       expect(infos.join("\n")).not.toContain("阶段：");
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -1749,16 +1993,32 @@ describe("PipelineRunner", () => {
 
     await state.saveBookConfig(bookId, englishBook);
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nKeep the pressure on the harbor debt.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Harbor gate",
-        protagonistState: "Lin Yue is tracking the vanished mentor.",
-        goal: "Reach the sealed berth.",
-        conflict: "The harbor debt keeps pulling him sideways.",
-      }), "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The harbor seal cannot be forged.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- The vanished mentor still owes a debt.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nKeep the pressure on the harbor debt.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Harbor gate",
+          protagonistState: "Lin Yue is tracking the vanished mentor.",
+          goal: "Reach the sealed berth.",
+          conflict: "The harbor debt keeps pulling him sideways.",
+        }),
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The harbor seal cannot be forged.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- The vanished mentor still owes a debt.\n",
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1779,12 +2039,14 @@ describe("PipelineRunner", () => {
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
-        issues: [{
-          severity: "warning",
-          category: "continuity",
-          description: "Keep the berth timing precise in the next chapter.",
-          suggestion: "Avoid skipping the dawn transition.",
-        }],
+        issues: [
+          {
+            severity: "warning",
+            category: "continuity",
+            description: "Keep the berth timing precise in the next chapter.",
+            suggestion: "Avoid skipping the dawn transition.",
+          },
+        ],
         summary: "warning only",
       }),
     );
@@ -1792,8 +2054,14 @@ describe("PipelineRunner", () => {
     try {
       await runner.writeNextChapter(bookId, 220);
 
-      const driftFile = await readFile(join(state.bookDir(bookId), "story", "audit_drift.md"), "utf-8");
-      const currentState = await readFile(join(state.bookDir(bookId), "story", "current_state.md"), "utf-8");
+      const driftFile = await readFile(
+        join(state.bookDir(bookId), "story", "audit_drift.md"),
+        "utf-8",
+      );
+      const currentState = await readFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "utf-8",
+      );
       expect(driftFile).toContain("## Audit Drift Correction");
       expect(driftFile).toContain("> Chapter 1 audit found the following issues");
       expect(driftFile).not.toContain("## 审计纠偏");
@@ -1810,11 +2078,31 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1881,11 +2169,31 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(state.bookDir(bookId), "story", "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "story", "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "story", "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -1918,12 +2226,14 @@ describe("PipelineRunner", () => {
         wordCount: "Governed revised body.".length,
       }),
     );
-    const analyzeChapter = vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockResolvedValue(
-      createAnalyzedOutput({
-        content: "Governed revised body.",
-        wordCount: "Governed revised body.".length,
-      }),
-    );
+    const analyzeChapter = vi
+      .spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter")
+      .mockResolvedValue(
+        createAnalyzedOutput({
+          content: "Governed revised body.",
+          wordCount: "Governed revised body.".length,
+        }),
+      );
 
     try {
       await runner.writeNextChapter(bookId, 220);
@@ -1960,15 +2270,15 @@ describe("PipelineRunner", () => {
         summary: "clean",
       }),
     );
-    const normalizeChapter = vi.mocked(
-      LengthNormalizerAgent.prototype.normalizeChapter,
-    ).mockResolvedValue({
-      normalizedContent: normalizedDraft,
-      finalCount: normalizedDraft.length,
-      applied: true,
-      mode: "compress",
-      tokenUsage: ZERO_USAGE,
-    });
+    const normalizeChapter = vi
+      .mocked(LengthNormalizerAgent.prototype.normalizeChapter)
+      .mockResolvedValue({
+        normalizedContent: normalizedDraft,
+        finalCount: normalizedDraft.length,
+        applied: true,
+        mode: "compress",
+        tokenUsage: ZERO_USAGE,
+      });
     vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockResolvedValue(
       createAnalyzedOutput({
         content: normalizedDraft,
@@ -2004,19 +2314,16 @@ describe("PipelineRunner", () => {
         wordCount: overlongDraft.length,
       }),
     );
-    const normalizeChapter = vi.mocked(
-      LengthNormalizerAgent.prototype.normalizeChapter,
-    ).mockResolvedValue({
-      normalizedContent: normalizedDraft,
-      finalCount: normalizedDraft.length,
-      applied: true,
-      mode: "compress",
-      tokenUsage: ZERO_USAGE,
-    });
-    const auditChapter = vi.spyOn(
-      ContinuityAuditor.prototype,
-      "auditChapter",
-    ).mockResolvedValue(
+    const normalizeChapter = vi
+      .mocked(LengthNormalizerAgent.prototype.normalizeChapter)
+      .mockResolvedValue({
+        normalizedContent: normalizedDraft,
+        finalCount: normalizedDraft.length,
+        applied: true,
+        mode: "compress",
+        tokenUsage: ZERO_USAGE,
+      });
+    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
         issues: [],
@@ -2051,13 +2358,8 @@ describe("PipelineRunner", () => {
         wordCount: nearTargetDraft.length,
       }),
     );
-    const normalizeChapter = vi.mocked(
-      LengthNormalizerAgent.prototype.normalizeChapter,
-    );
-    const auditChapter = vi.spyOn(
-      ContinuityAuditor.prototype,
-      "auditChapter",
-    ).mockResolvedValue(
+    const normalizeChapter = vi.mocked(LengthNormalizerAgent.prototype.normalizeChapter);
+    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
         issues: [],
@@ -2087,19 +2389,16 @@ describe("PipelineRunner", () => {
         wordCount: shortDraft.length,
       }),
     );
-    const normalizeChapter = vi.mocked(
-      LengthNormalizerAgent.prototype.normalizeChapter,
-    ).mockResolvedValue({
-      normalizedContent: normalizedDraft,
-      finalCount: normalizedDraft.length,
-      applied: true,
-      mode: "expand",
-      tokenUsage: ZERO_USAGE,
-    });
-    const auditChapter = vi.spyOn(
-      ContinuityAuditor.prototype,
-      "auditChapter",
-    ).mockResolvedValue(
+    const normalizeChapter = vi
+      .mocked(LengthNormalizerAgent.prototype.normalizeChapter)
+      .mockResolvedValue({
+        normalizedContent: normalizedDraft,
+        finalCount: normalizedDraft.length,
+        applied: true,
+        mode: "expand",
+        tokenUsage: ZERO_USAGE,
+      });
+    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
         issues: [],
@@ -2143,15 +2442,15 @@ describe("PipelineRunner", () => {
         wordCount: overlongDraft.length,
       }),
     );
-    const normalizeChapter = vi.mocked(
-      LengthNormalizerAgent.prototype.normalizeChapter,
-    ).mockResolvedValue({
-      normalizedContent: stillOverHard,
-      finalCount: stillOverHard.length,
-      applied: true,
-      mode: "compress",
-      tokenUsage: ZERO_USAGE,
-    });
+    const normalizeChapter = vi
+      .mocked(LengthNormalizerAgent.prototype.normalizeChapter)
+      .mockResolvedValue({
+        normalizedContent: stillOverHard,
+        finalCount: stillOverHard.length,
+        applied: true,
+        mode: "compress",
+        tokenUsage: ZERO_USAGE,
+      });
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
@@ -2175,9 +2474,9 @@ describe("PipelineRunner", () => {
       expect((result as { lengthWarnings?: ReadonlyArray<string> }).lengthWarnings?.[0]).toContain(
         "超出硬区间",
       );
-      expect((result as { lengthTelemetry?: { finalCount: number } }).lengthTelemetry?.finalCount).toBe(
-        stillOverHard.length,
-      );
+      expect(
+        (result as { lengthTelemetry?: { finalCount: number } }).lengthTelemetry?.finalCount,
+      ).toBe(stillOverHard.length);
       expect(chapterMeta?.lengthWarnings?.[0]).toContain("超出硬区间");
       expect(chapterMeta?.lengthTelemetry?.lengthWarning).toBe(true);
     } finally {
@@ -2194,13 +2493,17 @@ describe("PipelineRunner", () => {
     const revisedBody = "乙".repeat(215);
 
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The mentor debt is still personal.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
 
@@ -2246,9 +2549,7 @@ describe("PipelineRunner", () => {
       expect(result.status).toBe("audit-failed");
       expect(result.auditResult.summary).toBe("needs revision");
       expect(result.auditResult.issues).toEqual([CRITICAL_ISSUE]);
-      expect(savedIndex[0]?.auditIssues).toEqual([
-        `[critical] ${CRITICAL_ISSUE.description}`,
-      ]);
+      expect(savedIndex[0]?.auditIssues).toEqual([`[critical] ${CRITICAL_ISSUE.description}`]);
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -2306,23 +2607,28 @@ describe("PipelineRunner", () => {
     // First audit: postWriteErrors make it fail even though LLM says passed
     // Second audit (after repair): clean
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(createAuditResult({
-        passed: true,
-        overallScore: 88,
-        issues: [],
-        summary: "LLM thinks clean but postWriteErrors will override",
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: true,
-        overallScore: 92,
-        issues: [],
-        summary: "clean after fix",
-      }));
-    const reviseChapter = vi.spyOn(ReviserAgent.prototype, "reviseChapter")
-      .mockResolvedValueOnce(createReviseOutput({
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: true,
+          overallScore: 88,
+          issues: [],
+          summary: "LLM thinks clean but postWriteErrors will override",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: true,
+          overallScore: 92,
+          issues: [],
+          summary: "clean after fix",
+        }),
+      );
+    const reviseChapter = vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValueOnce(
+      createReviseOutput({
         revisedContent: "After auto fix.",
         wordCount: "After auto fix.".length,
-      }));
+      }),
+    );
     vi.spyOn(WriterAgent.prototype, "saveChapter").mockResolvedValue(undefined);
     vi.spyOn(WriterAgent.prototype, "saveNewTruthFiles").mockResolvedValue(undefined);
     vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockResolvedValue(
@@ -2352,25 +2658,32 @@ describe("PipelineRunner", () => {
         wordCount: draftBody.length,
       }),
     );
-    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 40,
-        issues: [CRITICAL_ISSUE],
-        summary: "needs repair",
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 50,
-        issues: [CRITICAL_ISSUE],
-        summary: "still weak",
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: false,
-        overallScore: 60,
-        issues: [CRITICAL_ISSUE],
-        summary: "should not be reached",
-      }));
+    const auditChapter = vi
+      .spyOn(ContinuityAuditor.prototype, "auditChapter")
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 40,
+          issues: [CRITICAL_ISSUE],
+          summary: "needs repair",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 50,
+          issues: [CRITICAL_ISSUE],
+          summary: "still weak",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: false,
+          overallScore: 60,
+          issues: [CRITICAL_ISSUE],
+          summary: "should not be reached",
+        }),
+      );
     const reviseChapter = vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
       createReviseOutput({
         revisedContent: revisedBody,
@@ -2451,18 +2764,22 @@ describe("PipelineRunner", () => {
     // First audit: postWriteErrors force passed=false, score 40 triggers loop
     // Second audit: after repair, passes
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(createAuditResult({
-        passed: true,
-        overallScore: 40,
-        issues: [],
-        summary: "postWriteErrors will override passed",
-      }))
-      .mockResolvedValueOnce(createAuditResult({
-        passed: true,
-        overallScore: 95,
-        issues: [],
-        summary: "clean after fix",
-      }));
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: true,
+          overallScore: 40,
+          issues: [],
+          summary: "postWriteErrors will override passed",
+        }),
+      )
+      .mockResolvedValueOnce(
+        createAuditResult({
+          passed: true,
+          overallScore: 95,
+          issues: [],
+          summary: "clean after fix",
+        }),
+      );
     vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
       createReviseOutput({
         revisedContent: "Final revised body.",
@@ -2486,20 +2803,27 @@ describe("PipelineRunner", () => {
     await runner.writeNextChapter(bookId);
 
     const storyDir = join(state.bookDir(bookId), "story");
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8"))
-      .resolves.toContain("final analyzed state");
-    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8"))
-      .resolves.toContain("final analyzed hooks");
-    await expect(readFile(join(storyDir, "particle_ledger.md"), "utf-8"))
-      .resolves.toContain("final analyzed ledger");
-    await expect(readFile(join(storyDir, "chapter_summaries.md"), "utf-8"))
-      .resolves.toContain("Final analyzed summary");
-    await expect(readFile(join(storyDir, "subplot_board.md"), "utf-8"))
-      .resolves.toContain("final analyzed subplots");
-    await expect(readFile(join(storyDir, "emotional_arcs.md"), "utf-8"))
-      .resolves.toContain("final analyzed emotions");
-    await expect(readFile(join(storyDir, "character_matrix.md"), "utf-8"))
-      .resolves.toContain("final analyzed matrix");
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toContain(
+      "final analyzed state",
+    );
+    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toContain(
+      "final analyzed hooks",
+    );
+    await expect(readFile(join(storyDir, "particle_ledger.md"), "utf-8")).resolves.toContain(
+      "final analyzed ledger",
+    );
+    await expect(readFile(join(storyDir, "chapter_summaries.md"), "utf-8")).resolves.toContain(
+      "Final analyzed summary",
+    );
+    await expect(readFile(join(storyDir, "subplot_board.md"), "utf-8")).resolves.toContain(
+      "final analyzed subplots",
+    );
+    await expect(readFile(join(storyDir, "emotional_arcs.md"), "utf-8")).resolves.toContain(
+      "final analyzed emotions",
+    );
+    await expect(readFile(join(storyDir, "character_matrix.md"), "utf-8")).resolves.toContain(
+      "final analyzed matrix",
+    );
 
     await rm(root, { recursive: true, force: true });
   });
@@ -2512,7 +2836,10 @@ describe("PipelineRunner", () => {
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
       createWriterOutput({
         content: "Lin Yue follows the debt into the river-port ledger.",
-        wordCount: countChapterLength("Lin Yue follows the debt into the river-port ledger.", "en_words"),
+        wordCount: countChapterLength(
+          "Lin Yue follows the debt into the river-port ledger.",
+          "en_words",
+        ),
         postWriteErrors: [],
         postWriteWarnings: [],
         runtimeStateDelta: {
@@ -2570,9 +2897,13 @@ describe("PipelineRunner", () => {
     const hooks = await readFile(join(storyDir, "pending_hooks.md"), "utf-8");
     const summaries = await readFile(join(storyDir, "chapter_summaries.md"), "utf-8");
     const manifest = JSON.parse(await readFile(join(storyDir, "state", "manifest.json"), "utf-8"));
-    const stateCurrent = JSON.parse(await readFile(join(storyDir, "state", "current_state.json"), "utf-8"));
+    const stateCurrent = JSON.parse(
+      await readFile(join(storyDir, "state", "current_state.json"), "utf-8"),
+    );
     const stateHooks = JSON.parse(await readFile(join(storyDir, "state", "hooks.json"), "utf-8"));
-    const stateSummaries = JSON.parse(await readFile(join(storyDir, "state", "chapter_summaries.json"), "utf-8"));
+    const stateSummaries = JSON.parse(
+      await readFile(join(storyDir, "state", "chapter_summaries.json"), "utf-8"),
+    );
 
     expect(currentState).toContain("Follow the debt through the river-port ledger.");
     expect(hooks).toContain("mentor-debt");
@@ -2592,32 +2923,68 @@ describe("PipelineRunner", () => {
     const storyDir = join(state.bookDir(bookId), "story");
     await mkdir(join(storyDir, "state"), { recursive: true });
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The mentor debt is still personal.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(join(storyDir, "chapter_summaries.md"), "# Chapter Summaries\n", "utf-8"),
-      writeFile(join(storyDir, "state", "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 0,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "current_state.json"), JSON.stringify({
-        chapter: 0,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "hooks.json"), JSON.stringify({
-        hooks: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "chapter_summaries.json"), JSON.stringify({
-        rows: [],
-      }, null, 2), "utf-8"),
+      writeFile(
+        join(storyDir, "state", "manifest.json"),
+        JSON.stringify(
+          {
+            schemaVersion: 2,
+            language: "en",
+            lastAppliedChapter: 0,
+            projectionVersion: 1,
+            migrationWarnings: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "current_state.json"),
+        JSON.stringify(
+          {
+            chapter: 0,
+            facts: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
@@ -2648,10 +3015,12 @@ describe("PipelineRunner", () => {
     const result = await runner.writeNextChapter(bookId);
 
     expect(result.status).toBe("ready-for-review");
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8"))
-      .resolves.toMatch(/\|\s*(Current Chapter|当前章节)\s*\|\s*1\s*\|/);
-    await expect(readFile(join(storyDir, "state", "manifest.json"), "utf-8"))
-      .resolves.toContain("\"lastAppliedChapter\": 1");
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toMatch(
+      /\|\s*(Current Chapter|当前章节)\s*\|\s*1\s*\|/,
+    );
+    await expect(readFile(join(storyDir, "state", "manifest.json"), "utf-8")).resolves.toContain(
+      '"lastAppliedChapter": 1',
+    );
 
     await rm(root, { recursive: true, force: true });
   });
@@ -2663,32 +3032,68 @@ describe("PipelineRunner", () => {
     const storyDir = join(state.bookDir(bookId), "story");
     await mkdir(join(storyDir, "state"), { recursive: true });
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The mentor debt is still personal.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(join(storyDir, "chapter_summaries.md"), "# Chapter Summaries\n", "utf-8"),
-      writeFile(join(storyDir, "state", "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 0,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "current_state.json"), JSON.stringify({
-        chapter: 0,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "hooks.json"), JSON.stringify({
-        hooks: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(storyDir, "state", "chapter_summaries.json"), JSON.stringify({
-        rows: [],
-      }, null, 2), "utf-8"),
+      writeFile(
+        join(storyDir, "state", "manifest.json"),
+        JSON.stringify(
+          {
+            schemaVersion: 2,
+            language: "en",
+            lastAppliedChapter: 0,
+            projectionVersion: 1,
+            migrationWarnings: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "current_state.json"),
+        JSON.stringify(
+          {
+            chapter: 0,
+            facts: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "state", "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     const beforeState = await readFile(join(storyDir, "current_state.md"), "utf-8");
@@ -2732,7 +3137,9 @@ describe("PipelineRunner", () => {
     await expect(runner.writeNextChapter(bookId)).rejects.toThrow();
 
     await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe(beforeState);
-    await expect(readFile(join(storyDir, "state", "manifest.json"), "utf-8")).resolves.toBe(beforeManifest);
+    await expect(readFile(join(storyDir, "state", "manifest.json"), "utf-8")).resolves.toBe(
+      beforeManifest,
+    );
 
     await rm(root, { recursive: true, force: true });
   });
@@ -2791,20 +3198,22 @@ describe("PipelineRunner", () => {
         updatedLedger: "broken ledger",
       }),
     );
-    const settleSpy = vi.spyOn(
-      WriterAgent.prototype as unknown as {
-        settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
-      },
-      "settleChapterState",
-    ).mockResolvedValue(
-      createWriterOutput({
-        content: "Healthy chapter body with the copper token in his coat.",
-        wordCount: "Healthy chapter body with the copper token in his coat.".length,
-        updatedState: "fixed state",
-        updatedHooks: "fixed hooks",
-        updatedLedger: "fixed ledger",
-      }),
-    );
+    const settleSpy = vi
+      .spyOn(
+        WriterAgent.prototype as unknown as {
+          settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
+        },
+        "settleChapterState",
+      )
+      .mockResolvedValue(
+        createWriterOutput({
+          content: "Healthy chapter body with the copper token in his coat.",
+          wordCount: "Healthy chapter body with the copper token in his coat.".length,
+          updatedState: "fixed state",
+          updatedHooks: "fixed hooks",
+          updatedLedger: "fixed ledger",
+        }),
+      );
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
         passed: true,
@@ -2815,10 +3224,12 @@ describe("PipelineRunner", () => {
     vi.spyOn(StateValidatorAgent.prototype, "validate")
       .mockResolvedValueOnce({
         passed: false,
-        warnings: [{
-          category: "unsupported_change",
-          description: "状态写成铜牌未带在身上，但正文明确写了怀里的铜牌。",
-        }],
+        warnings: [
+          {
+            category: "unsupported_change",
+            description: "状态写成铜牌未带在身上，但正文明确写了怀里的铜牌。",
+          },
+        ],
       })
       .mockResolvedValueOnce({
         passed: true,
@@ -2830,14 +3241,20 @@ describe("PipelineRunner", () => {
     expect(result.status).toBe("ready-for-review");
     expect(writeSpy).toHaveBeenCalledTimes(1);
     expect(settleSpy).toHaveBeenCalledTimes(1);
-    expect(settleSpy).toHaveBeenCalledWith(expect.objectContaining({
-      chapterNumber: 1,
-      title: "Test Chapter",
-      content: "Healthy chapter body with the copper token in his coat.",
-      validationFeedback: expect.stringContaining("怀里的铜牌"),
-    }));
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe("fixed state");
-    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe("fixed hooks");
+    expect(settleSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chapterNumber: 1,
+        title: "Test Chapter",
+        content: "Healthy chapter body with the copper token in his coat.",
+        validationFeedback: expect.stringContaining("怀里的铜牌"),
+      }),
+    );
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe(
+      "fixed state",
+    );
+    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe(
+      "fixed hooks",
+    );
 
     await rm(root, { recursive: true, force: true });
   });
@@ -2889,17 +3306,21 @@ describe("PipelineRunner", () => {
     vi.spyOn(StateValidatorAgent.prototype, "validate")
       .mockResolvedValueOnce({
         passed: false,
-        warnings: [{
-          category: "unsupported_change",
-          description: "settler 把铜牌写没了，但正文仍然明确带在身上。",
-        }],
+        warnings: [
+          {
+            category: "unsupported_change",
+            description: "settler 把铜牌写没了，但正文仍然明确带在身上。",
+          },
+        ],
       })
       .mockResolvedValueOnce({
         passed: false,
-        warnings: [{
-          category: "unsupported_change",
-          description: "重试后仍然把铜牌写没了。",
-        }],
+        warnings: [
+          {
+            category: "unsupported_change",
+            description: "重试后仍然把铜牌写没了。",
+          },
+        ],
       });
 
     const result = await runner.writeNextChapter(bookId);
@@ -2908,9 +3329,15 @@ describe("PipelineRunner", () => {
     expect(result.status).toBe("state-degraded");
     expect(savedIndex[0]?.status).toBe("state-degraded");
     expect(savedIndex[0]?.auditIssues).toContain("[warning] 重试后仍然把铜牌写没了。");
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe("stable state");
-    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe("stable hooks");
-    await expect(readFile(join(storyDir, "particle_ledger.md"), "utf-8")).resolves.toBe("stable ledger");
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe(
+      "stable state",
+    );
+    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe(
+      "stable hooks",
+    );
+    await expect(readFile(join(storyDir, "particle_ledger.md"), "utf-8")).resolves.toBe(
+      "stable ledger",
+    );
     await expect(readdir(chaptersDir)).resolves.toContain("0001_Test_Chapter.md");
     await expect(stat(join(storyDir, "snapshots", "1"))).rejects.toThrow();
 
@@ -2927,17 +3354,23 @@ describe("PipelineRunner", () => {
     await Promise.all([
       writeFile(join(storyDir, "current_state.md"), "stable state", "utf-8"),
       writeFile(join(storyDir, "pending_hooks.md"), "stable hooks", "utf-8"),
-      state.saveChapterIndex(bookId, [{
-        number: 1,
-        title: "Broken Persistence",
-        status: "state-degraded" as ChapterMeta["status"],
-        wordCount: 1234,
-        createdAt: now,
-        updatedAt: now,
-        auditIssues: ["[warning] state validation degraded"],
-        lengthWarnings: [],
-      }]),
-      writeFile(join(state.bookDir(bookId), "chapters", "0001_Broken_Persistence.md"), "# 第1章 Broken Persistence\n\nbody", "utf-8"),
+      state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "Broken Persistence",
+          status: "state-degraded" as ChapterMeta["status"],
+          wordCount: 1234,
+          createdAt: now,
+          updatedAt: now,
+          auditIssues: ["[warning] state validation degraded"],
+          lengthWarnings: [],
+        },
+      ]),
+      writeFile(
+        join(state.bookDir(bookId), "chapters", "0001_Broken_Persistence.md"),
+        "# 第1章 Broken Persistence\n\nbody",
+        "utf-8",
+      ),
     ]);
 
     await expect(runner.writeNextChapter(bookId)).rejects.toThrow(/state-degraded/i);
@@ -2962,39 +3395,43 @@ describe("PipelineRunner", () => {
         "# 第1章 Broken Persistence\n\nHealthy chapter body with the copper token in his coat.",
         "utf-8",
       ),
-      state.saveChapterIndex(bookId, [{
-        number: 1,
-        title: "Broken Persistence",
-        status: "state-degraded" as ChapterMeta["status"],
-        wordCount: 55,
-        createdAt: now,
-        updatedAt: now,
-        auditIssues: ["[warning] 重试后仍然把铜牌写没了。"],
-        lengthWarnings: [],
-        reviewNote: JSON.stringify({
-          kind: "state-degraded",
-          baseStatus: "ready-for-review",
-          injectedIssues: ["[warning] 重试后仍然把铜牌写没了。"],
-        }),
-      }]),
+      state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "Broken Persistence",
+          status: "state-degraded" as ChapterMeta["status"],
+          wordCount: 55,
+          createdAt: now,
+          updatedAt: now,
+          auditIssues: ["[warning] 重试后仍然把铜牌写没了。"],
+          lengthWarnings: [],
+          reviewNote: JSON.stringify({
+            kind: "state-degraded",
+            baseStatus: "ready-for-review",
+            injectedIssues: ["[warning] 重试后仍然把铜牌写没了。"],
+          }),
+        },
+      ]),
     ]);
 
-    const settleSpy = vi.spyOn(
-      WriterAgent.prototype as unknown as {
-        settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
-      },
-      "settleChapterState",
-    ).mockResolvedValue(
-      createWriterOutput({
-        chapterNumber: 1,
-        title: "Broken Persistence",
-        content: "Healthy chapter body with the copper token in his coat.",
-        wordCount: "Healthy chapter body with the copper token in his coat.".length,
-        updatedState: "fixed state",
-        updatedHooks: "fixed hooks",
-        updatedLedger: "fixed ledger",
-      }),
-    );
+    const settleSpy = vi
+      .spyOn(
+        WriterAgent.prototype as unknown as {
+          settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
+        },
+        "settleChapterState",
+      )
+      .mockResolvedValue(
+        createWriterOutput({
+          chapterNumber: 1,
+          title: "Broken Persistence",
+          content: "Healthy chapter body with the copper token in his coat.",
+          wordCount: "Healthy chapter body with the copper token in his coat.".length,
+          updatedState: "fixed state",
+          updatedHooks: "fixed hooks",
+          updatedLedger: "fixed ledger",
+        }),
+      );
     vi.spyOn(StateValidatorAgent.prototype, "validate").mockResolvedValue({
       passed: true,
       warnings: [],
@@ -3002,7 +3439,10 @@ describe("PipelineRunner", () => {
 
     const result = await (
       runner as unknown as {
-        repairChapterState: (bookId: string, chapterNumber?: number) => Promise<{
+        repairChapterState: (
+          bookId: string,
+          chapterNumber?: number,
+        ) => Promise<{
           status: string;
           chapterNumber: number;
         }>;
@@ -3012,11 +3452,17 @@ describe("PipelineRunner", () => {
 
     expect(result.status).toBe("ready-for-review");
     expect(result.chapterNumber).toBe(1);
-    expect(settleSpy).toHaveBeenCalledWith(expect.objectContaining({
-      allowReapply: true,
-    }));
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe("fixed state");
-    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe("fixed hooks");
+    expect(settleSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowReapply: true,
+      }),
+    );
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe(
+      "fixed state",
+    );
+    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe(
+      "fixed hooks",
+    );
     expect(savedIndex[0]?.status).toBe("ready-for-review");
     expect(savedIndex[0]?.auditIssues).toEqual([]);
     expect(savedIndex[0]?.reviewNote).toBeUndefined();
@@ -3034,53 +3480,73 @@ describe("PipelineRunner", () => {
     const storyDir = join(bookDir, "story");
 
     await Promise.all([
-      writeFile(join(storyDir, "current_focus.md"), "# 当前聚焦\n\n## 当前重点\n\n商会路线优先。\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n", "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# 世界观设定\n\n- 誓令碎片不可伪造。\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# 当前聚焦\n\n## 当前重点\n\n商会路线优先。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# 世界观设定\n\n- 誓令碎片不可伪造。\n",
+        "utf-8",
+      ),
       writeFile(join(storyDir, "current_state.md"), "stable state", "utf-8"),
       writeFile(join(storyDir, "pending_hooks.md"), "stable hooks", "utf-8"),
       writeFile(join(storyDir, "particle_ledger.md"), "stable ledger", "utf-8"),
-      writeFile(join(storyDir, "chapter_summaries.md"), [
-        "# 章节摘要",
-        "",
-        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
-        "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
-        "",
-      ].join("\n"), "utf-8"),
+      writeFile(
+        join(storyDir, "chapter_summaries.md"),
+        [
+          "# 章节摘要",
+          "",
+          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+          "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
       writeFile(
         join(bookDir, "chapters", "0001_夜灯.md"),
         "# 第1章 夜灯\n\n林越推门进去，先停在门槛外听了一息，再去看柜台后那盏没关的灯。",
         "utf-8",
       ),
-      state.saveChapterIndex(bookId, [{
-        number: 1,
-        title: "夜灯",
-        status: "approved" as ChapterMeta["status"],
-        wordCount: 55,
-        createdAt: now,
-        updatedAt: now,
-        auditIssues: [],
-        lengthWarnings: [],
-      }]),
+      state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "夜灯",
+          status: "approved" as ChapterMeta["status"],
+          wordCount: 55,
+          createdAt: now,
+          updatedAt: now,
+          auditIssues: [],
+          lengthWarnings: [],
+        },
+      ]),
     ]);
 
-    const settleSpy = vi.spyOn(
-      WriterAgent.prototype as unknown as {
-        settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
-      },
-      "settleChapterState",
-    ).mockResolvedValue(
-      createWriterOutput({
-        chapterNumber: 1,
-        title: "夜灯",
-        content: "林越推门进去，先停在门槛外听了一息，再去看柜台后那盏没关的灯。",
-        wordCount: "林越推门进去，先停在门槛外听了一息，再去看柜台后那盏没关的灯。".length,
-        updatedState: "synced state",
-        updatedHooks: "synced hooks",
-        updatedLedger: "synced ledger",
-      }),
-    );
+    const settleSpy = vi
+      .spyOn(
+        WriterAgent.prototype as unknown as {
+          settleChapterState: (input: Record<string, unknown>) => Promise<WriteChapterOutput>;
+        },
+        "settleChapterState",
+      )
+      .mockResolvedValue(
+        createWriterOutput({
+          chapterNumber: 1,
+          title: "夜灯",
+          content: "林越推门进去，先停在门槛外听了一息，再去看柜台后那盏没关的灯。",
+          wordCount: "林越推门进去，先停在门槛外听了一息，再去看柜台后那盏没关的灯。".length,
+          updatedState: "synced state",
+          updatedHooks: "synced hooks",
+          updatedLedger: "synced ledger",
+        }),
+      );
     vi.spyOn(StateValidatorAgent.prototype, "validate").mockResolvedValue({
       passed: true,
       warnings: [],
@@ -3088,7 +3554,10 @@ describe("PipelineRunner", () => {
 
     const result = await (
       runner as unknown as {
-        resyncChapterArtifacts: (bookId: string, chapterNumber?: number) => Promise<{
+        resyncChapterArtifacts: (
+          bookId: string,
+          chapterNumber?: number,
+        ) => Promise<{
           status: string;
           chapterNumber: number;
         }>;
@@ -3098,12 +3567,18 @@ describe("PipelineRunner", () => {
 
     expect(result.status).toBe("ready-for-review");
     expect(result.chapterNumber).toBe(1);
-    expect(settleSpy).toHaveBeenCalledWith(expect.objectContaining({
-      allowReapply: true,
-      chapterIntent: expect.stringContaining("把注意力收回师债主线"),
-    }));
-    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe("synced state");
-    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe("synced hooks");
+    expect(settleSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowReapply: true,
+        chapterIntent: expect.stringContaining("把注意力收回师债主线"),
+      }),
+    );
+    await expect(readFile(join(storyDir, "current_state.md"), "utf-8")).resolves.toBe(
+      "synced state",
+    );
+    await expect(readFile(join(storyDir, "pending_hooks.md"), "utf-8")).resolves.toBe(
+      "synced hooks",
+    );
     expect(savedIndex[0]?.status).toBe("ready-for-review");
 
     await rm(root, { recursive: true, force: true });
@@ -3160,7 +3635,7 @@ describe("PipelineRunner", () => {
       "chat",
     ).mockResolvedValue({
       content: [
-        "{\"warnings\":[],\"passed\":true}",
+        '{"warnings":[],"passed":true}',
         "",
         "## Notes",
         "Trailing markdown can include } braces and should not abort persistence.",
@@ -3171,8 +3646,9 @@ describe("PipelineRunner", () => {
     const result = await runner.writeNextChapter(bookId);
 
     expect(result.chapterNumber).toBe(1);
-    await expect(readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8"))
-      .resolves.toContain(finalBody);
+    await expect(readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8")).resolves.toContain(
+      finalBody,
+    );
     await expect(state.loadChapterIndex(bookId)).resolves.toEqual([
       expect.objectContaining({
         number: 1,
@@ -3320,7 +3796,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFanficFoundation").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Lantern quay",
@@ -3333,11 +3809,17 @@ describe("PipelineRunner", () => {
     vi.spyOn(runner, "generateStyleGuide").mockRejectedValue(new Error("style failed"));
 
     try {
-      await expect(runner.initFanficBook(book, "A".repeat(600), "canon.txt", "canon")).resolves.toBeUndefined();
+      await expect(
+        runner.initFanficBook(book, "A".repeat(600), "canon.txt", "canon"),
+      ).resolves.toBeUndefined();
 
       expect(await state.loadChapterIndex(bookId)).toEqual([]);
-      await expect(readFile(join(state.bookDir(bookId), "story", "fanfic_canon.md"), "utf-8")).resolves.toContain("Fanfic Canon");
-      await expect(stat(join(state.bookDir(bookId), "story", "snapshots", "0"))).resolves.toBeTruthy();
+      await expect(
+        readFile(join(state.bookDir(bookId), "story", "fanfic_canon.md"), "utf-8"),
+      ).resolves.toContain("Fanfic Canon");
+      await expect(
+        stat(join(state.bookDir(bookId), "story", "snapshots", "0")),
+      ).resolves.toBeTruthy();
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -3345,16 +3827,23 @@ describe("PipelineRunner", () => {
 
   it("imports short style samples with a deterministic guide instead of failing", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
-    const chatSpy = vi.spyOn(llmProvider, "chatCompletion").mockRejectedValue(new Error("should not call llm for short samples"));
-    const sample = "夜雨落在窗台。她没回头，只把那封信压进抽屉。楼下车灯一闪，像有人终于找到了这里。";
+    const chatSpy = vi
+      .spyOn(llmProvider, "chatCompletion")
+      .mockRejectedValue(new Error("should not call llm for short samples"));
+    const sample =
+      "夜雨落在窗台。她没回头，只把那封信压进抽屉。楼下车灯一闪，像有人终于找到了这里。";
 
     try {
       const guide = await runner.generateStyleGuide(bookId, sample, "short-snippet");
 
       expect(chatSpy).not.toHaveBeenCalled();
       expect(guide).toContain("样本文本较短");
-      await expect(readFile(join(state.bookDir(bookId), "story", "style_profile.json"), "utf-8")).resolves.toContain("short-snippet");
-      await expect(readFile(join(state.bookDir(bookId), "story", "style_guide.md"), "utf-8")).resolves.toContain("样本文本较短");
+      await expect(
+        readFile(join(state.bookDir(bookId), "story", "style_profile.json"), "utf-8"),
+      ).resolves.toContain("short-snippet");
+      await expect(
+        readFile(join(state.bookDir(bookId), "story", "style_guide.md"), "utf-8"),
+      ).resolves.toContain("样本文本较短");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -3383,17 +3872,25 @@ describe("PipelineRunner", () => {
     await mkdir(parentChaptersDir, { recursive: true });
     await Promise.all([
       writeFile(join(parentStoryDir, "story_bible.md"), "# Story Bible\n", "utf-8"),
-      writeFile(join(parentStoryDir, "current_state.md"), createStateCard({
-        chapter: 3,
-        location: "North watchtower",
-        protagonistState: "The mentor debt is no longer secret.",
-        goal: "Protect the watchtower archive.",
-        conflict: "Guild spies are already inside the archive.",
-      }), "utf-8"),
+      writeFile(
+        join(parentStoryDir, "current_state.md"),
+        createStateCard({
+          chapter: 3,
+          location: "North watchtower",
+          protagonistState: "The mentor debt is no longer secret.",
+          goal: "Protect the watchtower archive.",
+          conflict: "Guild spies are already inside the archive.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(parentStoryDir, "particle_ledger.md"), "# Ledger\n", "utf-8"),
       writeFile(join(parentStoryDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(join(parentStoryDir, "chapter_summaries.md"), "# Chapter Summaries\n", "utf-8"),
-      writeFile(join(parentChaptersDir, "0001_Parent.md"), `# Chapter 1\n\n${"Parent text. ".repeat(60)}`, "utf-8"),
+      writeFile(
+        join(parentChaptersDir, "0001_Parent.md"),
+        `# Chapter 1\n\n${"Parent text. ".repeat(60)}`,
+        "utf-8",
+      ),
     ]);
 
     vi.spyOn(llmProvider, "chatCompletion").mockResolvedValue({
@@ -3405,7 +3902,9 @@ describe("PipelineRunner", () => {
       const canon = await runner.importCanon(bookId, parentBookId);
 
       expect(canon).toContain("# Parent Canon");
-      await expect(readFile(join(state.bookDir(bookId), "story", "parent_canon.md"), "utf-8")).resolves.toContain("Imported canon body.");
+      await expect(
+        readFile(join(state.bookDir(bookId), "story", "parent_canon.md"), "utf-8"),
+      ).resolves.toContain("Imported canon body.");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -3418,7 +3917,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Ashen ferry crossing",
@@ -3443,14 +3942,14 @@ describe("PipelineRunner", () => {
     try {
       const result = await runner.importChapters({
         bookId,
-        chapters: [
-          { title: "Prelude", content: chapterContent },
-        ],
+        chapters: [{ title: "Prelude", content: chapterContent }],
       });
 
       expect(result.importedCount).toBe(1);
       expect((await state.loadChapterIndex(bookId))[0]?.status).toBe("imported");
-      await expect(readFile(join(state.bookDir(bookId), "story", "story_bible.md"), "utf-8")).resolves.toContain("# Story Bible");
+      await expect(
+        readFile(join(state.bookDir(bookId), "story", "story_bible.md"), "utf-8"),
+      ).resolves.toContain("# Story Bible");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -3462,7 +3961,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Shrine outskirts",
@@ -3474,34 +3973,38 @@ describe("PipelineRunner", () => {
     });
 
     vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter")
-      .mockResolvedValueOnce(createAnalyzedOutput({
-        chapterNumber: 1,
-        title: "One",
-        content: "One body.",
-        wordCount: "One body.".length,
-        updatedState: createStateCard({
-          chapter: 1,
-          location: "Ashen ferry crossing",
-          protagonistState: "Lin Yue still hides the oath token.",
-          goal: "Find the vanished mentor.",
-          conflict: "The mentor debt is still personal.",
+      .mockResolvedValueOnce(
+        createAnalyzedOutput({
+          chapterNumber: 1,
+          title: "One",
+          content: "One body.",
+          wordCount: "One body.".length,
+          updatedState: createStateCard({
+            chapter: 1,
+            location: "Ashen ferry crossing",
+            protagonistState: "Lin Yue still hides the oath token.",
+            goal: "Find the vanished mentor.",
+            conflict: "The mentor debt is still personal.",
+          }),
+          updatedHooks: "# Pending Hooks\n",
         }),
-        updatedHooks: "# Pending Hooks\n",
-      }))
-      .mockResolvedValueOnce(createAnalyzedOutput({
-        chapterNumber: 2,
-        title: "Two",
-        content: "Two body.",
-        wordCount: "Two body.".length,
-        updatedState: createStateCard({
-          chapter: 2,
-          location: "North watchtower",
-          protagonistState: "Lin Yue finally shows the oath token.",
-          goal: "Reach the watchtower before the guild.",
-          conflict: "The merchant guild now contests the mentor trail.",
+      )
+      .mockResolvedValueOnce(
+        createAnalyzedOutput({
+          chapterNumber: 2,
+          title: "Two",
+          content: "Two body.",
+          wordCount: "Two body.".length,
+          updatedState: createStateCard({
+            chapter: 2,
+            location: "North watchtower",
+            protagonistState: "Lin Yue finally shows the oath token.",
+            goal: "Reach the watchtower before the guild.",
+            conflict: "The merchant guild now contests the mentor trail.",
+          }),
+          updatedHooks: "# Pending Hooks\n",
         }),
-        updatedHooks: "# Pending Hooks\n",
-      }));
+      );
 
     try {
       await runner.importChapters({
@@ -3543,86 +4046,102 @@ describe("PipelineRunner", () => {
     }
   });
 
-  sqliteIt("rebuilds fact history from structured snapshot state instead of stale markdown snapshots", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
-    const storyDir = join(state.bookDir(bookId), "story");
-    const snapshotOneDir = join(storyDir, "snapshots", "1");
-    const snapshotOneStateDir = join(snapshotOneDir, "state");
-    await mkdir(snapshotOneStateDir, { recursive: true });
+  sqliteIt(
+    "rebuilds fact history from structured snapshot state instead of stale markdown snapshots",
+    async () => {
+      const { root, runner, state, bookId } = await createRunnerFixture();
+      const storyDir = join(state.bookDir(bookId), "story");
+      const snapshotOneDir = join(storyDir, "snapshots", "1");
+      const snapshotOneStateDir = join(snapshotOneDir, "state");
+      await mkdir(snapshotOneStateDir, { recursive: true });
 
-    await Promise.all([
-      writeFile(
-        join(snapshotOneDir, "current_state.md"),
-        createStateCard({
-          chapter: 1,
-          location: "Old markdown ferry crossing",
-          protagonistState: "Markdown state still hides the oath token.",
-          goal: "Follow the markdown trail.",
-          conflict: "Old markdown conflict.",
-        }),
-        "utf-8",
-      ),
-      writeFile(join(snapshotOneStateDir, "current_state.json"), JSON.stringify({
-        chapter: 1,
-        facts: [
-          {
-            subject: "current",
-            predicate: "Current Location",
-            object: "Structured watchtower",
-            validFromChapter: 1,
-            validUntilChapter: null,
-            sourceChapter: 1,
-          },
-          {
-            subject: "protagonist",
-            predicate: "Current Conflict",
-            object: "Structured conflict replaces markdown drift.",
-            validFromChapter: 1,
-            validUntilChapter: null,
-            sourceChapter: 1,
-          },
-        ],
-      }, null, 2), "utf-8"),
-    ]);
+      await Promise.all([
+        writeFile(
+          join(snapshotOneDir, "current_state.md"),
+          createStateCard({
+            chapter: 1,
+            location: "Old markdown ferry crossing",
+            protagonistState: "Markdown state still hides the oath token.",
+            goal: "Follow the markdown trail.",
+            conflict: "Old markdown conflict.",
+          }),
+          "utf-8",
+        ),
+        writeFile(
+          join(snapshotOneStateDir, "current_state.json"),
+          JSON.stringify(
+            {
+              chapter: 1,
+              facts: [
+                {
+                  subject: "current",
+                  predicate: "Current Location",
+                  object: "Structured watchtower",
+                  validFromChapter: 1,
+                  validUntilChapter: null,
+                  sourceChapter: 1,
+                },
+                {
+                  subject: "protagonist",
+                  predicate: "Current Conflict",
+                  object: "Structured conflict replaces markdown drift.",
+                  validFromChapter: 1,
+                  validUntilChapter: null,
+                  sourceChapter: 1,
+                },
+              ],
+            },
+            null,
+            2,
+          ),
+          "utf-8",
+        ),
+      ]);
 
-    try {
-      await (runner as unknown as {
-        syncCurrentStateFactHistory: (targetBookId: string, uptoChapter: number) => Promise<void>;
-      }).syncCurrentStateFactHistory(bookId, 1);
-
-      const memoryDb = new MemoryDB(state.bookDir(bookId));
       try {
-        expect(memoryDb.getCurrentFacts()).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              predicate: "Current Location",
-              object: "Structured watchtower",
-              validFromChapter: 1,
-            }),
-            expect.objectContaining({
-              predicate: "Current Conflict",
-              object: "Structured conflict replaces markdown drift.",
-              validFromChapter: 1,
-            }),
-          ]),
-        );
-        expect(memoryDb.getCurrentFacts()).not.toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              object: "Old markdown ferry crossing",
-            }),
-            expect.objectContaining({
-              object: "Old markdown conflict.",
-            }),
-          ]),
-        );
+        await (
+          runner as unknown as {
+            syncCurrentStateFactHistory: (
+              targetBookId: string,
+              uptoChapter: number,
+            ) => Promise<void>;
+          }
+        ).syncCurrentStateFactHistory(bookId, 1);
+
+        const memoryDb = new MemoryDB(state.bookDir(bookId));
+        try {
+          expect(memoryDb.getCurrentFacts()).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                predicate: "Current Location",
+                object: "Structured watchtower",
+                validFromChapter: 1,
+              }),
+              expect.objectContaining({
+                predicate: "Current Conflict",
+                object: "Structured conflict replaces markdown drift.",
+                validFromChapter: 1,
+              }),
+            ]),
+          );
+          expect(memoryDb.getCurrentFacts()).not.toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                object: "Old markdown ferry crossing",
+              }),
+              expect.objectContaining({
+                object: "Old markdown conflict.",
+              }),
+            ]),
+          );
+        } finally {
+          memoryDb.close();
+        }
       } finally {
-        memoryDb.close();
+        await rm(root, { recursive: true, force: true });
       }
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  });
+    },
+  );
 
   it("tracks imported English chapters using word counts instead of characters", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
@@ -3702,19 +4221,22 @@ describe("PipelineRunner", () => {
 
     await state.saveBookConfig(bookId, englishBook);
 
-    const foundation = vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
-      storyBible: "# Story Bible\n",
-      volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
-      currentState: createStateCard({
-        chapter: 0,
-        location: "Harbor gate",
-        protagonistState: "Mara arrives with a sealed letter.",
-        goal: "Find the missing captain before sunrise.",
-        conflict: "The harbor watch is searching every ship.",
-      }),
-      pendingHooks: "# Pending Hooks\n\n| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |\n| --- | --- | --- | --- | --- | --- | --- |\n",
-    });
+    const foundation = vi
+      .spyOn(ArchitectAgent.prototype, "generateFoundationFromImport")
+      .mockResolvedValue({
+        storyBible: "# Story Bible\n",
+        volumeOutline: "# Volume Outline\n",
+        bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
+        currentState: createStateCard({
+          chapter: 0,
+          location: "Harbor gate",
+          protagonistState: "Mara arrives with a sealed letter.",
+          goal: "Find the missing captain before sunrise.",
+          conflict: "The harbor watch is searching every ship.",
+        }),
+        pendingHooks:
+          "# Pending Hooks\n\n| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |\n| --- | --- | --- | --- | --- | --- | --- |\n",
+      });
     const saveChapter = vi.spyOn(WriterAgent.prototype, "saveChapter");
 
     vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockResolvedValue(
@@ -3730,8 +4252,10 @@ describe("PipelineRunner", () => {
           goal: "Slip past the harbor watch.",
           conflict: "The watch now searches for the missing captain's courier.",
         }),
-        updatedHooks: "# Pending Hooks\n\n| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |\n| --- | --- | --- | --- | --- | --- | --- |\n| captain-letter | 1 | mystery | open | 1 | The captain's disappearance is explained. | The sealed letter points to the vanished captain. |\n",
-        chapterSummary: "| 1 | Prelude | Mara | Mara reaches the harbor with a sealed letter. | Mara hides the letter and studies the watch patrol. | The captain-letter mystery opens. | tense | setup |",
+        updatedHooks:
+          "# Pending Hooks\n\n| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |\n| --- | --- | --- | --- | --- | --- | --- |\n| captain-letter | 1 | mystery | open | 1 | The captain's disappearance is explained. | The sealed letter points to the vanished captain. |\n",
+        chapterSummary:
+          "| 1 | Prelude | Mara | Mara reaches the harbor with a sealed letter. | Mara hides the letter and studies the watch patrol. | The captain-letter mystery opens. | tense | setup |",
         updatedSubplots: [
           "# Subplot Board",
           "",
@@ -3748,9 +4272,7 @@ describe("PipelineRunner", () => {
     try {
       await runner.importChapters({
         bookId,
-        chapters: [
-          { title: "Prelude", content: "A cold wind crossed the harbor." },
-        ],
+        chapters: [{ title: "Prelude", content: "A cold wind crossed the harbor." }],
       });
 
       const storyDir = join(state.bookDir(bookId), "story");
@@ -3779,7 +4301,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Ashen ferry crossing",
@@ -3803,18 +4325,18 @@ describe("PipelineRunner", () => {
     try {
       await runner.importChapters({
         bookId,
-        chapters: [
-          { title: "第一章", content: "章节正文。" },
-        ],
+        chapters: [{ title: "第一章", content: "章节正文。" }],
       });
 
-      expect(infos).toEqual(expect.arrayContaining([
-        "步骤 1：从 1 章生成基础设定...",
-        "基础设定已生成。",
-        "步骤 2：从第 1 章开始顺序回放...",
-        "分析章节 1/1：第一章...",
-        "完成。已导入 1 章，共 5字。下一章：2",
-      ]));
+      expect(infos).toEqual(
+        expect.arrayContaining([
+          "步骤 1：从 1 章生成基础设定...",
+          "基础设定已生成。",
+          "步骤 2：从第 1 章开始顺序回放...",
+          "分析章节 1/1：第一章...",
+          "完成。已导入 1 章，共 5字。下一章：2",
+        ]),
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -3824,9 +4346,11 @@ describe("PipelineRunner", () => {
     const { root, runner, bookId } = await createRunnerFixture();
 
     vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
-      storyBible: "# Story Bible\n\n- Keep the harbor search grounded in the missing captain thread.\n",
-      volumeOutline: "# Volume Outline\n\n## Volume 1\n- Chapter 1: Mara arrives at the harbor with the sealed letter.\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n\n- Stay close to Mara's viewpoint.\n",
+      storyBible:
+        "# Story Bible\n\n- Keep the harbor search grounded in the missing captain thread.\n",
+      volumeOutline:
+        "# Volume Outline\n\n## Volume 1\n- Chapter 1: Mara arrives at the harbor with the sealed letter.\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n\n- Stay close to Mara\'s viewpoint.\n',
       currentState: createStateCard({
         chapter: 0,
         location: "Harbor gate",
@@ -3844,23 +4368,23 @@ describe("PipelineRunner", () => {
       ].join("\n"),
     });
 
-    const analyzeChapter = vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockResolvedValue(
-      createAnalyzedOutput({
-        chapterNumber: 1,
-        title: "Prelude",
-        content: "A cold wind crossed the harbor.",
-        wordCount: countChapterLength("A cold wind crossed the harbor.", "en_words"),
-      }),
-    );
+    const analyzeChapter = vi
+      .spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter")
+      .mockResolvedValue(
+        createAnalyzedOutput({
+          chapterNumber: 1,
+          title: "Prelude",
+          content: "A cold wind crossed the harbor.",
+          wordCount: countChapterLength("A cold wind crossed the harbor.", "en_words"),
+        }),
+      );
     vi.spyOn(WriterAgent.prototype, "saveChapter").mockResolvedValue(undefined);
     vi.spyOn(WriterAgent.prototype, "saveNewTruthFiles").mockResolvedValue(undefined);
 
     try {
       await runner.importChapters({
         bookId,
-        chapters: [
-          { title: "Prelude", content: "A cold wind crossed the harbor." },
-        ],
+        chapters: [{ title: "Prelude", content: "A cold wind crossed the harbor." }],
       });
 
       expect(analyzeChapter.mock.calls[0]?.[0]).toMatchObject({
@@ -3890,9 +4414,21 @@ describe("PipelineRunner", () => {
     await state.saveBookConfig(bookId, englishBook);
     await mkdir(join(storyDir, "snapshots", "0"), { recursive: true });
     await Promise.all([
-      writeFile(join(storyDir, "subplot_board.md"), "# Subplot Board\n\nFUTURE LEAK subplot\n", "utf-8"),
-      writeFile(join(storyDir, "emotional_arcs.md"), "# Emotional Arcs\n\nFUTURE LEAK emotion\n", "utf-8"),
-      writeFile(join(storyDir, "character_matrix.md"), "# Character Matrix\n\nFUTURE LEAK matrix\n", "utf-8"),
+      writeFile(
+        join(storyDir, "subplot_board.md"),
+        "# Subplot Board\n\nFUTURE LEAK subplot\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "emotional_arcs.md"),
+        "# Emotional Arcs\n\nFUTURE LEAK emotion\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "character_matrix.md"),
+        "# Character Matrix\n\nFUTURE LEAK matrix\n",
+        "utf-8",
+      ),
       writeFile(
         join(storyDir, "chapter_summaries.md"),
         [
@@ -3933,7 +4469,7 @@ describe("PipelineRunner", () => {
     vi.spyOn(ArchitectAgent.prototype, "generateFoundationFromImport").mockResolvedValue({
       storyBible: "# Story Bible\n",
       volumeOutline: "# Volume Outline\n",
-      bookRules: "---\nversion: \"1.0\"\n---\n\n# Book Rules\n",
+      bookRules: '---\nversion: "1.0"\n---\n\n# Book Rules\n',
       currentState: createStateCard({
         chapter: 60,
         location: "Chengdu court",
@@ -3958,43 +4494,61 @@ describe("PipelineRunner", () => {
     let matrixSeenByFirstReplay = "";
     let summariesSeenByFirstReplay = "";
 
-    vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockImplementationOnce(async (input) => {
-      stateSeenByFirstReplay = await readFile(join(input.bookDir, "story", "current_state.md"), "utf-8");
-      hooksSeenByFirstReplay = await readFile(join(input.bookDir, "story", "pending_hooks.md"), "utf-8");
-      subplotSeenByFirstReplay = await readFile(join(input.bookDir, "story", "subplot_board.md"), "utf-8").catch(() => "");
-      emotionalSeenByFirstReplay = await readFile(join(input.bookDir, "story", "emotional_arcs.md"), "utf-8").catch(() => "");
-      matrixSeenByFirstReplay = await readFile(join(input.bookDir, "story", "character_matrix.md"), "utf-8").catch(() => "");
-      summariesSeenByFirstReplay = await readFile(join(input.bookDir, "story", "chapter_summaries.md"), "utf-8").catch(() => "");
+    vi.spyOn(ChapterAnalyzerAgent.prototype, "analyzeChapter").mockImplementationOnce(
+      async (input) => {
+        stateSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "current_state.md"),
+          "utf-8",
+        );
+        hooksSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "pending_hooks.md"),
+          "utf-8",
+        );
+        subplotSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "subplot_board.md"),
+          "utf-8",
+        ).catch(() => "");
+        emotionalSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "emotional_arcs.md"),
+          "utf-8",
+        ).catch(() => "");
+        matrixSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "character_matrix.md"),
+          "utf-8",
+        ).catch(() => "");
+        summariesSeenByFirstReplay = await readFile(
+          join(input.bookDir, "story", "chapter_summaries.md"),
+          "utf-8",
+        ).catch(() => "");
 
-      return createAnalyzedOutput({
-        chapterNumber: 1,
-        title: "Prelude",
-        content: "A cold wind crossed the harbor.",
-        wordCount: countChapterLength("A cold wind crossed the harbor.", "en_words"),
-        updatedState: createStateCard({
-          chapter: 1,
-          location: "Harbor gate",
-          protagonistState: "Mara hides the sealed letter under her coat.",
-          goal: "Slip past the harbor watch.",
-          conflict: "The watch now searches for the missing captain's courier.",
-        }),
-        updatedHooks: [
-          "# Pending Hooks",
-          "",
-          "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| captain-letter | 1 | mystery | open | 1 | The captain's disappearance is explained. | The sealed letter points to the vanished captain. |",
-          "",
-        ].join("\n"),
-      });
-    });
+        return createAnalyzedOutput({
+          chapterNumber: 1,
+          title: "Prelude",
+          content: "A cold wind crossed the harbor.",
+          wordCount: countChapterLength("A cold wind crossed the harbor.", "en_words"),
+          updatedState: createStateCard({
+            chapter: 1,
+            location: "Harbor gate",
+            protagonistState: "Mara hides the sealed letter under her coat.",
+            goal: "Slip past the harbor watch.",
+            conflict: "The watch now searches for the missing captain's courier.",
+          }),
+          updatedHooks: [
+            "# Pending Hooks",
+            "",
+            "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| captain-letter | 1 | mystery | open | 1 | The captain's disappearance is explained. | The sealed letter points to the vanished captain. |",
+            "",
+          ].join("\n"),
+        });
+      },
+    );
 
     try {
       await runner.importChapters({
         bookId,
-        chapters: [
-          { title: "Prelude", content: "A cold wind crossed the harbor." },
-        ],
+        chapters: [{ title: "Prelude", content: "A cold wind crossed the harbor." }],
       });
 
       expect(stateSeenByFirstReplay).toContain("| Current Chapter | 0 |");
@@ -4007,8 +4561,14 @@ describe("PipelineRunner", () => {
       expect(matrixSeenByFirstReplay).not.toContain("FUTURE LEAK");
       expect(summariesSeenByFirstReplay).not.toContain("FUTURE LEAK");
 
-      const snapshotZeroState = await readFile(join(storyDir, "snapshots", "0", "current_state.md"), "utf-8");
-      const snapshotZeroHooks = await readFile(join(storyDir, "snapshots", "0", "pending_hooks.md"), "utf-8");
+      const snapshotZeroState = await readFile(
+        join(storyDir, "snapshots", "0", "current_state.md"),
+        "utf-8",
+      );
+      const snapshotZeroHooks = await readFile(
+        join(storyDir, "snapshots", "0", "pending_hooks.md"),
+        "utf-8",
+      );
       expect(snapshotZeroState).toContain("| Current Chapter | 0 |");
       expect(snapshotZeroState).not.toContain("FUTURE LEAK");
       expect(snapshotZeroHooks).toContain("# Pending Hooks");
@@ -4039,20 +4599,26 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(chaptersDir, "0001_Test_Chapter.md"), "# 第1章 Test Chapter\n\nOriginal body.", "utf-8"),
+      writeFile(
+        join(chaptersDir, "0001_Test_Chapter.md"),
+        "# 第1章 Test Chapter\n\nOriginal body.",
+        "utf-8",
+      ),
       writeFile(join(storyDir, "current_state.md"), oldState, "utf-8"),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Test Chapter",
-      status: "audit-failed",
-      wordCount: "Original body.".length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "Test Chapter",
+        status: "audit-failed",
+        wordCount: "Original body.".length,
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
     await state.snapshotState(bookId, 1);
 
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
@@ -4108,13 +4674,17 @@ describe("PipelineRunner", () => {
     const now = "2026-03-19T00:00:00.000Z";
 
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 2,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The debt trail keeps narrowing.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 2,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The debt trail keeps narrowing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(
         join(storyDir, "chapter_summaries.md"),
@@ -4128,8 +4698,16 @@ describe("PipelineRunner", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(state.bookDir(bookId), "chapters", "0001_旧路.md"), "# 第1章 旧路\n\n城门在晨雾里半开。林越顺着石阶慢慢往里走。巷口那盏灯一直没有灭。", "utf-8"),
-      writeFile(join(state.bookDir(bookId), "chapters", "0002_暗巷.md"), "# 第2章 暗巷\n\n午后的风掠过墙头。林越没有回头，只是沿着阴影继续向前。墙后的铃声很轻。", "utf-8"),
+      writeFile(
+        join(state.bookDir(bookId), "chapters", "0001_旧路.md"),
+        "# 第1章 旧路\n\n城门在晨雾里半开。林越顺着石阶慢慢往里走。巷口那盏灯一直没有灭。",
+        "utf-8",
+      ),
+      writeFile(
+        join(state.bookDir(bookId), "chapters", "0002_暗巷.md"),
+        "# 第2章 暗巷\n\n午后的风掠过墙头。林越没有回头，只是沿着阴影继续向前。墙后的铃声很轻。",
+        "utf-8",
+      ),
     ]);
     await state.saveChapterIndex(bookId, [
       {
@@ -4158,8 +4736,11 @@ describe("PipelineRunner", () => {
       createWriterOutput({
         chapterNumber: 3,
         title: "回声",
-        content: "夜色慢慢压低了屋檐。林越先停在门外，随后才抬手去碰那道旧债印。风从更深的巷子里吹了出来。",
-        wordCount: "夜色慢慢压低了屋檐。林越先停在门外，随后才抬手去碰那道旧债印。风从更深的巷子里吹了出来。".length,
+        content:
+          "夜色慢慢压低了屋檐。林越先停在门外，随后才抬手去碰那道旧债印。风从更深的巷子里吹了出来。",
+        wordCount:
+          "夜色慢慢压低了屋檐。林越先停在门外，随后才抬手去碰那道旧债印。风从更深的巷子里吹了出来。"
+            .length,
         updatedState: createStateCard({
           chapter: 3,
           location: "Ashen ferry crossing",
@@ -4198,13 +4779,17 @@ describe("PipelineRunner", () => {
     const storyDir = join(state.bookDir(bookId), "story");
 
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 2,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The debt trail keeps narrowing.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 2,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The debt trail keeps narrowing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(join(storyDir, "chapter_summaries.md"), "# Chapter Summaries\n", "utf-8"),
     ]);
@@ -4225,12 +4810,14 @@ describe("PipelineRunner", () => {
         updatedLedger: "",
         updatedHooks: "# Pending Hooks\n",
         chapterSummary: "| 3 | 回声 | 林越 | 继续潜伏 | 目标未变 | 债印未解 | 克制 | 布局 |",
-        hookHealthIssues: [{
-          severity: "warning",
-          category: "伏笔债务",
-          description: "活跃伏笔过多，且本章没有处理陈旧债务。",
-          suggestion: "下一章优先推进或延后至少一个僵死伏笔。",
-        }],
+        hookHealthIssues: [
+          {
+            severity: "warning",
+            category: "伏笔债务",
+            description: "活跃伏笔过多，且本章没有处理陈旧债务。",
+            suggestion: "下一章优先推进或延后至少一个僵死伏笔。",
+          },
+        ],
       }),
     );
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
@@ -4251,9 +4838,7 @@ describe("PipelineRunner", () => {
       expect(driftFile).toContain("伏笔债务");
       expect(currentState).not.toContain("伏笔债务");
       expect(savedIndex[0]?.auditIssues).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining("活跃伏笔过多"),
-        ]),
+        expect.arrayContaining([expect.stringContaining("活跃伏笔过多")]),
       );
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -4263,7 +4848,8 @@ describe("PipelineRunner", () => {
   it("adds final paragraph fragmentation warnings from revised content before persist", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
     const storyDir = join(state.bookDir(bookId), "story");
-    const draftBody = "林越先把门推开一条缝，再侧耳去听墙后的动静。屋里的灯没有亮，但桌角还有没散的热气，说明人刚离开不久。";
+    const draftBody =
+      "林越先把门推开一条缝，再侧耳去听墙后的动静。屋里的灯没有亮，但桌角还有没散的热气，说明人刚离开不久。";
     const revisedBody = [
       "门开了。",
       "他没进去。",
@@ -4274,13 +4860,17 @@ describe("PipelineRunner", () => {
     ].join("\n\n");
 
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The debt trail keeps narrowing.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The debt trail keeps narrowing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
 
@@ -4360,25 +4950,31 @@ describe("PipelineRunner", () => {
 
     await Promise.all([
       writeFile(join(chaptersDir, "0001_回声.md"), "# 第1章 回声\n\n旧章节。", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The debt trail keeps narrowing.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The debt trail keeps narrowing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "回声",
-      status: "ready-for-review",
-      wordCount: 12,
-      createdAt: now,
-      updatedAt: now,
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "回声",
+        status: "ready-for-review",
+        wordCount: 12,
+        createdAt: now,
+        updatedAt: now,
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
       createWriterOutput({
@@ -4415,25 +5011,31 @@ describe("PipelineRunner", () => {
 
     await Promise.all([
       writeFile(join(chaptersDir, "0001_回声.md"), "# 第1章 回声\n\n旧章节。", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The debt trail keeps narrowing.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The debt trail keeps narrowing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "回声",
-      status: "ready-for-review",
-      wordCount: 12,
-      createdAt: now,
-      updatedAt: now,
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "回声",
+        status: "ready-for-review",
+        wordCount: 12,
+        createdAt: now,
+        updatedAt: now,
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
     vi.spyOn(WriterAgent.prototype, "writeChapter").mockResolvedValue(
       createWriterOutput({
@@ -4469,26 +5071,36 @@ describe("PipelineRunner", () => {
     const chaptersDir = join(state.bookDir(bookId), "chapters");
 
     await Promise.all([
-      writeFile(join(chaptersDir, "0001_Test_Chapter.md"), "# 第1章 Test Chapter\n\nOriginal body.", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
+      writeFile(
+        join(chaptersDir, "0001_Test_Chapter.md"),
+        "# 第1章 Test Chapter\n\nOriginal body.",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "Ashen ferry crossing",
+          protagonistState: "Lin Yue still hides the oath token.",
+          goal: "Find the vanished mentor.",
+          conflict: "The mentor debt is still personal.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Test Chapter",
-      status: "audit-failed",
-      wordCount: "Original body.".length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "Test Chapter",
+        status: "audit-failed",
+        wordCount: "Original body.".length,
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter").mockResolvedValue(
       createAuditResult({
@@ -4531,39 +5143,62 @@ describe("PipelineRunner", () => {
     const originalBody = "林越推门进去，先看见柜台后那盏没关的灯。";
 
     await Promise.all([
-      writeFile(join(storyDir, "current_focus.md"), "# 当前聚焦\n\n## 当前重点\n\n把注意力收回师债主线。\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "旧港便利店",
-        protagonistState: "林越仍在追查师债。",
-        goal: "把注意力拉回师债线索。",
-        conflict: "商会路线仍在分散注意力。",
-      }), "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# 世界观设定\n\n- 誓令碎片不可伪造。\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# 当前聚焦\n\n## 当前重点\n\n把注意力收回师债主线。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "旧港便利店",
+          protagonistState: "林越仍在追查师债。",
+          goal: "把注意力拉回师债线索。",
+          conflict: "商会路线仍在分散注意力。",
+        }),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# 世界观设定\n\n- 誓令碎片不可伪造。\n",
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# 伏笔池\n\n- 师债线索仍未回收。\n", "utf-8"),
-      writeFile(join(storyDir, "chapter_summaries.md"), [
-        "# 章节摘要",
-        "",
-        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
-        "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
-        "",
-      ].join("\n"), "utf-8"),
+      writeFile(
+        join(storyDir, "chapter_summaries.md"),
+        [
+          "# 章节摘要",
+          "",
+          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+          "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
       writeFile(join(chaptersDir, "0001_夜灯.md"), `# 第1章 夜灯\n\n${originalBody}`, "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "夜灯",
-      status: "audit-failed",
-      wordCount: originalBody.length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "夜灯",
+        status: "audit-failed",
+        wordCount: originalBody.length,
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
-    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
+    const auditChapter = vi
+      .spyOn(ContinuityAuditor.prototype, "auditChapter")
       .mockResolvedValueOnce(
         createAuditResult({
           passed: false,
@@ -4633,37 +5268,59 @@ describe("PipelineRunner", () => {
     const originalBody = "林越推门进去，先看见柜台后那盏没关的灯。";
 
     await Promise.all([
-      writeFile(join(storyDir, "current_focus.md"), "# 当前聚焦\n\n## 当前重点\n\n商会路线优先。\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "旧港便利店",
-        protagonistState: "林越仍在追查师债。",
-        goal: "把注意力拉回师债线索。",
-        conflict: "商会路线仍在分散注意力。",
-      }), "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# 世界观设定\n\n- 誓令碎片不可伪造。\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# 当前聚焦\n\n## 当前重点\n\n商会路线优先。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# 卷纲\n\n## 第1章\n先处理商会路线噪音。\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "旧港便利店",
+          protagonistState: "林越仍在追查师债。",
+          goal: "把注意力拉回师债线索。",
+          conflict: "商会路线仍在分散注意力。",
+        }),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# 世界观设定\n\n- 誓令碎片不可伪造。\n",
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# 伏笔池\n\n- 师债线索仍未回收。\n", "utf-8"),
-      writeFile(join(storyDir, "chapter_summaries.md"), [
-        "# 章节摘要",
-        "",
-        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
-        "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
-        "",
-      ].join("\n"), "utf-8"),
+      writeFile(
+        join(storyDir, "chapter_summaries.md"),
+        [
+          "# 章节摘要",
+          "",
+          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+          "| 1 | 夜灯 | 林越 | 林越继续追查师债 | 追查意图更强 | 师债推进 | 压抑 | 主线推进 |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
       writeFile(join(chaptersDir, "0001_夜灯.md"), `# 第1章 夜灯\n\n${originalBody}`, "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "夜灯",
-      status: "audit-failed",
-      wordCount: originalBody.length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "夜灯",
+        status: "audit-failed",
+        wordCount: originalBody.length,
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
       .mockResolvedValueOnce(
@@ -4702,286 +5359,345 @@ describe("PipelineRunner", () => {
     }
   });
 
-  it("passes merged AI-tell issues into manual revise and rejects no-improvement revisions", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
-    const storyDir = join(state.bookDir(bookId), "story");
-    const chaptersDir = join(state.bookDir(bookId), "chapters");
-    const originalBody = "林越抬手。林越停步。林越转身。林越侧耳。";
+  it(
+    "passes merged AI-tell issues into manual revise and rejects no-improvement revisions",
+    async () => {
+      const { root, runner, state, bookId } = await createRunnerFixture();
+      const storyDir = join(state.bookDir(bookId), "story");
+      const chaptersDir = join(state.bookDir(bookId), "chapters");
+      const originalBody = "林越抬手。林越停步。林越转身。林越侧耳。";
 
-    await Promise.all([
-      writeFile(join(chaptersDir, "0001_Test_Chapter.md"), `# 第1章 Test Chapter\n\n${originalBody}`, "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
-    ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Test Chapter",
-      status: "audit-failed",
-      wordCount: originalBody.length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+      await Promise.all([
+        writeFile(
+          join(chaptersDir, "0001_Test_Chapter.md"),
+          `# 第1章 Test Chapter\n\n${originalBody}`,
+          "utf-8",
+        ),
+        writeFile(
+          join(storyDir, "current_state.md"),
+          createStateCard({
+            chapter: 1,
+            location: "Ashen ferry crossing",
+            protagonistState: "Lin Yue still hides the oath token.",
+            goal: "Find the vanished mentor.",
+            conflict: "The mentor debt is still personal.",
+          }),
+          "utf-8",
+        ),
+        writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      ]);
+      await state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "Test Chapter",
+          status: "audit-failed",
+          wordCount: originalBody.length,
+          createdAt: "2026-03-19T00:00:00.000Z",
+          updatedAt: "2026-03-19T00:00:00.000Z",
+          auditIssues: [],
+          lengthWarnings: [],
+        },
+      ]);
 
-    vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(
-        createAuditResult({
-          passed: false,
-          issues: [{
-            severity: "warning",
-            category: "节奏",
-            description: "结尾解释略多。",
-            suggestion: "压缩一行解释。",
-          }],
-          summary: "needs revision",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createAuditResult({
-          passed: false,
-          issues: [{
-            severity: "warning",
-            category: "节奏",
-            description: "结尾解释略多。",
-            suggestion: "压缩一行解释。",
-          }],
-          summary: "still weak",
-        }),
-      );
-    const reviseChapter = vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
-      createReviseOutput({
-        revisedContent: `${originalBody}\n\n修订后收束更利落。`,
-        wordCount: `${originalBody}\n\n修订后收束更利落。`.length,
-        fixedIssues: ["- 压缩了结尾解释。"],
-      }),
-    );
-
-    try {
-      const result = await runner.reviseDraft(bookId, 1);
-      const savedChapter = await readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8");
-      const savedIndex = await state.loadChapterIndex(bookId);
-
-      expect(reviseChapter).toHaveBeenCalledTimes(1);
-      expect(reviseChapter.mock.calls[0]?.[3]).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ category: "节奏" }),
-          expect.objectContaining({ category: "列表式结构" }),
-        ]),
-      );
-      expect(result.applied).toBe(false);
-      expect(result.status).toBe("unchanged");
-      expect(result.skippedReason).toContain("did not improve");
-      expect(savedChapter).toContain(originalBody);
-      expect(savedChapter).not.toContain("修订后收束更利落");
-      expect(savedIndex[0]?.status).toBe("audit-failed");
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  }, SLOW_PIPELINE_TEST_TIMEOUT_MS);
-
-  it("persists manual revisions only when merged audit improves", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
-    const storyDir = join(state.bookDir(bookId), "story");
-    const chaptersDir = join(state.bookDir(bookId), "chapters");
-    const originalBody = "林越抬手。林越停步。林越转身。林越侧耳。";
-    const revisedBody = "门被风顶开，林越先停在门槛前。\n\n他侧过身，听见墙后那道更轻的呼吸。";
-
-    await Promise.all([
-      writeFile(join(chaptersDir, "0001_Test_Chapter.md"), `# 第1章 Test Chapter\n\n${originalBody}`, "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Ashen ferry crossing",
-        protagonistState: "Lin Yue still hides the oath token.",
-        goal: "Find the vanished mentor.",
-        conflict: "The mentor debt is still personal.",
-      }), "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
-    ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Test Chapter",
-      status: "audit-failed",
-      wordCount: originalBody.length,
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
-
-    vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(
-        createAuditResult({
-          passed: false,
-          issues: [{
-            severity: "warning",
-            category: "节奏",
-            description: "结尾解释略多。",
-            suggestion: "压缩一行解释。",
-          }],
-          summary: "needs revision",
-        }),
-      )
-      .mockResolvedValueOnce(
-        createAuditResult({
-          passed: true,
-          issues: [],
-          summary: "clean",
+      vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
+        .mockResolvedValueOnce(
+          createAuditResult({
+            passed: false,
+            issues: [
+              {
+                severity: "warning",
+                category: "节奏",
+                description: "结尾解释略多。",
+                suggestion: "压缩一行解释。",
+              },
+            ],
+            summary: "needs revision",
+          }),
+        )
+        .mockResolvedValueOnce(
+          createAuditResult({
+            passed: false,
+            issues: [
+              {
+                severity: "warning",
+                category: "节奏",
+                description: "结尾解释略多。",
+                suggestion: "压缩一行解释。",
+              },
+            ],
+            summary: "still weak",
+          }),
+        );
+      const reviseChapter = vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
+        createReviseOutput({
+          revisedContent: `${originalBody}\n\n修订后收束更利落。`,
+          wordCount: `${originalBody}\n\n修订后收束更利落。`.length,
+          fixedIssues: ["- 压缩了结尾解释。"],
         }),
       );
-    vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
-      createReviseOutput({
-        revisedContent: revisedBody,
-        wordCount: revisedBody.length,
-        fixedIssues: ["- 收紧了结尾节奏。"],
-        updatedState: createStateCard({
-          chapter: 1,
-          location: "Ashen ferry crossing",
-          protagonistState: "Lin Yue still hides the oath token.",
-          goal: "Find the vanished mentor.",
-          conflict: "The mentor debt sharpens into a direct threat.",
-        }),
-        updatedHooks: "# Pending Hooks\n",
-      }),
-    );
 
-    try {
-      const result = await runner.reviseDraft(bookId, 1);
-      const savedChapter = await readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8");
-      const savedIndex = await state.loadChapterIndex(bookId);
+      try {
+        const result = await runner.reviseDraft(bookId, 1);
+        const savedChapter = await readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8");
+        const savedIndex = await state.loadChapterIndex(bookId);
 
-      expect(result.applied).toBe(true);
-      expect(result.status).toBe("ready-for-review");
-      expect(result.fixedIssues).toEqual(["- 收紧了结尾节奏。"]);
-      expect(savedChapter).toContain(revisedBody);
-      expect(savedIndex[0]?.status).toBe("ready-for-review");
-      expect(savedIndex[0]?.auditIssues).toEqual([]);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  }, SLOW_PIPELINE_TEST_TIMEOUT_MS);
+        expect(reviseChapter).toHaveBeenCalledTimes(1);
+        expect(reviseChapter.mock.calls[0]?.[3]).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ category: "节奏" }),
+            expect.objectContaining({ category: "列表式结构" }),
+          ]),
+        );
+        expect(result.applied).toBe(false);
+        expect(result.status).toBe("unchanged");
+        expect(result.skippedReason).toContain("did not improve");
+        expect(savedChapter).toContain(originalBody);
+        expect(savedChapter).not.toContain("修订后收束更利落");
+        expect(savedIndex[0]?.status).toBe("audit-failed");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+    SLOW_PIPELINE_TEST_TIMEOUT_MS,
+  );
 
-  it("re-audits revisions against updated state overrides instead of stale on-disk truth files", async () => {
-    const { root, runner, state, bookId } = await createRunnerFixture();
-    const storyDir = join(state.bookDir(bookId), "story");
-    const chaptersDir = join(state.bookDir(bookId), "chapters");
-    const originalBody = "Taryn kept one hand on the annexe key and listened at the door.";
-    const revisedBody = `${originalBody}\n\nHe checked the seal again before he moved.`;
+  it(
+    "persists manual revisions only when merged audit improves",
+    async () => {
+      const { root, runner, state, bookId } = await createRunnerFixture();
+      const storyDir = join(state.bookDir(bookId), "story");
+      const chaptersDir = join(state.bookDir(bookId), "chapters");
+      const originalBody = "林越抬手。林越停步。林越转身。林越侧耳。";
+      const revisedBody = "门被风顶开，林越先停在门槛前。\n\n他侧过身，听见墙后那道更轻的呼吸。";
 
-    await state.saveBookConfig(bookId, {
-      ...(await state.loadBookConfig(bookId)),
-      platform: "other",
-      genre: "progression",
-      language: "en",
-      chapterWordCount: 1800,
-    });
+      await Promise.all([
+        writeFile(
+          join(chaptersDir, "0001_Test_Chapter.md"),
+          `# 第1章 Test Chapter\n\n${originalBody}`,
+          "utf-8",
+        ),
+        writeFile(
+          join(storyDir, "current_state.md"),
+          createStateCard({
+            chapter: 1,
+            location: "Ashen ferry crossing",
+            protagonistState: "Lin Yue still hides the oath token.",
+            goal: "Find the vanished mentor.",
+            conflict: "The mentor debt is still personal.",
+          }),
+          "utf-8",
+        ),
+        writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      ]);
+      await state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "Test Chapter",
+          status: "audit-failed",
+          wordCount: originalBody.length,
+          createdAt: "2026-03-19T00:00:00.000Z",
+          updatedAt: "2026-03-19T00:00:00.000Z",
+          auditIssues: [],
+          lengthWarnings: [],
+        },
+      ]);
 
-    await Promise.all([
-      writeFile(join(chaptersDir, "0001_First.md"), `# Chapter 1: First\n\nOpening chapter.`, "utf-8"),
-      writeFile(join(chaptersDir, "0002_Test_Chapter.md"), `# Chapter 2: Test Chapter\n\n${originalBody}`, "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Orsden archive lower hall",
-        protagonistState: "Taryn is still moving under Renn's first warning.",
-        goal: "Reach the annexe.",
-        conflict: "The archive is already compromised.",
-      }), "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
-    ]);
-    await state.saveChapterIndex(bookId, [
-      {
-        number: 1,
-        title: "First",
-        status: "ready-for-review",
-        wordCount: countChapterLength("Opening chapter.", "en_words"),
-        createdAt: "2026-03-19T00:00:00.000Z",
-        updatedAt: "2026-03-19T00:00:00.000Z",
-        auditIssues: [],
-        lengthWarnings: [],
-      },
-      {
-        number: 2,
-        title: "Test Chapter",
-        status: "audit-failed",
-        wordCount: countChapterLength(originalBody, "en_words"),
-        createdAt: "2026-03-19T00:00:00.000Z",
-        updatedAt: "2026-03-19T00:00:00.000Z",
-        auditIssues: [],
-        lengthWarnings: [],
-      },
-    ]);
-
-    const auditChapter = vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
-      .mockResolvedValueOnce(
-        createAuditResult({
-          passed: false,
-          issues: [{
-            severity: "warning",
-            category: "Pacing Check",
-            description: "The beat needs a firmer end stop.",
-            suggestion: "Tighten the closing move.",
-          }],
-          summary: "needs revision",
-        }),
-      )
-      .mockImplementationOnce(async (_bookDir, _chapterContent, chapterNumber, _genre, options) => {
-        const overrideState = (options as { truthFileOverrides?: { currentState?: string } } | undefined)
-          ?.truthFileOverrides?.currentState;
-        if (chapterNumber === 2 && overrideState?.includes("| Current Chapter | 2 |")) {
-          return createAuditResult({
+      vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
+        .mockResolvedValueOnce(
+          createAuditResult({
+            passed: false,
+            issues: [
+              {
+                severity: "warning",
+                category: "节奏",
+                description: "结尾解释略多。",
+                suggestion: "压缩一行解释。",
+              },
+            ],
+            summary: "needs revision",
+          }),
+        )
+        .mockResolvedValueOnce(
+          createAuditResult({
             passed: true,
             issues: [],
             summary: "clean",
-          });
-        }
+          }),
+        );
+      vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
+        createReviseOutput({
+          revisedContent: revisedBody,
+          wordCount: revisedBody.length,
+          fixedIssues: ["- 收紧了结尾节奏。"],
+          updatedState: createStateCard({
+            chapter: 1,
+            location: "Ashen ferry crossing",
+            protagonistState: "Lin Yue still hides the oath token.",
+            goal: "Find the vanished mentor.",
+            conflict: "The mentor debt sharpens into a direct threat.",
+          }),
+          updatedHooks: "# Pending Hooks\n",
+        }),
+      );
 
-        return createAuditResult({
-          passed: false,
-          issues: [{
-            severity: "critical",
-            category: "Chronicle Drift Check",
-            description: "The chapter is presented as 'chapter 2', but the supplied Current State Card still lists 'Current Chapter | 1'.",
-            suggestion: "Sync the state card before re-audit.",
-          }],
-          summary: "stale state card",
-        });
+      try {
+        const result = await runner.reviseDraft(bookId, 1);
+        const savedChapter = await readFile(join(chaptersDir, "0001_Test_Chapter.md"), "utf-8");
+        const savedIndex = await state.loadChapterIndex(bookId);
+
+        expect(result.applied).toBe(true);
+        expect(result.status).toBe("ready-for-review");
+        expect(result.fixedIssues).toEqual(["- 收紧了结尾节奏。"]);
+        expect(savedChapter).toContain(revisedBody);
+        expect(savedIndex[0]?.status).toBe("ready-for-review");
+        expect(savedIndex[0]?.auditIssues).toEqual([]);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+    SLOW_PIPELINE_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "re-audits revisions against updated state overrides instead of stale on-disk truth files",
+    async () => {
+      const { root, runner, state, bookId } = await createRunnerFixture();
+      const storyDir = join(state.bookDir(bookId), "story");
+      const chaptersDir = join(state.bookDir(bookId), "chapters");
+      const originalBody = "Taryn kept one hand on the annexe key and listened at the door.";
+      const revisedBody = `${originalBody}\n\nHe checked the seal again before he moved.`;
+
+      await state.saveBookConfig(bookId, {
+        ...(await state.loadBookConfig(bookId)),
+        platform: "other",
+        genre: "progression",
+        language: "en",
+        chapterWordCount: 1800,
       });
 
-    vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
-      createReviseOutput({
-        revisedContent: revisedBody,
-        wordCount: countChapterLength(revisedBody, "en_words"),
-        fixedIssues: ["- Synced the annexe beat and tightened the ending."],
-        updatedState: createStateCard({
-          chapter: 2,
-          location: "East annexe corridor",
-          protagonistState: "Taryn is pressed against the annexe door with the true key in hand.",
-          goal: "Open the annexe before the cart clears the court.",
-          conflict: "A forged key and rival searchers have turned lawful access into a trap.",
+      await Promise.all([
+        writeFile(
+          join(chaptersDir, "0001_First.md"),
+          `# Chapter 1: First\n\nOpening chapter.`,
+          "utf-8",
+        ),
+        writeFile(
+          join(chaptersDir, "0002_Test_Chapter.md"),
+          `# Chapter 2: Test Chapter\n\n${originalBody}`,
+          "utf-8",
+        ),
+        writeFile(
+          join(storyDir, "current_state.md"),
+          createStateCard({
+            chapter: 1,
+            location: "Orsden archive lower hall",
+            protagonistState: "Taryn is still moving under Renn's first warning.",
+            goal: "Reach the annexe.",
+            conflict: "The archive is already compromised.",
+          }),
+          "utf-8",
+        ),
+        writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
+      ]);
+      await state.saveChapterIndex(bookId, [
+        {
+          number: 1,
+          title: "First",
+          status: "ready-for-review",
+          wordCount: countChapterLength("Opening chapter.", "en_words"),
+          createdAt: "2026-03-19T00:00:00.000Z",
+          updatedAt: "2026-03-19T00:00:00.000Z",
+          auditIssues: [],
+          lengthWarnings: [],
+        },
+        {
+          number: 2,
+          title: "Test Chapter",
+          status: "audit-failed",
+          wordCount: countChapterLength(originalBody, "en_words"),
+          createdAt: "2026-03-19T00:00:00.000Z",
+          updatedAt: "2026-03-19T00:00:00.000Z",
+          auditIssues: [],
+          lengthWarnings: [],
+        },
+      ]);
+
+      const auditChapter = vi
+        .spyOn(ContinuityAuditor.prototype, "auditChapter")
+        .mockResolvedValueOnce(
+          createAuditResult({
+            passed: false,
+            issues: [
+              {
+                severity: "warning",
+                category: "Pacing Check",
+                description: "The beat needs a firmer end stop.",
+                suggestion: "Tighten the closing move.",
+              },
+            ],
+            summary: "needs revision",
+          }),
+        )
+        .mockImplementationOnce(
+          async (_bookDir, _chapterContent, chapterNumber, _genre, options) => {
+            const overrideState = (
+              options as { truthFileOverrides?: { currentState?: string } } | undefined
+            )?.truthFileOverrides?.currentState;
+            if (chapterNumber === 2 && overrideState?.includes("| Current Chapter | 2 |")) {
+              return createAuditResult({
+                passed: true,
+                issues: [],
+                summary: "clean",
+              });
+            }
+
+            return createAuditResult({
+              passed: false,
+              issues: [
+                {
+                  severity: "critical",
+                  category: "Chronicle Drift Check",
+                  description:
+                    "The chapter is presented as 'chapter 2', but the supplied Current State Card still lists 'Current Chapter | 1'.",
+                  suggestion: "Sync the state card before re-audit.",
+                },
+              ],
+              summary: "stale state card",
+            });
+          },
+        );
+
+      vi.spyOn(ReviserAgent.prototype, "reviseChapter").mockResolvedValue(
+        createReviseOutput({
+          revisedContent: revisedBody,
+          wordCount: countChapterLength(revisedBody, "en_words"),
+          fixedIssues: ["- Synced the annexe beat and tightened the ending."],
+          updatedState: createStateCard({
+            chapter: 2,
+            location: "East annexe corridor",
+            protagonistState: "Taryn is pressed against the annexe door with the true key in hand.",
+            goal: "Open the annexe before the cart clears the court.",
+            conflict: "A forged key and rival searchers have turned lawful access into a trap.",
+          }),
+          updatedHooks: "# Pending Hooks\n",
         }),
-        updatedHooks: "# Pending Hooks\n",
-      }),
-    );
+      );
 
-    try {
-      const result = await runner.reviseDraft(bookId, 2);
-      const savedIndex = await state.loadChapterIndex(bookId);
+      try {
+        const result = await runner.reviseDraft(bookId, 2);
+        const savedIndex = await state.loadChapterIndex(bookId);
 
-      expect(auditChapter).toHaveBeenCalledTimes(2);
-      expect(result.applied).toBe(true);
-      expect(result.status).toBe("ready-for-review");
-      expect(savedIndex[1]?.status).toBe("ready-for-review");
-      expect(savedIndex[1]?.auditIssues).toEqual([]);
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
-  }, SLOW_PIPELINE_TEST_TIMEOUT_MS);
+        expect(auditChapter).toHaveBeenCalledTimes(2);
+        expect(result.applied).toBe(true);
+        expect(result.status).toBe("ready-for-review");
+        expect(savedIndex[1]?.status).toBe("ready-for-review");
+        expect(savedIndex[1]?.auditIssues).toEqual([]);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+    SLOW_PIPELINE_TEST_TIMEOUT_MS,
+  );
 
   it("excludes pure sequence-level fatigue from revision blocker counts", async () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
@@ -4989,16 +5705,20 @@ describe("PipelineRunner", () => {
     const storyDir = join(bookDir, "story");
     const book = await state.loadBookConfig(bookId);
 
-    await writeFile(join(storyDir, "chapter_summaries.md"), [
-      "# 章节摘要",
-      "",
-      "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-      "| 1 | 旧门 | 林越 | 进入旧门 | 压力升高 | none | 冷峻 | 调查 |",
-      "| 2 | 灰灯 | 林越 | 检查灰灯 | 压力升高 | none | 冷峻 | 调查 |",
-      "| 3 | 纸页 | 林越 | 对照纸页 | 压力升高 | none | 冷峻 | 调查 |",
-      "",
-    ].join("\n"), "utf-8");
+    await writeFile(
+      join(storyDir, "chapter_summaries.md"),
+      [
+        "# 章节摘要",
+        "",
+        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| 1 | 旧门 | 林越 | 进入旧门 | 压力升高 | none | 冷峻 | 调查 |",
+        "| 2 | 灰灯 | 林越 | 检查灰灯 | 压力升高 | none | 冷峻 | 调查 |",
+        "| 3 | 纸页 | 林越 | 对照纸页 | 压力升高 | none | 冷峻 | 调查 |",
+        "",
+      ].join("\n"),
+      "utf-8",
+    );
 
     const result = await (
       runner as unknown as {
@@ -5046,16 +5766,20 @@ describe("PipelineRunner", () => {
     const storyDir = join(bookDir, "story");
     const book = await state.loadBookConfig(bookId);
 
-    await writeFile(join(storyDir, "chapter_summaries.md"), [
-      "# 章节摘要",
-      "",
-      "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-      "| 1 | 旧门 | 林越 | 进入旧门 | 压力升高 | none | 冷峻 | 调查 |",
-      "| 2 | 灰灯 | 林越 | 检查灰灯 | 压力升高 | none | 冷峻 | 调查 |",
-      "| 3 | 纸页 | 林越 | 对照纸页 | 压力升高 | none | 冷峻 | 调查 |",
-      "",
-    ].join("\n"), "utf-8");
+    await writeFile(
+      join(storyDir, "chapter_summaries.md"),
+      [
+        "# 章节摘要",
+        "",
+        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| 1 | 旧门 | 林越 | 进入旧门 | 压力升高 | none | 冷峻 | 调查 |",
+        "| 2 | 灰灯 | 林越 | 检查灰灯 | 压力升高 | none | 冷峻 | 调查 |",
+        "| 3 | 纸页 | 林越 | 对照纸页 | 压力升高 | none | 冷峻 | 调查 |",
+        "",
+      ].join("\n"),
+      "utf-8",
+    );
 
     const result = await (
       runner as unknown as {
@@ -5078,12 +5802,14 @@ describe("PipelineRunner", () => {
         auditChapter: vi.fn().mockResolvedValue(
           createAuditResult({
             passed: false,
-            issues: [{
-              severity: "warning",
-              category: "节奏单调",
-              description: "这一章的推进依然原地打转，没有完成当前场景应有的落点。",
-              suggestion: "让当前章把既定动作落下，不要继续停在同一观察节拍。",
-            }],
+            issues: [
+              {
+                severity: "warning",
+                category: "节奏单调",
+                description: "这一章的推进依然原地打转，没有完成当前场景应有的落点。",
+                suggestion: "让当前章把既定动作落下，不要继续停在同一观察节拍。",
+              },
+            ],
             summary: "needs revision",
           }),
         ),
@@ -5095,7 +5821,9 @@ describe("PipelineRunner", () => {
       language: "zh",
     });
 
-    expect(result.auditResult.issues.filter((issue) => issue.category === "节奏单调")).toHaveLength(2);
+    expect(result.auditResult.issues.filter((issue) => issue.category === "节奏单调")).toHaveLength(
+      2,
+    );
     expect(result.blockingCount).toBe(1);
     expect(result.criticalCount).toBe(0);
 
@@ -5106,7 +5834,8 @@ describe("PipelineRunner", () => {
     const { root, runner, state, bookId } = await createRunnerFixture();
     const storyDir = join(state.bookDir(bookId), "story");
     const chaptersDir = join(state.bookDir(bookId), "chapters");
-    const originalBody = "Tarin waited by the crooked berth marker and counted the missing lines twice.";
+    const originalBody =
+      "Tarin waited by the crooked berth marker and counted the missing lines twice.";
     const revisedBody = `${originalBody}\n\nHe did not move until the second bell rang across the water.`;
 
     await state.saveBookConfig(bookId, {
@@ -5118,40 +5847,50 @@ describe("PipelineRunner", () => {
     });
 
     await Promise.all([
-      writeFile(join(chaptersDir, "0001_Test_Chapter.md"), `# Chapter 1: Test Chapter\n\n${originalBody}`, "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 1,
-        location: "Dock Nine",
-        protagonistState: "Tarin still carries the sealed packet.",
-        goal: "Find Captain Voss.",
-        conflict: "The berth is wrong and the crew is missing.",
-      }), "utf-8"),
+      writeFile(
+        join(chaptersDir, "0001_Test_Chapter.md"),
+        `# Chapter 1: Test Chapter\n\n${originalBody}`,
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 1,
+          location: "Dock Nine",
+          protagonistState: "Tarin still carries the sealed packet.",
+          goal: "Find Captain Voss.",
+          conflict: "The berth is wrong and the crew is missing.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
     ]);
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Test Chapter",
-      status: "audit-failed",
-      wordCount: countChapterLength(originalBody, "en_words"),
-      createdAt: "2026-03-19T00:00:00.000Z",
-      updatedAt: "2026-03-19T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-      lengthTelemetry: {
-        target: 900,
-        softMin: 778,
-        softMax: 1022,
-        hardMin: 655,
-        hardMax: 1145,
-        countingMode: "en_words",
-        writerCount: countChapterLength(originalBody, "en_words"),
-        postWriterNormalizeCount: countChapterLength(originalBody, "en_words"),
-        postReviseCount: 0,
-        finalCount: countChapterLength(originalBody, "en_words"),
-        normalizeApplied: false,
-        lengthWarning: false,
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "Test Chapter",
+        status: "audit-failed",
+        wordCount: countChapterLength(originalBody, "en_words"),
+        createdAt: "2026-03-19T00:00:00.000Z",
+        updatedAt: "2026-03-19T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+        lengthTelemetry: {
+          target: 900,
+          softMin: 778,
+          softMax: 1022,
+          hardMin: 655,
+          hardMax: 1145,
+          countingMode: "en_words",
+          writerCount: countChapterLength(originalBody, "en_words"),
+          postWriterNormalizeCount: countChapterLength(originalBody, "en_words"),
+          postReviseCount: 0,
+          finalCount: countChapterLength(originalBody, "en_words"),
+          normalizeApplied: false,
+          lengthWarning: false,
+        },
       },
-    }]);
+    ]);
 
     vi.spyOn(ContinuityAuditor.prototype, "auditChapter")
       .mockResolvedValueOnce(

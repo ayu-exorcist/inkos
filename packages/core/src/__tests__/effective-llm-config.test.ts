@@ -14,18 +14,30 @@ describe("resolveEffectiveLLMConfig", () => {
 
   async function writeProject(llm: Record<string, unknown>) {
     root = await mkdtemp(join(tmpdir(), "inkos-effective-llm-"));
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      name: "effective-project",
-      version: "0.1.0",
-      language: "zh",
-      llm,
-      notify: [],
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          name: "effective-project",
+          version: "0.1.0",
+          language: "zh",
+          llm,
+          notify: [],
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
   }
 
   async function writeSecrets(services: Record<string, { apiKey: string }>) {
     await mkdir(join(root, ".inkos"), { recursive: true });
-    await writeFile(join(root, ".inkos", "secrets.json"), JSON.stringify({ services }, null, 2), "utf-8");
+    await writeFile(
+      join(root, ".inkos", "secrets.json"),
+      JSON.stringify({ services }, null, 2),
+      "utf-8",
+    );
   }
 
   it("Studio consumer 使用 Studio/project 配置，并忽略旧顶层 model/baseUrl", async () => {
@@ -363,15 +375,17 @@ describe("resolveEffectiveLLMConfig", () => {
     });
     await writeSecrets({ google: { apiKey: "sk-google" } });
 
-    await expect(resolveEffectiveLLMConfig({
-      consumer: "cli",
-      projectRoot: root,
-      envLayers: {
-        global: {},
-        project: { INKOS_LLM_MODEL: "kimi-k2.5" },
-        process: {},
-      },
-    })).rejects.toThrow(/模型.*kimi-k2\.5.*不属于.*google/);
+    await expect(
+      resolveEffectiveLLMConfig({
+        consumer: "cli",
+        projectRoot: root,
+        envLayers: {
+          global: {},
+          project: { INKOS_LLM_MODEL: "kimi-k2.5" },
+          process: {},
+        },
+      }),
+    ).rejects.toThrow(/模型.*kimi-k2\.5.*不属于.*google/);
   });
 
   it("CLI env 指向 Ollama 时允许用户本地安装的动态模型", async () => {

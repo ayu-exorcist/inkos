@@ -167,13 +167,17 @@ describe("PipelineRunner structured-state memory sync", () => {
     await mkdir(storyDir, { recursive: true });
     await mkdir(join(bookDir, "chapters"), { recursive: true });
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), createStateCard({
-        chapter: 0,
-        location: "Shrine outskirts",
-        protagonistState: "Lin Yue begins with the oath token hidden.",
-        goal: "Reach the trial city.",
-        conflict: "The trial deadline is closing in.",
-      }), "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        createStateCard({
+          chapter: 0,
+          location: "Shrine outskirts",
+          protagonistState: "Lin Yue begins with the oath token hidden.",
+          goal: "Reach the trial city.",
+          conflict: "The trial deadline is closing in.",
+        }),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n", "utf-8"),
       writeFile(join(storyDir, "chapter_summaries.md"), "# Chapter Summaries\n", "utf-8"),
     ]);
@@ -187,7 +191,6 @@ describe("PipelineRunner structured-state memory sync", () => {
           temperature: 0.7,
           maxTokens: 4096,
           thinkingBudget: 0,
-
         },
       } as ConstructorParameters<typeof PipelineRunner>[0]["client"],
       model: "test-model",
@@ -263,43 +266,49 @@ describe("PipelineRunner structured-state memory sync", () => {
       warnings: [],
       passed: true,
     });
-    vi.spyOn(WriterAgent.prototype, "saveChapter").mockImplementation(async function (
-      this: InstanceType<typeof WriterAgent>,
-      bookDirArg,
-      output,
-      numericalSystem,
-      language,
-    ) {
-      await originalSaveChapter.call(this, bookDirArg, output, numericalSystem, language);
-      await Promise.all([
-        writeFile(
-          join(bookDirArg, "story", "pending_hooks.md"),
-          [
-            "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | notes |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
-            "| markdown-drift-hook | 1 | mystery | open | 1 | 5 | Drifted markdown hook |",
-            "",
-          ].join("\n"),
-          "utf-8",
-        ),
-        writeFile(
-          join(bookDirArg, "story", "chapter_summaries.md"),
-          [
-            "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- |",
-            "| 1 | Markdown Drift Summary | Lin Yue | Drifted markdown event | Drifted markdown state | markdown-drift-hook advanced | flat | fallback |",
-            "",
-          ].join("\n"),
-          "utf-8",
-        ),
-      ]);
-    });
+    vi.spyOn(WriterAgent.prototype, "saveChapter").mockImplementation(
+      async function (
+        this: InstanceType<typeof WriterAgent>,
+        bookDirArg,
+        output,
+        numericalSystem,
+        language,
+      ) {
+        await originalSaveChapter.call(this, bookDirArg, output, numericalSystem, language);
+        await Promise.all([
+          writeFile(
+            join(bookDirArg, "story", "pending_hooks.md"),
+            [
+              "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | notes |",
+              "| --- | --- | --- | --- | --- | --- | --- |",
+              "| markdown-drift-hook | 1 | mystery | open | 1 | 5 | Drifted markdown hook |",
+              "",
+            ].join("\n"),
+            "utf-8",
+          ),
+          writeFile(
+            join(bookDirArg, "story", "chapter_summaries.md"),
+            [
+              "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- |",
+              "| 1 | Markdown Drift Summary | Lin Yue | Drifted markdown event | Drifted markdown state | markdown-drift-hook advanced | flat | fallback |",
+              "",
+            ].join("\n"),
+            "utf-8",
+          ),
+        ]);
+      },
+    );
 
     await runner.writeNextChapter(bookId);
 
     const narrativeStore = FakeMemoryDB.stores.get(bookDir);
-    expect(await readFile(join(storyDir, "pending_hooks.md"), "utf-8")).toContain("markdown-drift-hook");
-    expect(await readFile(join(storyDir, "chapter_summaries.md"), "utf-8")).toContain("Markdown Drift Summary");
+    expect(await readFile(join(storyDir, "pending_hooks.md"), "utf-8")).toContain(
+      "markdown-drift-hook",
+    );
+    expect(await readFile(join(storyDir, "chapter_summaries.md"), "utf-8")).toContain(
+      "Markdown Drift Summary",
+    );
     expect(narrativeStore?.hooks).toEqual([
       expect.objectContaining({
         hookId: "structured-hook",

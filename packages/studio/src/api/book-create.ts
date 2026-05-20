@@ -40,7 +40,10 @@ export function normalizeStudioPlatform(platform?: string): Platform {
   return normalizePlatformOrOther(platform);
 }
 
-export function buildStudioBookConfig(body: StudioCreateBookBody, now: string): StudioBookConfigDraft {
+export function buildStudioBookConfig(
+  body: StudioCreateBookBody,
+  now: string,
+): StudioBookConfigDraft {
   return {
     id: body.title
       .toLowerCase()
@@ -79,7 +82,7 @@ export async function waitForStudioBookReady(
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const response = await fetchImpl(`/api/v1/books/${encodeURIComponent(bookId)}`);
     if (response.ok) {
-      return await response.json() as StudioBookDetail;
+      return (await response.json()) as StudioBookDetail;
     }
 
     if (attempt < maxAttempts && response.status === 404) {

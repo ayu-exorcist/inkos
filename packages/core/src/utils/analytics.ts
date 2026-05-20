@@ -13,7 +13,10 @@ export interface AnalyticsData {
   readonly avgWordsPerChapter: number;
   readonly auditPassRate: number;
   readonly topIssueCategories: ReadonlyArray<{ readonly category: string; readonly count: number }>;
-  readonly chaptersWithMostIssues: ReadonlyArray<{ readonly chapter: number; readonly issueCount: number }>;
+  readonly chaptersWithMostIssues: ReadonlyArray<{
+    readonly chapter: number;
+    readonly issueCount: number;
+  }>;
   readonly statusDistribution: Record<string, number>;
   readonly tokenStats?: TokenStats;
 }
@@ -41,9 +44,10 @@ export function computeAnalytics(
     (ch) => ch.status !== "drafted" && ch.status !== "drafting" && ch.status !== "card-generated",
   );
   const passedChapters = auditedChapters.filter((ch) => passedStatuses.has(ch.status));
-  const auditPassRate = auditedChapters.length > 0
-    ? Math.round((passedChapters.length / auditedChapters.length) * 100)
-    : 100;
+  const auditPassRate =
+    auditedChapters.length > 0
+      ? Math.round((passedChapters.length / auditedChapters.length) * 100)
+      : 100;
 
   const categoryCounts = new Map<string, number>();
   for (const ch of chapters) {
@@ -72,9 +76,18 @@ export function computeAnalytics(
   const chaptersWithUsage = chapters.filter((ch) => ch.tokenUsage);
   let tokenStats: TokenStats | undefined;
   if (chaptersWithUsage.length > 0) {
-    const totalPromptTokens = chaptersWithUsage.reduce((sum, ch) => sum + (ch.tokenUsage?.promptTokens ?? 0), 0);
-    const totalCompletionTokens = chaptersWithUsage.reduce((sum, ch) => sum + (ch.tokenUsage?.completionTokens ?? 0), 0);
-    const totalTokens = chaptersWithUsage.reduce((sum, ch) => sum + (ch.tokenUsage?.totalTokens ?? 0), 0);
+    const totalPromptTokens = chaptersWithUsage.reduce(
+      (sum, ch) => sum + (ch.tokenUsage?.promptTokens ?? 0),
+      0,
+    );
+    const totalCompletionTokens = chaptersWithUsage.reduce(
+      (sum, ch) => sum + (ch.tokenUsage?.completionTokens ?? 0),
+      0,
+    );
+    const totalTokens = chaptersWithUsage.reduce(
+      (sum, ch) => sum + (ch.tokenUsage?.totalTokens ?? 0),
+      0,
+    );
     const avgTokensPerChapter = Math.round(totalTokens / chaptersWithUsage.length);
 
     const recentTrend = [...chaptersWithUsage]
@@ -82,11 +95,24 @@ export function computeAnalytics(
       .slice(-5)
       .map((ch) => ({ chapter: ch.number, totalTokens: ch.tokenUsage?.totalTokens ?? 0 }));
 
-    tokenStats = { totalPromptTokens, totalCompletionTokens, totalTokens, avgTokensPerChapter, recentTrend };
+    tokenStats = {
+      totalPromptTokens,
+      totalCompletionTokens,
+      totalTokens,
+      avgTokensPerChapter,
+      recentTrend,
+    };
   }
 
   return {
-    bookId, totalChapters, totalWords, avgWordsPerChapter, auditPassRate,
-    topIssueCategories, chaptersWithMostIssues, statusDistribution, tokenStats,
+    bookId,
+    totalChapters,
+    totalWords,
+    avgWordsPerChapter,
+    auditPassRate,
+    topIssueCategories,
+    chaptersWithMostIssues,
+    statusDistribution,
+    tokenStats,
   };
 }

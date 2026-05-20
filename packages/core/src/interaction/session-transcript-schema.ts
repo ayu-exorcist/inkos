@@ -51,10 +51,12 @@ export const MessageEventSchema = BaseEventSchema.extend({
   piTurnIndex: z.number().int().nonnegative().optional(),
   toolCallId: z.string().min(1).optional(),
   sourceToolAssistantUuid: z.string().min(1).optional(),
-  legacyDisplay: z.object({
-    thinking: z.string().optional(),
-    toolExecutions: z.array(z.unknown()).optional(),
-  }).optional(),
+  legacyDisplay: z
+    .object({
+      thinking: z.string().optional(),
+      toolExecutions: z.array(z.unknown()).optional(),
+    })
+    .optional(),
   message: z.unknown(),
 });
 

@@ -165,7 +165,11 @@ describe("session transcript restore", () => {
         { type: "toolCall", id: "tool-1" },
       ],
     });
-    expect(restored[1]).toMatchObject({ role: "toolResult", toolCallId: "tool-1", toolName: "read" });
+    expect(restored[1]).toMatchObject({
+      role: "toolResult",
+      toolCallId: "tool-1",
+      toolName: "read",
+    });
     expect(JSON.stringify(restored)).not.toContain(TOOL_RESULT_BRIDGE_TEXT);
   });
 
@@ -358,7 +362,11 @@ describe("session transcript restore", () => {
       {
         role: "assistant",
         content: [
-          { type: "thinking", thinking: "DeepSeek reasoning", thinkingSignature: "reasoning_content" },
+          {
+            type: "thinking",
+            thinking: "DeepSeek reasoning",
+            thinkingSignature: "reasoning_content",
+          },
           { type: "text", text: "可见回答" },
         ],
         api: "openai-completions",
@@ -384,7 +392,11 @@ describe("session transcript restore", () => {
       {
         role: "assistant",
         content: [
-          { type: "thinking", thinking: "DeepSeek reasoning", thinkingSignature: "reasoning_content" },
+          {
+            type: "thinking",
+            thinking: "DeepSeek reasoning",
+            thinkingSignature: "reasoning_content",
+          },
           { type: "text", text: "可见回答" },
         ],
         api: "openai-completions",
@@ -542,7 +554,7 @@ describe("session transcript restore", () => {
       id: "deepseek-v4-pro",
     });
 
-    expect(JSON.stringify(adapted)).not.toContain("\"toolCall\"");
+    expect(JSON.stringify(adapted)).not.toContain('"toolCall"');
     expect(adapted.some((message: any) => message.role === "toolResult")).toBe(false);
     expect(adapted).toEqual([
       expect.objectContaining({
@@ -595,7 +607,9 @@ describe("session transcript restore", () => {
     const messages = [
       {
         role: "assistant",
-        content: [{ type: "toolCall", id: "tool-1", name: "ls", arguments: { subdir: "story/roles" } }],
+        content: [
+          { type: "toolCall", id: "tool-1", name: "ls", arguments: { subdir: "story/roles" } },
+        ],
         api: "openai-completions",
         provider: "openai",
         model: "gemini-pro-latest",
@@ -620,7 +634,7 @@ describe("session transcript restore", () => {
     });
 
     const body = JSON.stringify(adapted);
-    expect(body).not.toContain("\"toolCall\"");
+    expect(body).not.toContain('"toolCall"');
     expect(adapted.some((message: any) => message.role === "toolResult")).toBe(false);
     expect(adapted).toEqual([
       expect.objectContaining({
@@ -637,9 +651,18 @@ describe("session transcript restore", () => {
       {
         role: "assistant",
         content: [
-          { type: "thinking", thinking: "deepseek reasoning", thinkingSignature: "reasoning_content" },
+          {
+            type: "thinking",
+            thinking: "deepseek reasoning",
+            thinkingSignature: "reasoning_content",
+          },
           { type: "text", text: "先看角色。" },
-          { type: "toolCall", id: "tool-1", name: "read", arguments: { path: "story/roles/林默.md" } },
+          {
+            type: "toolCall",
+            id: "tool-1",
+            name: "read",
+            arguments: { path: "story/roles/林默.md" },
+          },
         ],
         api: "openai-completions",
         provider: "openai",
@@ -667,7 +690,7 @@ describe("session transcript restore", () => {
     const body = JSON.stringify(adapted);
     expect(body).not.toContain("reasoning_content");
     expect(body).not.toContain("deepseek reasoning");
-    expect(body).not.toContain("\"toolCall\"");
+    expect(body).not.toContain('"toolCall"');
     expect(body).toContain("先看角色。");
     expect(body).toContain("[Tool results]");
     expect(body).toContain("林默资料");
@@ -871,7 +894,12 @@ describe("session transcript restore", () => {
         role: "assistant",
         content: [
           { type: "thinking", thinking: "先列目录" },
-          { type: "toolCall", id: "ls-1", name: "ls", arguments: { bookId: "book-a", subdir: "story/roles" } },
+          {
+            type: "toolCall",
+            id: "ls-1",
+            name: "ls",
+            arguments: { bookId: "book-a", subdir: "story/roles" },
+          },
         ],
         api: "google-generative-ai",
         provider: "google",
@@ -941,17 +969,19 @@ describe("session transcript restore", () => {
         role: "assistant",
         content: "角色目录已查看。",
         thinking: "先列目录",
-        toolExecutions: [{
-          id: "ls-1",
-          tool: "ls",
-          label: "列目录",
-          status: "completed",
-          args: { bookId: "book-a", subdir: "story/roles" },
-          result: "主要角色/\n次要角色/",
-          details: { path: "books/book-a/story/roles" },
-          startedAt: 4,
-          completedAt: 5,
-        }],
+        toolExecutions: [
+          {
+            id: "ls-1",
+            tool: "ls",
+            label: "列目录",
+            status: "completed",
+            args: { bookId: "book-a", subdir: "story/roles" },
+            result: "主要角色/\n次要角色/",
+            details: { path: "books/book-a/story/roles" },
+            startedAt: 4,
+            completedAt: 5,
+          },
+        ],
       },
     ]);
   });

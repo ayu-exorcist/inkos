@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const proxyAgentMock = vi.fn((url: string) => ({ kind: "proxy-agent", url }));
+const proxyAgentMock = vi.fn(function (this: unknown, url: string) {
+  return { kind: "proxy-agent", url };
+});
 
 vi.mock("undici", () => ({
   ProxyAgent: proxyAgentMock,
@@ -23,7 +25,12 @@ describe("proxy fetch helpers", () => {
     };
 
     expect(resolveProxyUrl("http://explicit-proxy:9910", env)).toBe("http://explicit-proxy:9910");
-    await fetchWithProxy("https://api.example/v1/chat/completions", { method: "POST" }, "http://explicit-proxy:9910", env);
+    await fetchWithProxy(
+      "https://api.example/v1/chat/completions",
+      { method: "POST" },
+      "http://explicit-proxy:9910",
+      env,
+    );
 
     expect(proxyAgentMock).toHaveBeenCalledWith("http://explicit-proxy:9910");
     expect(fetchMock).toHaveBeenCalledWith(
@@ -64,12 +71,16 @@ describe("proxy fetch helpers", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     expect(resolveProxyUrl(undefined, {})).toBeUndefined();
-    await fetchWithProxy("https://api.example/v1/models", { headers: { Authorization: "Bearer test" } }, undefined, {});
-
-    expect(proxyAgentMock).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledWith(
+    await fetchWithProxy(
       "https://api.example/v1/models",
       { headers: { Authorization: "Bearer test" } },
+      undefined,
+      {},
     );
+
+    expect(proxyAgentMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example/v1/models", {
+      headers: { Authorization: "Bearer test" },
+    });
   });
 });

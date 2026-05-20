@@ -20,14 +20,19 @@ interface BookSummary {
   readonly title: string;
 }
 
-interface Nav { toDashboard: () => void }
+interface Nav {
+  toDashboard: () => void;
+}
 
 export interface StyleStatusNotice {
   readonly tone: "error" | "success" | "info";
   readonly message: string;
 }
 
-export function buildStyleStatusNotice(analyzeStatus: string, importStatus: string): StyleStatusNotice | null {
+export function buildStyleStatusNotice(
+  analyzeStatus: string,
+  importStatus: string,
+): StyleStatusNotice | null {
   const message = analyzeStatus.trim() || importStatus.trim();
   if (!message) return null;
   if (message.startsWith("Error:")) {
@@ -73,7 +78,10 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
     if (!importBookId || !text.trim()) return;
     setImportStatus("Importing...");
     try {
-      await postApi(`/books/${importBookId}/style/import`, { text, sourceName: sourceName || "sample" });
+      await postApi(`/books/${importBookId}/style/import`, {
+        text,
+        sourceName: sourceName || "sample",
+      });
       setImportStatus("Style guide imported successfully!");
     } catch (e) {
       setImportStatus(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -83,7 +91,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span>{t("nav.style")}</span>
       </div>
@@ -97,7 +107,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
         {/* Input */}
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">{t("style.sourceName")}</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+              {t("style.sourceName")}
+            </label>
             <input
               type="text"
               value={sourceName}
@@ -107,7 +119,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
             />
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">{t("style.textSample")}</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+              {t("style.textSample")}
+            </label>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -132,7 +146,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
         <div className="space-y-4">
           {profile && (
             <div className={`border ${c.cardStatic} rounded-lg p-5 space-y-4`}>
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">{t("style.results")}</h3>
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+                {t("style.results")}
+              </h3>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-secondary/30 rounded-lg p-3">
                   <div className="text-muted-foreground text-xs">{t("style.avgSentence")}</div>
@@ -140,7 +156,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
                 </div>
                 <div className="bg-secondary/30 rounded-lg p-3">
                   <div className="text-muted-foreground text-xs">{t("style.vocabDiversity")}</div>
-                  <div className="text-xl font-bold">{(profile.vocabularyDiversity * 100).toFixed(0)}%</div>
+                  <div className="text-xl font-bold">
+                    {(profile.vocabularyDiversity * 100).toFixed(0)}%
+                  </div>
                 </div>
                 <div className="bg-secondary/30 rounded-lg p-3">
                   <div className="text-muted-foreground text-xs">{t("style.avgParagraph")}</div>
@@ -153,20 +171,31 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
               </div>
               {profile.topPatterns.length > 0 && (
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("style.topPatterns")}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                    {t("style.topPatterns")}
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {profile.topPatterns.map((p) => (
-                      <span key={p} className="px-2 py-1 text-xs bg-secondary rounded">{p}</span>
+                      <span key={p} className="px-2 py-1 text-xs bg-secondary rounded">
+                        {p}
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
               {profile.rhetoricalFeatures.length > 0 && (
                 <div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("style.rhetoricalFeatures")}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                    {t("style.rhetoricalFeatures")}
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {profile.rhetoricalFeatures.map((f) => (
-                      <span key={f} className="px-2 py-1 text-xs bg-primary/10 text-primary rounded">{f}</span>
+                      <span
+                        key={f}
+                        className="px-2 py-1 text-xs bg-primary/10 text-primary rounded"
+                      >
+                        {f}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -185,7 +214,9 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
                 >
                   <option value="">{t("style.selectBook")}</option>
                   {booksData?.books.map((b) => (
-                    <option key={b.id} value={b.id}>{b.title}</option>
+                    <option key={b.id} value={b.id}>
+                      {b.title}
+                    </option>
                   ))}
                 </select>
                 <button
@@ -195,12 +226,16 @@ export function StyleManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
                 >
                   {t("style.importGuide")}
                 </button>
-                {importStatus && <div className="text-xs text-muted-foreground">{importStatus}</div>}
+                {importStatus && (
+                  <div className="text-xs text-muted-foreground">{importStatus}</div>
+                )}
               </div>
             </div>
           )}
           {!profile && !loading && (
-            <div className={`border border-dashed ${c.cardStatic} rounded-lg p-8 text-center text-muted-foreground text-sm italic`}>
+            <div
+              className={`border border-dashed ${c.cardStatic} rounded-lg p-8 text-center text-muted-foreground text-sm italic`}
+            >
               {t("style.emptyHint")}
             </div>
           )}

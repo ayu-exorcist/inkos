@@ -2,10 +2,7 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  loadPersistedPlan,
-  savePersistedPlan,
-} from "../pipeline/persisted-governed-plan.js";
+import { loadPersistedPlan, savePersistedPlan } from "../pipeline/persisted-governed-plan.js";
 import type { PlanChapterOutput } from "../agents/planner.js";
 
 const MEMO_BODY = `## 当前任务
@@ -113,11 +110,7 @@ plannerInputs: []
 ## 当前任务
 只有一段。
 `;
-    await writeFile(
-      join(dir, "story", "runtime", "chapter-0001.plan.md"),
-      corrupt,
-      "utf-8",
-    );
+    await writeFile(join(dir, "story", "runtime", "chapter-0001.plan.md"), corrupt, "utf-8");
 
     const loaded = await loadPersistedPlan(dir, 1);
     expect(loaded).toBeNull();

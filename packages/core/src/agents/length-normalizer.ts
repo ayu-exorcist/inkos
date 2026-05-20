@@ -1,6 +1,11 @@
 import { BaseAgent } from "./base.js";
 import type { LengthNormalizeMode, LengthSpec } from "../models/length-governance.js";
-import { countChapterLength, chooseNormalizeMode, isOutsideHardRange, isOutsideSoftRange } from "../utils/length-metrics.js";
+import {
+  countChapterLength,
+  chooseNormalizeMode,
+  isOutsideHardRange,
+  isOutsideSoftRange,
+} from "../utils/length-metrics.js";
 
 export interface NormalizeLengthInput {
   readonly chapterContent: string;
@@ -29,9 +34,10 @@ export class LengthNormalizerAgent extends BaseAgent {
 
   async normalizeChapter(input: NormalizeLengthInput): Promise<NormalizeLengthOutput> {
     const originalCount = countChapterLength(input.chapterContent, input.lengthSpec.countingMode);
-    const mode = input.lengthSpec.normalizeMode === "none"
-      ? chooseNormalizeMode(originalCount, input.lengthSpec)
-      : input.lengthSpec.normalizeMode;
+    const mode =
+      input.lengthSpec.normalizeMode === "none"
+        ? chooseNormalizeMode(originalCount, input.lengthSpec)
+        : input.lengthSpec.normalizeMode;
 
     if (mode === "none") {
       return {
@@ -56,9 +62,10 @@ export class LengthNormalizerAgent extends BaseAgent {
 
     const sanitizedContent = this.sanitizeNormalizedContent(response.content, input.chapterContent);
     const sanitizedCount = countChapterLength(sanitizedContent, input.lengthSpec.countingMode);
-    const wasTruncated = sanitizedContent !== input.chapterContent
-      && sanitizedCount < input.lengthSpec.hardMin
-      && this.looksTruncated(sanitizedContent);
+    const wasTruncated =
+      sanitizedContent !== input.chapterContent &&
+      sanitizedCount < input.lengthSpec.hardMin &&
+      this.looksTruncated(sanitizedContent);
     const normalizedContent = wasTruncated ? input.chapterContent : sanitizedContent;
     const finalCount = countChapterLength(normalizedContent, input.lengthSpec.countingMode);
     const warning = wasTruncated
@@ -76,9 +83,7 @@ export class LengthNormalizerAgent extends BaseAgent {
   }
 
   private buildSystemPrompt(mode: LengthNormalizeMode): string {
-    const action = mode === "compress"
-      ? "compress"
-      : "expand";
+    const action = mode === "compress" ? "compress" : "expand";
 
     return `你是一位章节长度修正器。你的任务是对章节正文做一次单次修正，只能执行一次，不得递归重写。
 
@@ -94,9 +99,7 @@ export class LengthNormalizerAgent extends BaseAgent {
     originalCount: number,
     mode: LengthNormalizeMode,
   ): string {
-    const intentBlock = input.chapterIntent
-      ? `\n## Chapter Intent\n${input.chapterIntent}\n`
-      : "";
+    const intentBlock = input.chapterIntent ? `\n## Chapter Intent\n${input.chapterIntent}\n` : "";
     const controlBlock = input.reducedControlBlock
       ? `\n## Reduced Control Block\n${input.reducedControlBlock}\n`
       : "";
@@ -197,7 +200,11 @@ ${input.chapterContent}`;
     if (/^```/.test(line)) return true;
     if (/^#+\s*(说明|解释|注释|analysis|analysis note)\b/i.test(line)) return true;
 
-    if (/^(下面是|以下是).*(正文|章节|压缩|扩写|修正|修改|调整|改写|润色|结果|内容|输出|版本)/i.test(line)) {
+    if (
+      /^(下面是|以下是).*(正文|章节|压缩|扩写|修正|修改|调整|改写|润色|结果|内容|输出|版本)/i.test(
+        line,
+      )
+    ) {
       return true;
     }
 
@@ -205,11 +212,19 @@ ${input.chapterContent}`;
       return true;
     }
 
-    if (/^(here(?:'s| is)|below is).*(chapter|draft|content|rewrite|revised|compressed|expanded|normalized|adjusted|output|version|result)/i.test(line)) {
+    if (
+      /^(here(?:'s| is)|below is).*(chapter|draft|content|rewrite|revised|compressed|expanded|normalized|adjusted|output|version|result)/i.test(
+        line,
+      )
+    ) {
       return true;
     }
 
-    if (/^i(?:'ll| will)\s+(rewrite|revise|reword|compress|expand|normalize|adjust|shorten|lengthen|trim|fix)\b/i.test(line)) {
+    if (
+      /^i(?:'ll| will)\s+(rewrite|revise|reword|compress|expand|normalize|adjust|shorten|lengthen|trim|fix)\b/i.test(
+        line,
+      )
+    ) {
       return true;
     }
 

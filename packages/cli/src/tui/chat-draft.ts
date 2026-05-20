@@ -1,7 +1,4 @@
-import {
-  appendInteractionMessage,
-  type InteractionSession,
-} from "@actalk/inkos-core";
+import { appendInteractionMessage, type InteractionSession } from "@actalk/inkos-core";
 
 export function createOptimisticUserMessageSession(
   session: InteractionSession,
@@ -28,9 +25,11 @@ export function appendStreamingAssistantChunk(
   if (lastMessage?.role === "assistant" && lastMessage.timestamp === timestamp) {
     return {
       ...session,
-      messages: session.messages.map((message, index) => index === session.messages.length - 1
-        ? { ...message, content: message.content + chunk }
-        : message),
+      messages: session.messages.map((message, index) =>
+        index === session.messages.length - 1
+          ? { ...message, content: message.content + chunk }
+          : message,
+      ),
     };
   }
 

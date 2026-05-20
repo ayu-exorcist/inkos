@@ -57,7 +57,10 @@ const EMPTY_FORM: GenreFormData = {
 };
 
 function parseCommaSeparated(value: string): ReadonlyArray<string> {
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function GenreForm({
@@ -94,7 +97,9 @@ function GenreForm({
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground uppercase tracking-wide">{t("genre.name")}</label>
+          <label className="text-xs text-muted-foreground uppercase tracking-wide">
+            {t("genre.name")}
+          </label>
           <input
             type="text"
             value={form.name}
@@ -105,7 +110,9 @@ function GenreForm({
       </div>
 
       <div>
-        <label className="text-xs text-muted-foreground uppercase tracking-wide">{t("create.language")}</label>
+        <label className="text-xs text-muted-foreground uppercase tracking-wide">
+          {t("create.language")}
+        </label>
         <select
           value={form.language}
           onChange={(e) => set("language", e.target.value as "zh" | "en")}
@@ -168,7 +175,9 @@ function GenreForm({
       </div>
 
       <div>
-        <label className="text-xs text-muted-foreground uppercase tracking-wide">{t("genre.pacingRule")}</label>
+        <label className="text-xs text-muted-foreground uppercase tracking-wide">
+          {t("genre.pacingRule")}
+        </label>
         <input
           type="text"
           value={form.pacingRule}
@@ -178,7 +187,9 @@ function GenreForm({
       </div>
 
       <div>
-        <label className="text-xs text-muted-foreground uppercase tracking-wide">{t("genre.rulesMd")}</label>
+        <label className="text-xs text-muted-foreground uppercase tracking-wide">
+          {t("genre.rulesMd")}
+        </label>
         <textarea
           value={form.body}
           onChange={(e) => set("body", e.target.value)}
@@ -213,7 +224,8 @@ export function GenreManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // Only show genres matching current language, plus custom project genres
-  const filteredGenres = data?.genres.filter((g) => g.language === lang || g.source === "project") ?? [];
+  const filteredGenres =
+    data?.genres.filter((g) => g.language === lang || g.source === "project") ?? [];
   const validSelected = selected && filteredGenres.some((g) => g.id === selected) ? selected : null;
   const selectedGenre = filteredGenres.find((g) => g.id === validSelected) ?? null;
 
@@ -316,7 +328,9 @@ export function GenreManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span>{t("create.genre")}</span>
       </div>
@@ -409,33 +423,47 @@ export function GenreManager({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFu
               </div>
 
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("genre.chapterTypes")}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  {t("genre.chapterTypes")}
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   {detail.profile.chapterTypes.map((ct) => (
-                    <span key={ct} className="px-2 py-1 text-xs bg-secondary rounded">{ct}</span>
+                    <span key={ct} className="px-2 py-1 text-xs bg-secondary rounded">
+                      {ct}
+                    </span>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("genre.fatigueWords")}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  {t("genre.fatigueWords")}
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   {detail.profile.fatigueWords.slice(0, 15).map((w) => (
-                    <span key={w} className="px-2 py-1 text-xs bg-secondary rounded">{w}</span>
+                    <span key={w} className="px-2 py-1 text-xs bg-secondary rounded">
+                      {w}
+                    </span>
                   ))}
                   {detail.profile.fatigueWords.length > 15 && (
-                    <span className="text-xs text-muted-foreground">+{detail.profile.fatigueWords.length - 15}</span>
+                    <span className="text-xs text-muted-foreground">
+                      +{detail.profile.fatigueWords.length - 15}
+                    </span>
                   )}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("genre.pacingRule")}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  {t("genre.pacingRule")}
+                </div>
                 <div className="text-sm">{detail.profile.pacingRule || "—"}</div>
               </div>
 
               <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">{t("genre.rules")}</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  {t("genre.rules")}
+                </div>
                 <pre className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-foreground/80 bg-muted/30 p-4 rounded-md max-h-[300px] overflow-y-auto">
                   {detail.body || "—"}
                 </pre>

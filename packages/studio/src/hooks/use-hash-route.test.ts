@@ -20,7 +20,10 @@ describe("hash route", () => {
     });
 
     it("parses book settings route", () => {
-      expect(parseHash("#/book/my-novel/settings")).toEqual({ page: "book-settings", bookId: "my-novel" });
+      expect(parseHash("#/book/my-novel/settings")).toEqual({
+        page: "book-settings",
+        bookId: "my-novel",
+      });
     });
 
     it("decodes encoded bookId", () => {
@@ -40,11 +43,17 @@ describe("hash route", () => {
     });
 
     it("parses service-detail", () => {
-      expect(parseHash("#/services/openai")).toEqual({ page: "service-detail", serviceId: "openai" });
+      expect(parseHash("#/services/openai")).toEqual({
+        page: "service-detail",
+        serviceId: "openai",
+      });
     });
 
     it("decodes encoded serviceId", () => {
-      expect(parseHash("#/services/%E8%87%AA%E5%AE%9A%E4%B9%89")).toEqual({ page: "service-detail", serviceId: "自定义" });
+      expect(parseHash("#/services/%E8%87%AA%E5%AE%9A%E4%B9%89")).toEqual({
+        page: "service-detail",
+        serviceId: "自定义",
+      });
     });
 
     it("falls back to dashboard for unknown hash", () => {
@@ -66,7 +75,9 @@ describe("hash route", () => {
     });
 
     it("book-settings -> #/book/{id}/settings", () => {
-      expect(routeToHash({ page: "book-settings", bookId: "novel-1" })).toBe("#/book/novel-1/settings");
+      expect(routeToHash({ page: "book-settings", bookId: "novel-1" })).toBe(
+        "#/book/novel-1/settings",
+      );
     });
 
     it("encodes Chinese bookId", () => {
@@ -84,7 +95,9 @@ describe("hash route", () => {
     });
 
     it("service-detail -> #/services/{id}", () => {
-      expect(routeToHash({ page: "service-detail", serviceId: "openai" })).toBe("#/services/openai");
+      expect(routeToHash({ page: "service-detail", serviceId: "openai" })).toBe(
+        "#/services/openai",
+      );
     });
 
     it("encodes Chinese serviceId", () => {

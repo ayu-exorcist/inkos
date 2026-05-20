@@ -11,26 +11,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "../components/ui/dropdown-menu";
-import {
-  Reasoning,
-  ReasoningTrigger,
-  ReasoningContent,
-} from "../components/ai-elements/reasoning";
+import { Reasoning, ReasoningTrigger, ReasoningContent } from "../components/ai-elements/reasoning";
 import { ChatMessage } from "../components/chat/ChatMessage";
 import { QuickActions } from "../components/chat/QuickActions";
 import { ToolExecutionSteps } from "../components/chat/ToolExecutionSteps";
-import {
-  Loader2,
-  BotMessageSquare,
-  ArrowUp,
-  ChevronDown,
-  Check,
-} from "lucide-react";
+import { Loader2, BotMessageSquare, ArrowUp, ChevronDown, Check } from "lucide-react";
 import { Shimmer } from "../components/ai-elements/shimmer";
-import {
-  Message,
-  MessageContent,
-} from "../components/ai-elements/message";
+import { Message, MessageContent } from "../components/ai-elements/message";
 import {
   type ChatPageModelPreference,
   filterModelGroups,
@@ -66,7 +53,14 @@ interface ServiceConfigPayload {
 
 // -- Component --
 
-export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-create", nav, theme, t, sse: _sse }: ChatPageProps) {
+export function ChatPage({
+  activeBookId,
+  mode = activeBookId ? "book" : "book-create",
+  nav,
+  theme,
+  t,
+  sse: _sse,
+}: ChatPageProps) {
   // -- Store selectors --
   const messages = useChatStore(chatSelectors.activeMessages);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
@@ -93,9 +87,12 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
   const isStreaming = useMemo(() => {
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return false;
-    return last.thinkingStreaming === true
-      || !last.content
-      || (last.toolExecutions?.some(t => t.status === "running" || t.status === "processing") ?? false);
+    return (
+      last.thinkingStreaming === true ||
+      !last.content ||
+      (last.toolExecutions?.some((t) => t.status === "running" || t.status === "processing") ??
+        false)
+    );
   }, [messages]);
 
   // -- Model picker: read raw state, derive with useMemo (stable refs) --
@@ -107,10 +104,13 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
   const fetchServices = useServiceStore((s) => s.fetchServices);
   const fetchBankModels = useServiceStore((s) => s.fetchBankModels);
   const fetchCustomModels = useServiceStore((s) => s.fetchCustomModels);
-  const [configuredModelSelection, setConfiguredModelSelection] = useState<ChatPageModelPreference | null>(null);
+  const [configuredModelSelection, setConfiguredModelSelection] =
+    useState<ChatPageModelPreference | null>(null);
   const [serviceConfigLoaded, setServiceConfigLoaded] = useState(false);
 
-  useEffect(() => { void fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+    void fetchServices();
+  }, [fetchServices]);
   useEffect(() => {
     void fetchBankModels();
     void fetchCustomModels();
@@ -143,7 +143,8 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
     const connected = services.filter((s) => s.connected);
     if (connected.length === 0) return "no-models" as const;
     if (bankModelsLoading) return "loading" as const;
-    if (connected.some((s) => (modelsByService[s.service]?.length ?? 0) > 0)) return "ready" as const;
+    if (connected.some((s) => (modelsByService[s.service]?.length ?? 0) > 0))
+      return "ready" as const;
     const hasConnectedBank = connected.some((s) => !s.service.startsWith("custom"));
     const hasConnectedCustom = connected.some((s) => s.service.startsWith("custom"));
     if (!hasConnectedBank && hasConnectedCustom && customModelsLoading) return "loading" as const;
@@ -176,7 +177,14 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
     if (nextSelection) {
       setSelectedModel(nextSelection.model, nextSelection.service);
     }
-  }, [configuredModelSelection, groupedModels, selectedModel, selectedService, serviceConfigLoaded, setSelectedModel]);
+  }, [
+    configuredModelSelection,
+    groupedModels,
+    selectedModel,
+    selectedService,
+    serviceConfigLoaded,
+    setSelectedModel,
+  ]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -219,16 +227,19 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
         return;
       }
 
-      const existingId = mode === "project-chat"
-        ? getProjectChatSessionId()
-        : getBookCreateSessionId();
+      const existingId =
+        mode === "project-chat" ? getProjectChatSessionId() : getBookCreateSessionId();
       if (existingId) {
         await loadSessionDetail(existingId);
         if (cancelled) return;
 
         const state = useChatStore.getState();
         const session = state.sessions[existingId];
-        if (session && session.bookId === null && (mode !== "project-chat" || session.messages.length > 0)) {
+        if (
+          session &&
+          session.bookId === null &&
+          (mode !== "project-chat" || session.messages.length > 0)
+        ) {
           activateSession(existingId);
           return;
         }
@@ -288,9 +299,7 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
             <div className="w-14 h-14 rounded-2xl border border-dashed border-border flex items-center justify-center mb-4 bg-secondary/30 opacity-40">
               <BotMessageSquare size={24} className="text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground/70 max-w-md leading-7">
-              {emptyGuidance}
-            </p>
+            <p className="text-sm text-muted-foreground/70 max-w-md leading-7">{emptyGuidance}</p>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -298,16 +307,33 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
               <div key={`${msg.timestamp}-${i}`}>
                 {msg.role === "user" ? (
                   /* User message */
-                  <ChatMessage role="user" content={msg.content} timestamp={msg.timestamp} theme={theme} />
+                  <ChatMessage
+                    role="user"
+                    content={msg.content}
+                    timestamp={msg.timestamp}
+                    theme={theme}
+                  />
                 ) : msg.parts && msg.parts.length > 0 ? (
                   /* Assistant message — parts-based rendering (chronological) */
                   /* Merge consecutive utility tool parts into one group */
                   <>
                     {(() => {
                       type RenderItem =
-                        | { kind: "thinking"; pi: number; part: Extract<typeof msg.parts[0], { type: "thinking" }> }
-                        | { kind: "text"; pi: number; part: Extract<typeof msg.parts[0], { type: "text" }> }
-                        | { kind: "tools"; parts: Array<Extract<typeof msg.parts[0], { type: "tool" }>>; startIdx: number };
+                        | {
+                            kind: "thinking";
+                            pi: number;
+                            part: Extract<(typeof msg.parts)[0], { type: "thinking" }>;
+                          }
+                        | {
+                            kind: "text";
+                            pi: number;
+                            part: Extract<(typeof msg.parts)[0], { type: "text" }>;
+                          }
+                        | {
+                            kind: "tools";
+                            parts: Array<Extract<(typeof msg.parts)[0], { type: "tool" }>>;
+                            startIdx: number;
+                          };
 
                       const items: RenderItem[] = [];
                       for (let pi = 0; pi < msg.parts!.length; pi++) {
@@ -339,7 +365,12 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
                           );
                         }
                         if (item.kind === "tools") {
-                          return <ToolExecutionSteps key={`x-${item.startIdx}`} executions={item.parts.map(p => p.execution)} />;
+                          return (
+                            <ToolExecutionSteps
+                              key={`x-${item.startIdx}`}
+                              executions={item.parts.map((p) => p.execution)}
+                            />
+                          );
                         }
                         if (item.kind === "text" && item.part.content) {
                           return (
@@ -378,7 +409,6 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
                 </MessageContent>
               </Message>
             )}
-
           </div>
         )}
       </div>
@@ -397,56 +427,65 @@ export function ChatPage({ activeBookId, mode = activeBookId ? "book" : "book-cr
       {/* Input area */}
       <div className="shrink-0 border-t border-border/40 px-4 py-3">
         <div className="max-w-3xl mx-auto">
-            <div className="rounded-xl bg-secondary/30 transition-all">
-              <div className="flex items-center gap-2 px-3 py-2">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(input); } }}
-                  placeholder={isZh ? "输入指令..." : "Enter command..."}
-                  disabled={loading || !activeSessionId}
-                  rows={1}
-                  className="flex-1 bg-transparent text-sm leading-6 placeholder:text-muted-foreground/50 outline-none! border-none! ring-0! shadow-none focus:outline-none! focus:ring-0! focus:border-none! resize-none disabled:opacity-50 max-h-[200px] overflow-y-auto"
-                />
-                <button
-                  type="button"
-                  onClick={() => onSend(input)}
-                  disabled={!input.trim() || loading || !activeSessionId}
-                  className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100 shadow-sm shadow-primary/20"
-                >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowUp size={14} strokeWidth={2.5} />}
-                </button>
-              </div>
-              <div className="flex items-center gap-2 px-3 pb-2 border-t border-border/20 pt-1.5">
-                {modelPickerStatus === "loading" ? (
-                  <span className="text-xs text-muted-foreground/40 animate-pulse">加载模型...</span>
-                ) : modelPickerStatus === "ready" ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted text-sm transition-colors cursor-pointer">
-                      <span className="font-medium text-xs truncate max-w-[220px]">
-                        {selectedModelLabel}
-                      </span>
-                      <ChevronDown size={14} className="text-muted-foreground" />
-                    </DropdownMenuTrigger>
-                    <ModelPickerContent
-                      groupedModels={groupedModels}
-                      selectedModel={selectedModel}
-                      selectedService={selectedService}
-                      onSelect={setSelectedModel}
-                      onManage={() => nav.toServices()}
-                    />
-                  </DropdownMenu>
+          <div className="rounded-xl bg-secondary/30 transition-all">
+            <div className="flex items-center gap-2 px-3 py-2">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onSend(input);
+                  }
+                }}
+                placeholder={isZh ? "输入指令..." : "Enter command..."}
+                disabled={loading || !activeSessionId}
+                rows={1}
+                className="flex-1 bg-transparent text-sm leading-6 placeholder:text-muted-foreground/50 outline-none! border-none! ring-0! shadow-none focus:outline-none! focus:ring-0! focus:border-none! resize-none disabled:opacity-50 max-h-[200px] overflow-y-auto"
+              />
+              <button
+                type="button"
+                onClick={() => onSend(input)}
+                disabled={!input.trim() || loading || !activeSessionId}
+                className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:scale-105 active:scale-95 transition-all disabled:opacity-20 disabled:scale-100 shadow-sm shadow-primary/20"
+              >
+                {loading ? (
+                  <Loader2 size={14} className="animate-spin" />
                 ) : (
-                  <button
-                    onClick={() => nav.toServices()}
-                    className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
-                  >
-                    配置模型 →
-                  </button>
+                  <ArrowUp size={14} strokeWidth={2.5} />
                 )}
-              </div>
+              </button>
             </div>
+            <div className="flex items-center gap-2 px-3 pb-2 border-t border-border/20 pt-1.5">
+              {modelPickerStatus === "loading" ? (
+                <span className="text-xs text-muted-foreground/40 animate-pulse">加载模型...</span>
+              ) : modelPickerStatus === "ready" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted text-sm transition-colors cursor-pointer">
+                    <span className="font-medium text-xs truncate max-w-[220px]">
+                      {selectedModelLabel}
+                    </span>
+                    <ChevronDown size={14} className="text-muted-foreground" />
+                  </DropdownMenuTrigger>
+                  <ModelPickerContent
+                    groupedModels={groupedModels}
+                    selectedModel={selectedModel}
+                    selectedService={selectedService}
+                    onSelect={setSelectedModel}
+                    onManage={() => nav.toServices()}
+                  />
+                </DropdownMenu>
+              ) : (
+                <button
+                  onClick={() => nav.toServices()}
+                  className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
+                >
+                  配置模型 →
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -460,7 +499,11 @@ function ModelPickerContent({
   onSelect,
   onManage,
 }: {
-  groupedModels: ReadonlyArray<{ service: string; label: string; models: ReadonlyArray<{ id: string; name?: string }> }>;
+  groupedModels: ReadonlyArray<{
+    service: string;
+    label: string;
+    models: ReadonlyArray<{ id: string; name?: string }>;
+  }>;
   selectedModel: string | null;
   selectedService: string | null;
   onSelect: (model: string, service: string) => void;

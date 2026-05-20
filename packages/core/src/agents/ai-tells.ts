@@ -50,7 +50,8 @@ export function analyzeAITells(content: string, language: AITellLanguage = "zh")
     const paragraphLengths = paragraphs.map((p) => p.length);
     const mean = paragraphLengths.reduce((a, b) => a + b, 0) / paragraphLengths.length;
     if (mean > 0) {
-      const variance = paragraphLengths.reduce((sum, l) => sum + (l - mean) ** 2, 0) / paragraphLengths.length;
+      const variance =
+        paragraphLengths.reduce((sum, l) => sum + (l - mean) ** 2, 0) / paragraphLengths.length;
       const stdDev = Math.sqrt(variance);
       const cv = stdDev / mean;
       if (cv < 0.15) {
@@ -102,12 +103,9 @@ export function analyzeAITells(content: string, language: AITellLanguage = "zh")
       transitionCounts[isEnglish ? word.toLowerCase() : word] = count;
     }
   }
-  const repeatedTransitions = Object.entries(transitionCounts)
-    .filter(([, count]) => count >= 3);
+  const repeatedTransitions = Object.entries(transitionCounts).filter(([, count]) => count >= 3);
   if (repeatedTransitions.length > 0) {
-    const detail = repeatedTransitions
-      .map(([word, count]) => `"${word}"×${count}`)
-      .join(joiner);
+    const detail = repeatedTransitions.map(([word, count]) => `"${word}"×${count}`).join(joiner);
     issues.push({
       severity: "warning",
       category: isEnglish ? "Formulaic transitions" : "公式化转折",
@@ -131,10 +129,10 @@ export function analyzeAITells(content: string, language: AITellLanguage = "zh")
     let maxConsecutive = 1;
     for (let i = 1; i < sentences.length; i++) {
       const prevPrefix = isEnglish
-        ? sentences[i - 1]!.split(/\s+/)[0]?.toLowerCase() ?? ""
+        ? (sentences[i - 1]!.split(/\s+/)[0]?.toLowerCase() ?? "")
         : sentences[i - 1]!.slice(0, 2);
       const currPrefix = isEnglish
-        ? sentences[i]!.split(/\s+/)[0]?.toLowerCase() ?? ""
+        ? (sentences[i]!.split(/\s+/)[0]?.toLowerCase() ?? "")
         : sentences[i]!.slice(0, 2);
       if (prevPrefix === currPrefix) {
         consecutiveSamePrefix++;

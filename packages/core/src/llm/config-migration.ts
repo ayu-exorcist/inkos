@@ -13,6 +13,7 @@ export async function migrateConfig(projectRoot: string): Promise<MigrationResul
   try {
     raw = await readFile(configPath, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return { migrated: false };
   }
 

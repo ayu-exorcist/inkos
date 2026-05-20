@@ -2,10 +2,7 @@ export interface WechatWorkConfig {
   readonly webhookUrl: string;
 }
 
-export async function sendWechatWork(
-  config: WechatWorkConfig,
-  content: string,
-): Promise<void> {
+export async function sendWechatWork(config: WechatWorkConfig, content: string): Promise<void> {
   const response = await fetch(config.webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -99,11 +99,13 @@ describe("interaction models", () => {
       timestamp: 1,
     });
 
-    expect(next.messages).toEqual([{
-      role: "user",
-      content: "continue",
-      timestamp: 1,
-    }]);
+    expect(next.messages).toEqual([
+      {
+        role: "user",
+        content: "continue",
+        timestamp: 1,
+      },
+    ]);
   });
 
   it("appends interaction events in timestamp order", () => {
@@ -123,13 +125,15 @@ describe("interaction models", () => {
       detail: "Completed write_next for harbor.",
     });
 
-    expect(next.events).toEqual([{
-      kind: "task.completed",
-      timestamp: 2,
-      status: "completed",
-      bookId: "harbor",
-      detail: "Completed write_next for harbor.",
-    }]);
+    expect(next.events).toEqual([
+      {
+        kind: "task.completed",
+        timestamp: 2,
+        status: "completed",
+        bookId: "harbor",
+        detail: "Completed write_next for harbor.",
+      },
+    ]);
   });
 
   it("stores and clears a creation draft inside the shared session", () => {

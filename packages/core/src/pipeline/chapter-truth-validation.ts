@@ -1,5 +1,9 @@
 import type { AuditIssue, AuditResult } from "../agents/continuity.js";
-import type { StateValidationAuthorityContext, ValidationResult, StateValidatorAgent } from "../agents/state-validator.js";
+import type {
+  StateValidationAuthorityContext,
+  ValidationResult,
+  StateValidatorAgent,
+} from "../agents/state-validator.js";
 import type { WriteChapterOutput, WriterAgent } from "../agents/writer.js";
 import type { BookConfig } from "../models/book.js";
 import type { ContextPackage, RuleStack } from "../models/input-governance.js";
@@ -59,17 +63,21 @@ export async function validateChapterTruthPersistence(params: {
       params.authorityContext,
     );
   } catch (error) {
-    params.logger?.warn(`State validation error for chapter ${params.chapterNumber}: ${String(error)}`);
-    const errorDescription = params.language === "en"
-      ? `State validation unavailable: ${String(error)}`
-      : `状态校验不可用：${String(error)}`;
+    params.logger?.warn(
+      `State validation error for chapter ${params.chapterNumber}: ${String(error)}`,
+    );
+    const errorDescription =
+      params.language === "en"
+        ? `State validation unavailable: ${String(error)}`
+        : `状态校验不可用：${String(error)}`;
     const errorIssue: AuditIssue = {
       severity: "warning",
       category: "state-validation",
       description: errorDescription,
-      suggestion: params.language === "en"
-        ? "Repair chapter state from the persisted body before continuing."
-        : "请先基于已保存正文修复本章 state，再继续后续章节。",
+      suggestion:
+        params.language === "en"
+          ? "Repair chapter state from the persisted body before continuing."
+          : "请先基于已保存正文修复本章 state，再继续后续章节。",
     };
     return {
       validation: { passed: true, warnings: [] },

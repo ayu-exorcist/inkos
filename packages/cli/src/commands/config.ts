@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { findProjectRoot, log, logError, GLOBAL_CONFIG_DIR, GLOBAL_ENV_PATH } from "../utils.js";
 import { listModelsForService } from "@actalk/inkos-core";
 
-export const configCommand = new Command("config")
-  .description("Manage project configuration");
+export const configCommand = new Command("config").description("Manage project configuration");
 
 configCommand
   .command("set")
@@ -23,14 +22,23 @@ configCommand
       const keys = key.split(".");
 
       const KNOWN_KEYS = new Set([
-        "llm.provider", "llm.baseUrl", "llm.model", "llm.temperature",
-        "llm.thinkingBudget", "llm.proxyUrl", "llm.apiFormat", "llm.stream",
+        "llm.provider",
+        "llm.baseUrl",
+        "llm.model",
+        "llm.temperature",
+        "llm.thinkingBudget",
+        "llm.proxyUrl",
+        "llm.apiFormat",
+        "llm.stream",
         "inputGovernanceMode",
         "foundation.reviewRetries",
         "writing.reviewRetries",
-        "daemon.schedule.radarCron", "daemon.schedule.writeCron",
-        "daemon.maxConcurrentBooks", "daemon.chaptersPerCycle",
-        "daemon.retryDelayMs", "daemon.cooldownAfterChapterMs",
+        "daemon.schedule.radarCron",
+        "daemon.schedule.writeCron",
+        "daemon.maxConcurrentBooks",
+        "daemon.chaptersPerCycle",
+        "daemon.retryDelayMs",
+        "daemon.cooldownAfterChapterMs",
         "daemon.maxChaptersPerDay",
       ]);
       // Allow any key under llm.extra.* (passthrough to API)
@@ -38,23 +46,36 @@ configCommand
         // Find closest match by edit distance on the last segment
         const candidates = [...KNOWN_KEYS];
         const inputParts = key.split(".");
-        const samePrefixCandidates = candidates.filter(k => {
+        const samePrefixCandidates = candidates.filter((k) => {
           const parts = k.split(".");
-          return parts.length === inputParts.length && parts.slice(0, -1).join(".") === inputParts.slice(0, -1).join(".");
+          return (
+            parts.length === inputParts.length &&
+            parts.slice(0, -1).join(".") === inputParts.slice(0, -1).join(".")
+          );
         });
         const editDist = (a: string, b: string): number => {
-          const m = a.length, n = b.length;
-          const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0));
-          for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
-            dp[i]![j] = Math.min(dp[i-1]![j]! + 1, dp[i]![j-1]! + 1, dp[i-1]![j-1]! + (a[i-1] !== b[j-1] ? 1 : 0));
+          const m = a.length,
+            n = b.length;
+          const dp = Array.from({ length: m + 1 }, (_, i) =>
+            Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+          );
+          for (let i = 1; i <= m; i++)
+            for (let j = 1; j <= n; j++)
+              dp[i]![j] = Math.min(
+                dp[i - 1]![j]! + 1,
+                dp[i]![j - 1]! + 1,
+                dp[i - 1]![j - 1]! + (a[i - 1] !== b[j - 1] ? 1 : 0),
+              );
           return dp[m]![n]!;
         };
         const inputLast = inputParts[inputParts.length - 1]!;
         const suggestion = samePrefixCandidates
-          .map(k => ({ k, d: editDist(k.split(".").pop()!, inputLast) }))
+          .map((k) => ({ k, d: editDist(k.split(".").pop()!, inputLast) }))
           .sort((a, b) => a.d - b.d)
-          .find(x => x.d <= 3)?.k;
-        logError(`Unknown config key "${key}".${suggestion ? ` Did you mean "${suggestion}"?` : ""}`);
+          .find((x) => x.d <= 3)?.k;
+        logError(
+          `Unknown config key "${key}".${suggestion ? ` Did you mean "${suggestion}"?` : ""}`,
+        );
         log(`Known keys: ${candidates.join(", ")}`);
         process.exit(1);
       }
@@ -130,12 +151,10 @@ configCommand
   .action(async () => {
     try {
       const content = await readFile(GLOBAL_ENV_PATH, "utf-8");
-      const masked = content.replace(
-        /(INKOS_LLM_API_KEY=)(.{8})(.*)(.{4})/,
-        "$1$2...$4",
-      );
+      const masked = content.replace(/(INKOS_LLM_API_KEY=)(.{8})(.*)(.{4})/, "$1$2...$4");
       log(masked);
     } catch {
+      // failure expected, safe to ignore
       log("No global config found. Run 'inkos config set-global' to create one.");
     }
   });
@@ -162,7 +181,14 @@ configCommand
     }
   });
 
-const KNOWN_AGENTS = ["writer", "auditor", "reviser", "architect", "radar", "chapter-analyzer"] as const;
+const KNOWN_AGENTS = [
+  "writer",
+  "auditor",
+  "reviser",
+  "architect",
+  "radar",
+  "chapter-analyzer",
+] as const;
 const ENV_VAR_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function validateApiKeyEnvName(value: string): string | undefined {
@@ -183,47 +209,54 @@ configCommand
   .option("--api-key-env <envVar>", "Env variable name for API key (e.g., PACKYAPI_KEY)")
   .option("--stream", "Enable streaming (default)")
   .option("--no-stream", "Disable streaming")
-  .action(async (agent: string, model: string, opts: { baseUrl?: string; provider?: string; apiKeyEnv?: string; stream?: boolean }) => {
-    if (!KNOWN_AGENTS.includes(agent as typeof KNOWN_AGENTS[number])) {
-      logError(`Unknown agent "${agent}". Valid agents: ${KNOWN_AGENTS.join(", ")}`);
-      process.exit(1);
-    }
-
-    if (opts.apiKeyEnv) {
-      const validationError = validateApiKeyEnvName(opts.apiKeyEnv);
-      if (validationError) {
-        logError(validationError);
+  .action(
+    async (
+      agent: string,
+      model: string,
+      opts: { baseUrl?: string; provider?: string; apiKeyEnv?: string; stream?: boolean },
+    ) => {
+      if (!KNOWN_AGENTS.includes(agent as (typeof KNOWN_AGENTS)[number])) {
+        logError(`Unknown agent "${agent}". Valid agents: ${KNOWN_AGENTS.join(", ")}`);
         process.exit(1);
       }
-    }
 
-    const root = findProjectRoot();
-    const configPath = join(root, "inkos.json");
-
-    try {
-      const raw = await readFile(configPath, "utf-8");
-      const config = JSON.parse(raw);
-      const overrides = config.modelOverrides ?? {};
-
-      const hasProviderOpts = opts.baseUrl || opts.provider || opts.apiKeyEnv || opts.stream === false;
-      if (hasProviderOpts) {
-        const override: Record<string, unknown> = { model };
-        if (opts.baseUrl) override.baseUrl = opts.baseUrl;
-        if (opts.provider) override.provider = opts.provider;
-        if (opts.apiKeyEnv) override.apiKeyEnv = opts.apiKeyEnv;
-        if (opts.stream === false) override.stream = false;
-        config.modelOverrides = { ...overrides, [agent]: override };
-      } else {
-        config.modelOverrides = { ...overrides, [agent]: model };
+      if (opts.apiKeyEnv) {
+        const validationError = validateApiKeyEnvName(opts.apiKeyEnv);
+        if (validationError) {
+          logError(validationError);
+          process.exit(1);
+        }
       }
 
-      await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
-      log(`Model override: ${agent} → ${model}${opts.baseUrl ? ` (${opts.baseUrl})` : ""}`);
-    } catch (e) {
-      logError(`Failed to update config: ${e}`);
-      process.exit(1);
-    }
-  });
+      const root = findProjectRoot();
+      const configPath = join(root, "inkos.json");
+
+      try {
+        const raw = await readFile(configPath, "utf-8");
+        const config = JSON.parse(raw);
+        const overrides = config.modelOverrides ?? {};
+
+        const hasProviderOpts =
+          opts.baseUrl || opts.provider || opts.apiKeyEnv || opts.stream === false;
+        if (hasProviderOpts) {
+          const override: Record<string, unknown> = { model };
+          if (opts.baseUrl) override.baseUrl = opts.baseUrl;
+          if (opts.provider) override.provider = opts.provider;
+          if (opts.apiKeyEnv) override.apiKeyEnv = opts.apiKeyEnv;
+          if (opts.stream === false) override.stream = false;
+          config.modelOverrides = { ...overrides, [agent]: override };
+        } else {
+          config.modelOverrides = { ...overrides, [agent]: model };
+        }
+
+        await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
+        log(`Model override: ${agent} → ${model}${opts.baseUrl ? ` (${opts.baseUrl})` : ""}`);
+      } catch (e) {
+        logError(`Failed to update config: ${e}`);
+        process.exit(1);
+      }
+    },
+  );
 
 configCommand
   .command("remove-model")

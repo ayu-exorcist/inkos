@@ -81,9 +81,7 @@ describe("filterModelGroups", () => {
     {
       service: "custom:gemma",
       label: "LM Studio",
-      models: [
-        { id: "google/gemma-4-27b-it", name: "google/gemma-4-27b-it" },
-      ],
+      models: [{ id: "google/gemma-4-27b-it", name: "google/gemma-4-27b-it" }],
     },
   ] as const;
 
@@ -121,16 +119,12 @@ describe("pickModelSelection", () => {
     {
       service: "google",
       label: "Google Gemini",
-      models: [
-        { id: "gemini-2.5-flash", name: "gemini-2.5-flash" },
-      ],
+      models: [{ id: "gemini-2.5-flash", name: "gemini-2.5-flash" }],
     },
     {
       service: "moonshot",
       label: "Moonshot",
-      models: [
-        { id: "kimi-k2.5", name: "kimi-k2.5" },
-      ],
+      models: [{ id: "kimi-k2.5", name: "kimi-k2.5" }],
     },
   ] as const;
 
@@ -153,30 +147,36 @@ describe("pickModelSelection", () => {
   });
 
   it("prefers the configured service and model when there is no current selection", () => {
-    expect(pickModelSelection(grouped, null, null, {
-      service: "moonshot",
-      model: "kimi-k2.5",
-    })).toEqual({
+    expect(
+      pickModelSelection(grouped, null, null, {
+        service: "moonshot",
+        model: "kimi-k2.5",
+      }),
+    ).toEqual({
       model: "kimi-k2.5",
       service: "moonshot",
     });
   });
 
   it("prefers the configured service even when its configured model is stale", () => {
-    expect(pickModelSelection(grouped, null, null, {
-      service: "moonshot",
-      model: "kimi-k3",
-    })).toEqual({
+    expect(
+      pickModelSelection(grouped, null, null, {
+        service: "moonshot",
+        model: "kimi-k3",
+      }),
+    ).toEqual({
       model: "kimi-k2.5",
       service: "moonshot",
     });
   });
 
   it("keeps a valid user selection over the configured default", () => {
-    expect(pickModelSelection(grouped, "gemini-2.5-flash", "google", {
-      service: "moonshot",
-      model: "kimi-k2.5",
-    })).toBeNull();
+    expect(
+      pickModelSelection(grouped, "gemini-2.5-flash", "google", {
+        service: "moonshot",
+        model: "kimi-k2.5",
+      }),
+    ).toBeNull();
   });
 
   it("returns null when no models are available", () => {
@@ -186,18 +186,22 @@ describe("pickModelSelection", () => {
 
 describe("pickProjectChatSessionId", () => {
   it("prefers the newest project chat session that already has messages", () => {
-    expect(pickProjectChatSessionId([
-      { sessionId: "empty-latest", messageCount: 0 },
-      { sessionId: "short-fiction-session", messageCount: 3 },
-      { sessionId: "older-session", messageCount: 1 },
-    ])).toBe("short-fiction-session");
+    expect(
+      pickProjectChatSessionId([
+        { sessionId: "empty-latest", messageCount: 0 },
+        { sessionId: "short-fiction-session", messageCount: 3 },
+        { sessionId: "older-session", messageCount: 1 },
+      ]),
+    ).toBe("short-fiction-session");
   });
 
   it("falls back to the newest empty session when all sessions are empty", () => {
-    expect(pickProjectChatSessionId([
-      { sessionId: "empty-latest", messageCount: 0 },
-      { sessionId: "empty-older", messageCount: 0 },
-    ])).toBe("empty-latest");
+    expect(
+      pickProjectChatSessionId([
+        { sessionId: "empty-latest", messageCount: 0 },
+        { sessionId: "empty-older", messageCount: 0 },
+      ]),
+    ).toBe("empty-latest");
   });
 
   it("returns null when there is no project chat session", () => {

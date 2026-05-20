@@ -14,7 +14,7 @@ export const initCommand = new Command("init")
     try {
       await mkdir(projectDir, { recursive: true });
       await initializeProjectDirectory(projectDir, {
-        language: (opts.lang === "en" ? "en" : "zh"),
+        language: opts.lang === "en" ? "en" : "zh",
         overwriteSupportFiles: true,
       });
 
@@ -34,7 +34,9 @@ export const initCommand = new Command("init")
         log("Next steps:");
         if (name) log(`  cd ${name}`);
         log("  # Option 1: Set global config (recommended, one-time):");
-        log("  inkos config set-global --provider openai --base-url <your-api-url> --api-key <your-key> --model <your-model>");
+        log(
+          "  inkos config set-global --provider openai --base-url <your-api-url> --api-key <your-key> --model <your-model>",
+        );
         log("  # Option 2: Edit .env for this project only");
         log("");
         log(exampleCreate);

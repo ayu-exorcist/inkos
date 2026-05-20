@@ -1,7 +1,11 @@
 import { readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import type { ChapterMeta } from "../models/chapter.js";
-import { classifyTruthAuthority, normalizeTruthFileName, type TruthAuthority } from "./truth-authority.js";
+import {
+  classifyTruthAuthority,
+  normalizeTruthFileName,
+  type TruthAuthority,
+} from "./truth-authority.js";
 
 export type EditRequest =
   | {
@@ -63,10 +67,12 @@ export interface ExecutedEditTransaction {
 }
 
 function isMissingDirectoryError(error: unknown): boolean {
-  return typeof error === "object"
-    && error !== null
-    && "code" in error
-    && (error as { code?: unknown }).code === "ENOENT";
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "ENOENT"
+  );
 }
 
 export function planEditTransaction(request: EditRequest): PlannedEditTransaction {
@@ -102,7 +108,12 @@ export function planEditTransaction(request: EditRequest): PlannedEditTransactio
         bookId: request.bookId,
         normalizedFileName,
         truthAuthority,
-        affectedScope: truthAuthority === "runtime-truth" ? "book" : truthAuthority === "memory" ? "book" : "book",
+        affectedScope:
+          truthAuthority === "runtime-truth"
+            ? "book"
+            : truthAuthority === "memory"
+              ? "book"
+              : "book",
         requiresTruthRebuild: truthAuthority === "runtime-truth" || truthAuthority === "memory",
       };
     }
@@ -129,16 +140,18 @@ async function collectEditableFiles(dir: string): Promise<ReadonlyArray<string>>
     }
     throw error;
   });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      return collectEditableFiles(fullPath);
-    }
-    if (!/\.(md|json|ya?ml|txt)$/i.test(entry.name)) {
-      return [];
-    }
-    return [fullPath];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return collectEditableFiles(fullPath);
+      }
+      if (!/\.(md|json|ya?ml|txt)$/i.test(entry.name)) {
+        return [];
+      }
+      return [fullPath];
+    }),
+  );
   return files.flat();
 }
 
@@ -181,13 +194,14 @@ async function executeChapterLocalEdit(
   const root = deps.bookDir(request.bookId);
   const chaptersDir = join(root, "chapters");
   const paddedChapter = String(request.chapterNumber).padStart(4, "0");
-  const chapterFile = (await readdir(chaptersDir).catch((error) => {
-    if (isMissingDirectoryError(error)) {
-      return [];
-    }
-    throw error;
-  }))
-    .find((file) => file.startsWith(`${paddedChapter}_`) && file.endsWith(".md"));
+  const chapterFile = (
+    await readdir(chaptersDir).catch((error) => {
+      if (isMissingDirectoryError(error)) {
+        return [];
+      }
+      throw error;
+    })
+  ).find((file) => file.startsWith(`${paddedChapter}_`) && file.endsWith(".md"));
 
   if (!chapterFile) {
     throw new Error(`Chapter ${request.chapterNumber} not found in "${request.bookId}".`);
@@ -205,27 +219,34 @@ async function executeChapterLocalEdit(
   await writeFile(chapterPath, nextContent, "utf-8");
 
   const runtimeDir = join(root, "story", "runtime");
-  const runtimeFiles = (await readdir(runtimeDir).catch((error) => {
-    if (isMissingDirectoryError(error)) {
-      return [];
-    }
-    throw error;
-  }))
-    .filter((file) => file.startsWith(`chapter-${paddedChapter}.`));
-  await Promise.all(runtimeFiles.map((file) => unlink(join(runtimeDir, file)).catch(() => undefined)));
+  const runtimeFiles = (
+    await readdir(runtimeDir).catch((error) => {
+      if (isMissingDirectoryError(error)) {
+        return [];
+      }
+      throw error;
+    })
+  ).filter((file) => file.startsWith(`chapter-${paddedChapter}.`));
+  await Promise.all(
+    runtimeFiles.map((file) => unlink(join(runtimeDir, file)).catch(() => undefined)),
+  );
 
   const index = [...(await deps.loadChapterIndex(request.bookId))];
-  const updatedIndex = index.map((chapter) => chapter.number === request.chapterNumber
-    ? {
-        ...chapter,
-        status: "audit-failed" as const,
-        updatedAt: new Date().toISOString(),
-        auditIssues: [
-          ...chapter.auditIssues.filter((issue) => !issue.includes("Manual text edit requires review")),
-          "[warning] Manual text edit requires review before continuation.",
-        ],
-      }
-    : chapter);
+  const updatedIndex = index.map((chapter) =>
+    chapter.number === request.chapterNumber
+      ? {
+          ...chapter,
+          status: "audit-failed" as const,
+          updatedAt: new Date().toISOString(),
+          auditIssues: [
+            ...chapter.auditIssues.filter(
+              (issue) => !issue.includes("Manual text edit requires review"),
+            ),
+            "[warning] Manual text edit requires review before continuation.",
+          ],
+        }
+      : chapter,
+  );
   await deps.saveChapterIndex(request.bookId, updatedIndex);
 
   return {

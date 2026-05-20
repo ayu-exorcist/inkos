@@ -51,8 +51,10 @@ describe("Scheduler", () => {
         }
         await blockedCycle;
       });
-    vi.spyOn(scheduler as unknown as { runRadarScan: () => Promise<void> }, "runRadarScan")
-      .mockResolvedValue(undefined);
+    vi.spyOn(
+      scheduler as unknown as { runRadarScan: () => Promise<void> },
+      "runRadarScan",
+    ).mockResolvedValue(undefined);
 
     await scheduler.start();
 
@@ -86,29 +88,45 @@ describe("Scheduler", () => {
     };
 
     vi.spyOn(
-      (scheduler as unknown as { pipeline: { writeNextChapter: (bookId: string, words?: number, temp?: number) => Promise<unknown> } }).pipeline,
+      (
+        scheduler as unknown as {
+          pipeline: {
+            writeNextChapter: (bookId: string, words?: number, temp?: number) => Promise<unknown>;
+          };
+        }
+      ).pipeline,
       "writeNextChapter",
     ).mockResolvedValue({
-        chapterNumber: 3,
-        title: "Broken State",
-        wordCount: 2100,
-        revised: false,
-        status: "state-degraded",
-        auditResult: {
-          passed: true,
-          issues: [{
+      chapterNumber: 3,
+      title: "Broken State",
+      wordCount: 2100,
+      revised: false,
+      status: "state-degraded",
+      auditResult: {
+        passed: true,
+        issues: [
+          {
             severity: "warning",
             category: "state-validation",
             description: "state validation still failed after retry",
             suggestion: "repair state before continuing",
-          }],
-          summary: "clean",
-        },
+          },
+        ],
+        summary: "clean",
+      },
     });
-    const handleAuditFailure = vi.spyOn(
-      scheduler as unknown as { handleAuditFailure: (bookId: string, chapterNumber: number, issueCategories?: string[]) => Promise<void> },
-      "handleAuditFailure",
-    ).mockResolvedValue(undefined);
+    const handleAuditFailure = vi
+      .spyOn(
+        scheduler as unknown as {
+          handleAuditFailure: (
+            bookId: string,
+            chapterNumber: number,
+            issueCategories?: string[],
+          ) => Promise<void>;
+        },
+        "handleAuditFailure",
+      )
+      .mockResolvedValue(undefined);
 
     const success = await (
       scheduler as unknown as {

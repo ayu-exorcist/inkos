@@ -26,20 +26,25 @@ export async function processTuiAgentInput(params: {
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => ({ role: message.role, content: message.content }));
 
-  let nextSession = appendInteractionMessage(clearPendingDecision({
-    ...params.session,
-    ...(resolvedBookId ? { activeBookId: resolvedBookId } : {}),
-    currentExecution: {
-      status: "planning",
-      ...(resolvedBookId ? { bookId: resolvedBookId } : {}),
-      ...(params.session.activeChapterNumber ? { chapterNumber: params.session.activeChapterNumber } : {}),
-      stageLabel: "agent",
+  let nextSession = appendInteractionMessage(
+    clearPendingDecision({
+      ...params.session,
+      ...(resolvedBookId ? { activeBookId: resolvedBookId } : {}),
+      currentExecution: {
+        status: "planning",
+        ...(resolvedBookId ? { bookId: resolvedBookId } : {}),
+        ...(params.session.activeChapterNumber
+          ? { chapterNumber: params.session.activeChapterNumber }
+          : {}),
+        stageLabel: "agent",
+      },
+    }),
+    {
+      role: "user",
+      content: params.input,
+      timestamp: userTimestamp,
     },
-  }), {
-    role: "user",
-    content: params.input,
-    timestamp: userTimestamp,
-  });
+  );
 
   if (!resolvedBookId && isCreateBookInstruction(params.input)) {
     const book = parseBookCreationRequest(params.input);
@@ -49,19 +54,22 @@ export async function processTuiAgentInput(params: {
         authorIntent: params.input,
       });
       const responseText = `已创建《${book.title}》，接下来可以直接输入“写第1章”。`;
-      nextSession = appendInteractionMessage({
-        ...nextSession,
-        activeBookId: book.id,
-        currentExecution: {
-          status: "completed",
-          bookId: book.id,
-          stageLabel: "architect",
+      nextSession = appendInteractionMessage(
+        {
+          ...nextSession,
+          activeBookId: book.id,
+          currentExecution: {
+            status: "completed",
+            bookId: book.id,
+            stageLabel: "architect",
+          },
         },
-      }, {
-        role: "assistant",
-        content: responseText,
-        timestamp: userTimestamp + 1,
-      });
+        {
+          role: "assistant",
+          content: responseText,
+          timestamp: userTimestamp + 1,
+        },
+      );
       await persistProjectSession(params.projectRoot, nextSession);
       return {
         responseText,
@@ -84,21 +92,24 @@ export async function processTuiAgentInput(params: {
       status ? `，状态 ${status}` : "",
       "。",
     ].join("");
-    nextSession = appendInteractionMessage({
-      ...nextSession,
-      activeBookId: resolvedBookId,
-      currentExecution: {
-        status: "completed",
-        bookId: resolvedBookId,
-        ...(chapterNumber ? { chapterNumber } : {}),
-        stageLabel: "writer",
+    nextSession = appendInteractionMessage(
+      {
+        ...nextSession,
+        activeBookId: resolvedBookId,
+        currentExecution: {
+          status: "completed",
+          bookId: resolvedBookId,
+          ...(chapterNumber ? { chapterNumber } : {}),
+          stageLabel: "writer",
+        },
+        ...(chapterNumber ? { activeChapterNumber: chapterNumber } : {}),
       },
-      ...(chapterNumber ? { activeChapterNumber: chapterNumber } : {}),
-    }, {
-      role: "assistant",
-      content: responseText,
-      timestamp: userTimestamp + 1,
-    });
+      {
+        role: "assistant",
+        content: responseText,
+        timestamp: userTimestamp + 1,
+      },
+    );
     await persistProjectSession(params.projectRoot, nextSession);
     return {
       responseText,
@@ -130,22 +141,29 @@ export async function processTuiAgentInput(params: {
   const activeBookId = createdBookId ?? resolvedBookId;
 
   if (result.responseText?.trim()) {
-    const lastAssistant = result.messages.filter((message: any) => message.role === "assistant").pop() as { thinking?: string } | undefined;
-    nextSession = appendInteractionMessage({
-      ...nextSession,
-      ...(activeBookId ? { activeBookId } : {}),
-      currentExecution: {
-        status: "completed",
-        ...(activeBookId ? { bookId: activeBookId } : {}),
-        ...(params.session.activeChapterNumber ? { chapterNumber: params.session.activeChapterNumber } : {}),
-        stageLabel: "agent",
+    const lastAssistant = result.messages
+      .filter((message: any) => message.role === "assistant")
+      .pop() as { thinking?: string } | undefined;
+    nextSession = appendInteractionMessage(
+      {
+        ...nextSession,
+        ...(activeBookId ? { activeBookId } : {}),
+        currentExecution: {
+          status: "completed",
+          ...(activeBookId ? { bookId: activeBookId } : {}),
+          ...(params.session.activeChapterNumber
+            ? { chapterNumber: params.session.activeChapterNumber }
+            : {}),
+          stageLabel: "agent",
+        },
       },
-    }, {
-      role: "assistant",
-      content: result.responseText,
-      ...(lastAssistant?.thinking ? { thinking: lastAssistant.thinking } : {}),
-      timestamp: userTimestamp + 1,
-    });
+      {
+        role: "assistant",
+        content: result.responseText,
+        ...(lastAssistant?.thinking ? { thinking: lastAssistant.thinking } : {}),
+        timestamp: userTimestamp + 1,
+      },
+    );
   } else {
     nextSession = {
       ...nextSession,
@@ -153,7 +171,9 @@ export async function processTuiAgentInput(params: {
       currentExecution: {
         status: "completed",
         ...(activeBookId ? { bookId: activeBookId } : {}),
-        ...(params.session.activeChapterNumber ? { chapterNumber: params.session.activeChapterNumber } : {}),
+        ...(params.session.activeChapterNumber
+          ? { chapterNumber: params.session.activeChapterNumber }
+          : {}),
         stageLabel: "agent",
       },
     };
@@ -168,28 +188,34 @@ export async function processTuiAgentInput(params: {
 
 function isWriteNextInstruction(instruction: string): boolean {
   const trimmed = instruction.trim();
-  return /^(continue|继续|继续写|写下一章|write next|下一章|再来一章)$/i.test(trimmed)
-    || /^写第\s*\d+\s*章$/i.test(trimmed)
-    || /(继续写|写下一章|下一章|再来一章|write\s+next)/i.test(trimmed);
+  return (
+    /^(continue|继续|继续写|写下一章|write next|下一章|再来一章)$/i.test(trimmed) ||
+    /^写第\s*\d+\s*章$/i.test(trimmed) ||
+    /(继续写|写下一章|下一章|再来一章|write\s+next)/i.test(trimmed)
+  );
 }
 
 function isCreateBookInstruction(instruction: string): boolean {
-  return /(建书|新建书|创建|开书|create\s+(?:a\s+)?book)/i.test(instruction)
-    && /(?:标题|书名|title)\s*[《"“]/i.test(instruction);
+  return (
+    /(建书|新建书|创建|开书|create\s+(?:a\s+)?book)/i.test(instruction) &&
+    /(?:标题|书名|title)\s*[《"“]/i.test(instruction)
+  );
 }
 
-function parseBookCreationRequest(instruction: string): {
-  id: string;
-  title: string;
-  genre: string;
-  platform: "tomato" | "feilu" | "qidian" | "other";
-  language: "zh" | "en";
-  status: "outlining";
-  targetChapters: number;
-  chapterWordCount: number;
-  createdAt: string;
-  updatedAt: string;
-} | undefined {
+function parseBookCreationRequest(instruction: string):
+  | {
+      id: string;
+      title: string;
+      genre: string;
+      platform: "tomato" | "feilu" | "qidian" | "other";
+      language: "zh" | "en";
+      status: "outlining";
+      targetChapters: number;
+      chapterWordCount: number;
+      createdAt: string;
+      updatedAt: string;
+    }
+  | undefined {
   const title = extractTitle(instruction);
   if (!title) return undefined;
   const now = new Date().toISOString();
@@ -235,12 +261,14 @@ function inferGenre(instruction: string): string {
 }
 
 function deriveBookId(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fff]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 30) || `book-${Date.now().toString(36)}`;
+  return (
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fff]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 30) || `book-${Date.now().toString(36)}`
+  );
 }
 
 function extractCreatedBookId(messages: ReadonlyArray<unknown>): string | undefined {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildAutoInitMessages, buildInteractiveSetupCopy, resolveSetupProvider, resolveSetupService } from "../tui/setup.js";
+import {
+  buildAutoInitMessages,
+  buildInteractiveSetupCopy,
+  resolveSetupProvider,
+  resolveSetupService,
+} from "../tui/setup.js";
 
 describe("tui setup i18n", () => {
   it("builds Chinese setup copy by default", () => {

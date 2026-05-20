@@ -38,7 +38,9 @@ export function deriveInvalidationPaths(path: string): ReadonlyArray<string> {
     return ["/api/v1/books", `/api/v1/books/${bookAction[1]}`];
   }
 
-  const chapterAction = normalized.match(/^\/api\/v1\/books\/([^/]+)\/chapters\/\d+\/(approve|reject)$/);
+  const chapterAction = normalized.match(
+    /^\/api\/v1\/books\/([^/]+)\/chapters\/\d+\/(approve|reject)$/,
+  );
   if (chapterAction) {
     return ["/api/v1/books", `/api/v1/books/${chapterAction[1]}`];
   }
@@ -55,16 +57,18 @@ export function invalidateApiPaths(paths: ReadonlyArray<string>): void {
     return;
   }
 
-  window.dispatchEvent(new CustomEvent<ApiInvalidateDetail>(API_INVALIDATE_EVENT, {
-    detail: { paths: [...new Set(paths)] },
-  }));
+  window.dispatchEvent(
+    new CustomEvent<ApiInvalidateDetail>(API_INVALIDATE_EVENT, {
+      detail: { paths: [...new Set(paths)] },
+    }),
+  );
 }
 
 async function readErrorMessage(res: Response): Promise<string> {
   const contentType = res.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
     try {
-      const json = await res.json() as { error?: unknown };
+      const json = (await res.json()) as { error?: unknown };
       if (typeof json.error === "string" && json.error.trim()) {
         return localizeKnownRuntimeMessage(json.error);
       }
@@ -114,7 +118,7 @@ export async function fetchJson<T>(
     return JSON.parse(text) as T;
   }
 
-  return await res.json() as T;
+  return (await res.json()) as T;
 }
 
 export function useApi<T>(path: string) {

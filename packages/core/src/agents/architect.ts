@@ -117,39 +117,65 @@ export class ArchitectAgent extends BaseAgent {
       };
     },
   ): Promise<ArchitectOutput> {
-    const { profile: gp, body: genreBody } =
-      await readGenreProfile(this.ctx.projectRoot, book.genre);
+    const { profile: gp, body: genreBody } = await readGenreProfile(
+      this.ctx.projectRoot,
+      book.genre,
+    );
     const resolvedLanguage = book.language ?? gp.language;
 
     const contextBlock = externalContext
       ? `\n\n## 外部指令\n以下是来自外部系统的创作指令，请将其融入设定中：\n\n${externalContext}\n`
       : "";
     const reviewFeedbackBlock = this.buildReviewFeedbackBlock(reviewFeedback, resolvedLanguage);
-    const revisePrompt = options?.reviseFrom
-      ? this.buildRevisePrompt(options.reviseFrom)
-      : "";
+    const revisePrompt = options?.reviseFrom ? this.buildRevisePrompt(options.reviseFrom) : "";
 
     const numericalBlock = gp.numericalSystem
       ? "- 有明确的数值/资源体系可追踪\n- 在 book_rules 中定义 numericalSystemOverrides（hardCap、resourceTypes）"
       : "- 本题材无数值系统，不需要资源账本";
     const powerBlock = gp.powerScaling ? "- 有明确的战力等级体系" : "";
-    const eraBlock = gp.eraResearch ? "- 需要年代考据支撑（在 book_rules 中设置 eraConstraints）" : "";
-
-    const systemPrompt = resolvedLanguage === "en"
-      ? this.buildEnglishFoundationPrompt(book, gp, genreBody, contextBlock, reviewFeedbackBlock, numericalBlock, powerBlock, eraBlock)
-      : this.buildChineseFoundationPrompt(book, gp, genreBody, contextBlock, reviewFeedbackBlock, numericalBlock, powerBlock, eraBlock);
-
-    const langPrefix = resolvedLanguage === "en"
-      ? `【LANGUAGE OVERRIDE】ALL output (story_frame, volume_map, roles, book_rules, pending_hooks) MUST be written in English. Character names, place names, and all prose must be in English. The === SECTION: === tags remain unchanged. Do NOT emit rhythm_principles or current_state sections — rhythm principles live inside the last paragraph of volume_map; environment/era anchors (when relevant) are woven into story_frame's world-tonal-ground paragraph.\n\n`
+    const eraBlock = gp.eraResearch
+      ? "- 需要年代考据支撑（在 book_rules 中设置 eraConstraints）"
       : "";
-    const userMessage = resolvedLanguage === "en"
-      ? `Generate the complete foundation for a ${gp.name} novel titled "${book.title}". Write everything in English.`
-      : `请为标题为"${book.title}"的${gp.name}小说生成完整基础设定。`;
 
-    const response = await this.chat([
-      { role: "system", content: langPrefix + systemPrompt + revisePrompt },
-      { role: "user", content: userMessage },
-    ], { temperature: 0.8 });
+    const systemPrompt =
+      resolvedLanguage === "en"
+        ? this.buildEnglishFoundationPrompt(
+            book,
+            gp,
+            genreBody,
+            contextBlock,
+            reviewFeedbackBlock,
+            numericalBlock,
+            powerBlock,
+            eraBlock,
+          )
+        : this.buildChineseFoundationPrompt(
+            book,
+            gp,
+            genreBody,
+            contextBlock,
+            reviewFeedbackBlock,
+            numericalBlock,
+            powerBlock,
+            eraBlock,
+          );
+
+    const langPrefix =
+      resolvedLanguage === "en"
+        ? `【LANGUAGE OVERRIDE】ALL output (story_frame, volume_map, roles, book_rules, pending_hooks) MUST be written in English. Character names, place names, and all prose must be in English. The === SECTION: === tags remain unchanged. Do NOT emit rhythm_principles or current_state sections — rhythm principles live inside the last paragraph of volume_map; environment/era anchors (when relevant) are woven into story_frame's world-tonal-ground paragraph.\n\n`
+        : "";
+    const userMessage =
+      resolvedLanguage === "en"
+        ? `Generate the complete foundation for a ${gp.name} novel titled "${book.title}". Write everything in English.`
+        : `请为标题为"${book.title}"的${gp.name}小说生成完整基础设定。`;
+
+    const response = await this.chat(
+      [
+        { role: "system", content: langPrefix + systemPrompt + revisePrompt },
+        { role: "user", content: userMessage },
+      ],
+      { temperature: 0.8 },
+    );
 
     return this.parseSections(response.content, resolvedLanguage);
   }
@@ -360,9 +386,13 @@ protagonist:
 genreLock:
   primary: ${book.genre}
   forbidden: [(2-3种禁止混入的文风)]
-${gp.numericalSystem ? `numericalSystemOverrides:
+${
+  gp.numericalSystem
+    ? `numericalSystemOverrides:
   hardCap: (根据设定确定)
-  resourceTypes: [(核心资源类型列表)]` : ""}
+  resourceTypes: [(核心资源类型列表)]`
+    : ""
+}
 prohibitions:
   - (3-5条本书禁忌)
 chapterTypesOverride: []
@@ -559,9 +589,13 @@ protagonist:
 genreLock:
   primary: ${book.genre}
   forbidden: [(2-3 forbidden style intrusions)]
-${gp.numericalSystem ? `numericalSystemOverrides:
+${
+  gp.numericalSystem
+    ? `numericalSystemOverrides:
   hardCap: (decide from setting)
-  resourceTypes: [(core resource types)]` : ""}
+  resourceTypes: [(core resource types)]`
+    : ""
+}
 prohibitions:
   - (3-5 book-specific prohibitions)
 chapterTypesOverride: []
@@ -647,8 +681,8 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     // When the model uses ONLY legacy section names, we accept an empty roles
     // list (consolidator/readers fall back to the character_matrix shim).
     // When the new story_frame / volume_map names are used we require roles.
-    const usingLegacyOutlineNames = !storyFrame && !volumeMap
-      && (legacyStoryBible.length > 0 || legacyVolumeOutline.length > 0);
+    const usingLegacyOutlineNames =
+      !storyFrame && !volumeMap && (legacyStoryBible.length > 0 || legacyVolumeOutline.length > 0);
 
     const missing: string[] = [];
     const effectiveStoryFrame = storyFrame || legacyStoryBible;
@@ -699,7 +733,10 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
   private parseRoles(raw: string): ReadonlyArray<ArchitectRole> {
     if (!raw.trim()) return [];
 
-    const blocks = raw.split(/^---ROLE---$/m).map((chunk) => chunk.trim()).filter(Boolean);
+    const blocks = raw
+      .split(/^---ROLE---$/m)
+      .map((chunk) => chunk.trim())
+      .filter(Boolean);
     const roles: ArchitectRole[] = [];
 
     for (const block of blocks) {
@@ -714,7 +751,8 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
       if (!tierMatch || !nameMatch) continue;
 
       const tierValue = tierMatch[1]!.toLowerCase();
-      const tier: "major" | "minor" = (tierValue === "major" || tierValue === "主要") ? "major" : "minor";
+      const tier: "major" | "minor" =
+        tierValue === "major" || tierValue === "主要" ? "major" : "minor";
       const name = nameMatch[1]!.trim();
       if (!name || !content) continue;
 
@@ -731,10 +769,15 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     return `# 故事圣经（兼容指针——已废弃）\n\n> 本文件仅为外部读取保留。权威来源已迁移至：\n> - outline/story_frame.md（主题 / 基调 / 核心冲突 / 世界铁律 / 终局）\n> - outline/volume_map.md（章级别的分卷地图）\n> - roles/ 文件夹（一人一卡角色档案）\n\n## story_frame 摘录\n\n${storyFrame.slice(0, 2000)}\n`;
   }
 
-  private buildCharacterMatrixShim(roles: ReadonlyArray<ArchitectRole>, language: "zh" | "en"): string {
-    const majorLines = roles.filter((role) => role.tier === "major")
+  private buildCharacterMatrixShim(
+    roles: ReadonlyArray<ArchitectRole>,
+    language: "zh" | "en",
+  ): string {
+    const majorLines = roles
+      .filter((role) => role.tier === "major")
       .map((role) => `- roles/主要角色/${role.name}.md`);
-    const minorLines = roles.filter((role) => role.tier === "minor")
+    const minorLines = roles
+      .filter((role) => role.tier === "minor")
       .map((role) => `- roles/次要角色/${role.name}.md`);
 
     if (language === "en") {
@@ -746,14 +789,10 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
   private buildBookRulesShim(bookRulesBody: string, language: "zh" | "en"): string {
     const trimmedBody = bookRulesBody.trim();
     if (language === "en") {
-      const excerpt = trimmedBody
-        ? `\n\n## Narrative guidance excerpt\n\n${trimmedBody}\n`
-        : "";
+      const excerpt = trimmedBody ? `\n\n## Narrative guidance excerpt\n\n${trimmedBody}\n` : "";
       return `# Book Rules (compat pointer — deprecated)\n\n> This file is kept for external readers only. The authoritative YAML frontmatter (protagonist / prohibitions / genreLock / ...) now lives at the top of outline/story_frame.md. readBookRules() prefers that location and only falls back here for books initialized before Phase 5 cleanup #3.${excerpt}`;
     }
-    const excerpt = trimmedBody
-      ? `\n\n## 叙事指引摘录\n\n${trimmedBody}\n`
-      : "";
+    const excerpt = trimmedBody ? `\n\n## 叙事指引摘录\n\n${trimmedBody}\n` : "";
     return `# 本书规则（兼容指针——已废弃）\n\n> 本文件仅为外部读取保留。权威 YAML frontmatter（protagonist / prohibitions / genreLock / ...）已迁移至 outline/story_frame.md 顶部。readBookRules() 优先读那里，只有 Phase 5 cleanup #3 之前的老书才会回退到本文件。${excerpt}`;
   }
 
@@ -791,7 +830,7 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     if (mode === "revise" && !isPhase5Output) {
       throw new Error(
         "Architect revise mode produced legacy-format output (storyFrame empty). " +
-        "The book's architecture files have NOT been modified.",
+          "The book's architecture files have NOT been modified.",
       );
     }
 
@@ -806,29 +845,33 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
       writes.push(writeFile(join(storyDir, "story_bible.md"), output.storyBible, "utf-8"));
       writes.push(writeFile(join(storyDir, "volume_outline.md"), output.volumeOutline, "utf-8"));
       writes.push(writeFile(join(storyDir, "book_rules.md"), output.bookRules, "utf-8"));
-      writes.push(writeFile(
-        join(storyDir, "character_matrix.md"),
-        language === "en"
-          ? "# Character Matrix\n\n<!-- One ## section per character. Add new characters as new ## blocks. -->\n"
-          : "# 角色矩阵\n\n<!-- 每个角色一个 ## 块，新角色追加新 ## 即可。 -->\n",
-        "utf-8",
-      ));
+      writes.push(
+        writeFile(
+          join(storyDir, "character_matrix.md"),
+          language === "en"
+            ? "# Character Matrix\n\n<!-- One ## section per character. Add new characters as new ## blocks. -->\n"
+            : "# 角色矩阵\n\n<!-- 每个角色一个 ## 块，新角色追加新 ## 即可。 -->\n",
+          "utf-8",
+        ),
+      );
 
       if (mode === "init") {
         const currentStateSeed = output.currentState?.trim()
           ? output.currentState
-          : (language === "en"
-              ? "# Current State\n\n> Seeded at book creation. Runtime state is appended by the consolidator after each chapter.\n"
-              : "# 当前状态\n\n> 建书时占位。运行时每章之后由 consolidator 追加最新状态。\n");
+          : language === "en"
+            ? "# Current State\n\n> Seeded at book creation. Runtime state is appended by the consolidator after each chapter.\n"
+            : "# 当前状态\n\n> 建书时占位。运行时每章之后由 consolidator 追加最新状态。\n";
         writes.push(writeFile(join(storyDir, "current_state.md"), currentStateSeed, "utf-8"));
         writes.push(writeFile(join(storyDir, "pending_hooks.md"), output.pendingHooks, "utf-8"));
-        writes.push(writeFile(
-          join(storyDir, "emotional_arcs.md"),
-          language === "en"
-            ? "# Emotional Arcs\n\n| Character | Chapter | Emotional State | Trigger Event | Intensity (1-10) | Arc Direction |\n| --- | --- | --- | --- | --- | --- |\n"
-            : "# 情感弧线\n\n| 角色 | 章节 | 情绪状态 | 触发事件 | 强度(1-10) | 弧线方向 |\n|------|------|----------|----------|------------|----------|\n",
-          "utf-8",
-        ));
+        writes.push(
+          writeFile(
+            join(storyDir, "emotional_arcs.md"),
+            language === "en"
+              ? "# Emotional Arcs\n\n| Character | Chapter | Emotional State | Trigger Event | Intensity (1-10) | Arc Direction |\n| --- | --- | --- | --- | --- | --- |\n"
+              : "# 情感弧线\n\n| 角色 | 章节 | 情绪状态 | 触发事件 | 强度(1-10) | 弧线方向 |\n|------|------|----------|----------|------------|----------|\n",
+            "utf-8",
+          ),
+        );
       }
 
       await Promise.all(writes);
@@ -839,8 +882,9 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     // schema for structured fields (protagonist, prohibitions, …). We prepend
     // it to story_frame.md so readers have one canonical place to look.
     // book_rules.md becomes a compat shim.
-    const { frontmatter: bookRulesFrontmatter, body: bookRulesBody } =
-      extractYamlFrontmatter(output.bookRules);
+    const { frontmatter: bookRulesFrontmatter, body: bookRulesBody } = extractYamlFrontmatter(
+      output.bookRules,
+    );
     const storyFrame = bookRulesFrontmatter
       ? `${bookRulesFrontmatter}\n\n${storyFrameBody.trim()}\n`
       : storyFrameBody;
@@ -869,16 +913,20 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     }
 
     // Compat shims — these are pointer files, not authoritative content.
-    writes.push(writeFile(
-      join(storyDir, "story_bible.md"),
-      this.buildStoryBibleShim(storyFrame, language),
-      "utf-8",
-    ));
-    writes.push(writeFile(
-      join(storyDir, "character_matrix.md"),
-      this.buildCharacterMatrixShim(roles, language),
-      "utf-8",
-    ));
+    writes.push(
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        this.buildStoryBibleShim(storyFrame, language),
+        "utf-8",
+      ),
+    );
+    writes.push(
+      writeFile(
+        join(storyDir, "character_matrix.md"),
+        this.buildCharacterMatrixShim(roles, language),
+        "utf-8",
+      ),
+    );
 
     // Cleanup #1: volume_outline.md mirror removed. All readers now resolve
     // through readVolumeMap() in utils/outline-paths.ts, which prefers
@@ -888,11 +936,13 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     // book_rules.md is now a compat shim — the authoritative YAML
     // frontmatter lives on story_frame.md (cleanup #3). readBookRules()
     // prefers story_frame.md but still falls back here for older books.
-    writes.push(writeFile(
-      join(storyDir, "book_rules.md"),
-      this.buildBookRulesShim(bookRulesBody, language),
-      "utf-8",
-    ));
+    writes.push(
+      writeFile(
+        join(storyDir, "book_rules.md"),
+        this.buildBookRulesShim(bookRulesBody, language),
+        "utf-8",
+      ),
+    );
 
     // Runtime state files.
     // Phase 5 consolidation: the architect no longer emits a current_state
@@ -907,26 +957,30 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     if (mode === "init") {
       const currentStateSeed = output.currentState?.trim()
         ? output.currentState
-        : (language === "en"
-            ? "# Current State\n\n> Seeded at book creation. Runtime state is appended by the consolidator after each chapter. Initial per-character state lives in roles/*.Current_State; load-bearing initial world facts live in pending_hooks rows with start_chapter=0.\n"
-            : "# 当前状态\n\n> 建书时占位。运行时每章之后由 consolidator 追加最新状态。每个角色的初始状态详见 roles/*.当前现状；承重的初始世界设定见 pending_hooks 里 startChapter=0 的行。\n");
+        : language === "en"
+          ? "# Current State\n\n> Seeded at book creation. Runtime state is appended by the consolidator after each chapter. Initial per-character state lives in roles/*.Current_State; load-bearing initial world facts live in pending_hooks rows with start_chapter=0.\n"
+          : "# 当前状态\n\n> 建书时占位。运行时每章之后由 consolidator 追加最新状态。每个角色的初始状态详见 roles/*.当前现状；承重的初始世界设定见 pending_hooks 里 startChapter=0 的行。\n";
       writes.push(writeFile(join(storyDir, "current_state.md"), currentStateSeed, "utf-8"));
       writes.push(writeFile(join(storyDir, "pending_hooks.md"), output.pendingHooks, "utf-8"));
-      writes.push(writeFile(
-        join(storyDir, "emotional_arcs.md"),
-        language === "en"
-          ? "# Emotional Arcs\n\n| Character | Chapter | Emotional State | Trigger Event | Intensity (1-10) | Arc Direction |\n| --- | --- | --- | --- | --- | --- |\n"
-          : "# 情感弧线\n\n| 角色 | 章节 | 情绪状态 | 触发事件 | 强度(1-10) | 弧线方向 |\n|------|------|----------|----------|------------|----------|\n",
-        "utf-8",
-      ));
+      writes.push(
+        writeFile(
+          join(storyDir, "emotional_arcs.md"),
+          language === "en"
+            ? "# Emotional Arcs\n\n| Character | Chapter | Emotional State | Trigger Event | Intensity (1-10) | Arc Direction |\n| --- | --- | --- | --- | --- | --- |\n"
+            : "# 情感弧线\n\n| 角色 | 章节 | 情绪状态 | 触发事件 | 强度(1-10) | 弧线方向 |\n|------|------|----------|----------|------------|----------|\n",
+          "utf-8",
+        ),
+      );
       // used_elements.md — migrated from castor/xs originality tracking
-      writes.push(writeFile(
-        join(storyDir, "used_elements.md"),
-        language === "en"
-          ? "# Used Elements Tracker\n\n## Consumed Hooks / Payoffs\n- [ch?] (fill after each chapter)\n\n## Consumed Scene Archetypes\n- [ch?] (fill after each chapter)\n\n## Banned Reuse (next N chapters)\n- (manually set ban period)\n\n## Pending (planted but not yet paid off)\n- (manually track upcoming beats)\n"
-          : "# 已消耗元素追踪\n\n## 已消耗钩子/爽点\n- [第?章]（每章写完后填写）\n\n## 已消耗场景原型\n- [第?章]（每章写完后填写）\n\n## 禁止复用（未来 N 章内）\n- （手动设置禁用期限）\n\n## 待使用（已铺垫但未兑现）\n- （手动追踪即将使用的节拍）\n",
-        "utf-8",
-      ));
+      writes.push(
+        writeFile(
+          join(storyDir, "used_elements.md"),
+          language === "en"
+            ? "# Used Elements Tracker\n\n## Consumed Hooks / Payoffs\n- [ch?] (fill after each chapter)\n\n## Consumed Scene Archetypes\n- [ch?] (fill after each chapter)\n\n## Banned Reuse (next N chapters)\n- (manually set ban period)\n\n## Pending (planted but not yet paid off)\n- (manually track upcoming beats)\n"
+            : "# 已消耗元素追踪\n\n## 已消耗钩子/爽点\n- [第?章]（每章写完后填写）\n\n## 已消耗场景原型\n- [第?章]（每章写完后填写）\n\n## 禁止复用（未来 N 章内）\n- （手动设置禁用期限）\n\n## 待使用（已铺垫但未兑现）\n- （手动追踪即将使用的节拍）\n",
+          "utf-8",
+        ),
+      );
     }
 
     // Cleanup #2 (Option B): particle_ledger.md / subplot_board.md /
@@ -951,41 +1005,45 @@ You MUST emit all **5 SECTION blocks in order**: story_frame → volume_map → 
     reviewFeedback?: string,
     options?: { readonly importMode?: "continuation" | "series" },
   ): Promise<ArchitectOutput> {
-    const { profile: gp, body: genreBody } =
-      await readGenreProfile(this.ctx.projectRoot, book.genre);
+    const { profile: gp, body: genreBody } = await readGenreProfile(
+      this.ctx.projectRoot,
+      book.genre,
+    );
     const resolvedLanguage = book.language ?? gp.language;
     const reviewFeedbackBlock = this.buildReviewFeedbackBlock(reviewFeedback, resolvedLanguage);
 
     const contextBlock = externalContext
-      ? (resolvedLanguage === "en"
-          ? `\n\n## External Instructions\n${externalContext}\n`
-          : `\n\n## 外部指令\n${externalContext}\n`)
+      ? resolvedLanguage === "en"
+        ? `\n\n## External Instructions\n${externalContext}\n`
+        : `\n\n## 外部指令\n${externalContext}\n`
       : "";
 
     const numericalBlock = gp.numericalSystem
-      ? (resolvedLanguage === "en"
-          ? "- The story uses a trackable numerical/resource system"
-          : "- 有明确的数值/资源体系可追踪")
-      : (resolvedLanguage === "en"
-          ? "- No explicit numerical system"
-          : "- 本题材无数值系统");
+      ? resolvedLanguage === "en"
+        ? "- The story uses a trackable numerical/resource system"
+        : "- 有明确的数值/资源体系可追踪"
+      : resolvedLanguage === "en"
+        ? "- No explicit numerical system"
+        : "- 本题材无数值系统";
 
     const isSeries = options?.importMode === "series";
 
-    const continuationDirective = resolvedLanguage === "en"
-      ? (isSeries
+    const continuationDirective =
+      resolvedLanguage === "en"
+        ? isSeries
           ? `## Continuation Direction Requirements
 The continuation portion must open up new narrative space — new conflict vector, new location, new time horizon. Ignite within 5 chapters; at least 50% fresh scenes.`
           : `## Continuation Direction
-Naturally extend the existing arc. Advance existing conflicts, pay off planted hooks, introduce new complications organically.`)
-      : (isSeries
+Naturally extend the existing arc. Advance existing conflicts, pay off planted hooks, introduce new complications organically.`
+        : isSeries
           ? `## 续写方向要求
 续写必须引入新叙事空间——新冲突、新地点、新时间。5章内引爆，50%以上场景新鲜。`
           : `## 续写方向
-自然延续已有叙事弧线。推进现有冲突、兑现已埋伏笔、引入有机新变数。`);
+自然延续已有叙事弧线。推进现有冲突、兑现已埋伏笔、引入有机新变数。`;
 
-    const systemPrompt = resolvedLanguage === "en"
-      ? `You are a professional novel architect. Reverse-engineer a prose-density foundation from the source chapters and write the continuation path.${contextBlock}${reviewFeedbackBlock}
+    const systemPrompt =
+      resolvedLanguage === "en"
+        ? `You are a professional novel architect. Reverse-engineer a prose-density foundation from the source chapters and write the continuation path.${contextBlock}${reviewFeedbackBlock}
 
 ## Book metadata
 - Title: ${book.title}
@@ -1007,7 +1065,7 @@ Follow the consolidated 5-section === SECTION: === layout: story_frame, volume_m
 All prose must be derived from the source package. Do not invent settings. If the package says it is compressed, treat chapter catalog + excerpts as evidence for the foundation; the full chapters will be replayed later for detailed truth files. For volume_map, treat existing chapters as "review" (one paragraph) and continuation as prose chapter-level planning. Hook extraction must be complete for the evidence provided.
 
 All output MUST be written in English.`
-      : `你是专业的网络小说架构师。从已有章节中反向推导散文密度的基础设定，同时设计续写路径。${contextBlock}${reviewFeedbackBlock}
+        : `你是专业的网络小说架构师。从已有章节中反向推导散文密度的基础设定，同时设计续写路径。${contextBlock}${reviewFeedbackBlock}
 
 ## 书籍元信息
 - 标题：${book.title}
@@ -1027,14 +1085,18 @@ ${continuationDirective}
 
 所有 prose 必须从资料包中推导，不得臆造。若资料包声明为压缩包，把章节目录和正文摘录当作基础设定证据；完整章节会在后续回放阶段逐章进入 truth files。volume_map 中，已有章节作为"回顾段"（一段散文），续写部分写到章级 prose。伏笔识别以资料包提供的证据为准，尽量完整。`;
 
-    const userMessage = resolvedLanguage === "en"
-      ? `Generate the complete foundation for an imported ${gp.name} novel titled "${book.title}". Write everything in English.\n\n${chaptersText}`
-      : `以下是《${book.title}》的已有正文资料包，请从中反向推导完整基础设定：\n\n${chaptersText}`;
+    const userMessage =
+      resolvedLanguage === "en"
+        ? `Generate the complete foundation for an imported ${gp.name} novel titled "${book.title}". Write everything in English.\n\n${chaptersText}`
+        : `以下是《${book.title}》的已有正文资料包，请从中反向推导完整基础设定：\n\n${chaptersText}`;
 
-    const response = await this.chat([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userMessage },
-    ], { temperature: 0.5 });
+    const response = await this.chat(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+      { temperature: 0.5 },
+    );
 
     return this.parseSections(response.content, resolvedLanguage);
   }
@@ -1045,9 +1107,14 @@ ${continuationDirective}
     fanficMode: FanficMode,
     reviewFeedback?: string,
   ): Promise<ArchitectOutput> {
-    const { profile: gp, body: genreBody } =
-      await readGenreProfile(this.ctx.projectRoot, book.genre);
-    const reviewFeedbackBlock = this.buildReviewFeedbackBlock(reviewFeedback, book.language ?? "zh");
+    const { profile: gp, body: genreBody } = await readGenreProfile(
+      this.ctx.projectRoot,
+      book.genre,
+    );
+    const reviewFeedbackBlock = this.buildReviewFeedbackBlock(
+      reviewFeedback,
+      book.language ?? "zh",
+    );
 
     const MODE_INSTRUCTIONS: Record<FanficMode, string> = {
       canon: "剧情发生在原作空白期或未详述的角度。不可改变原作已确立的事实。",
@@ -1085,13 +1152,16 @@ ${genreBody}
 - 主角弧线只写在 roles/主要角色/<主角>.md，不在 story_frame 重复
 - 所有 outline 必须是散文密度`;
 
-    const response = await this.chat([
-      { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: `请为标题为"${book.title}"的${fanficMode}模式同人小说生成基础设定。目标${book.targetChapters}章，每章${book.chapterWordCount}字。`,
-      },
-    ], { temperature: 0.7 });
+    const response = await this.chat(
+      [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `请为标题为"${book.title}"的${fanficMode}模式同人小说生成基础设定。目标${book.targetChapters}章，每章${book.chapterWordCount}字。`,
+        },
+      ],
+      { temperature: 0.7 },
+    );
 
     return this.parseSections(response.content, book.language ?? "zh");
   }
@@ -1133,7 +1203,9 @@ ${trimmed}\n`;
     const cutoff = lines.findIndex((line) => {
       const trimmed = line.trim();
       if (!trimmed) return false;
-      return /^(如果(?:你愿意|需要|想要|希望)|If (?:you(?:'d)? like|you want|needed)|I can (?:continue|next))/i.test(trimmed);
+      return /^(如果(?:你愿意|需要|想要|希望)|If (?:you(?:'d)? like|you want|needed)|I can (?:continue|next))/i.test(
+        trimmed,
+      );
     });
 
     if (cutoff < 0) {
@@ -1149,7 +1221,12 @@ ${trimmed}\n`;
       .map((line) => line.trim())
       .filter((line) => line.startsWith("|"))
       .filter((line) => !line.includes("---"))
-      .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()))
+      .map((line) =>
+        line
+          .split("|")
+          .slice(1, -1)
+          .map((cell) => cell.trim()),
+      )
       .filter((cells) => cells.some(Boolean));
 
     if (rows.length === 0) {
@@ -1165,9 +1242,12 @@ ${trimmed}\n`;
     const normalizedHooks = dataRows.map((row, index) => {
       const rawProgress = row[4] ?? "";
       const normalizedProgress = this.parseHookChapterNumber(rawProgress);
-      const seedNote = normalizedProgress === 0 && this.hasNarrativeProgress(rawProgress)
-        ? (language === "zh" ? `初始线索：${rawProgress}` : `initial signal: ${rawProgress}`)
-        : "";
+      const seedNote =
+        normalizedProgress === 0 && this.hasNarrativeProgress(rawProgress)
+          ? language === "zh"
+            ? `初始线索：${rawProgress}`
+            : `initial signal: ${rawProgress}`
+          : "";
 
       const phase7 = row.length >= 12;
       const phase6 = row.length >= 8;
@@ -1181,7 +1261,7 @@ ${trimmed}\n`;
         status: row[3] ?? "open",
         lastAdvancedChapter: normalizedProgress,
         expectedPayoff: row[5] ?? "",
-        payoffTiming: phase6 ? row[6] ?? "" : "",
+        payoffTiming: phase6 ? (row[6] ?? "") : "",
         notes,
       };
 
@@ -1230,7 +1310,8 @@ ${trimmed}\n`;
     if (!raw) return [];
     const lines = raw.split("\n");
     const volumeHeader = /^(第[一二三四五六七八九十百千万零〇\d]+卷|Volume\s+\d+)/i;
-    const rangePattern = /[（(]\s*(?:第|[Cc]hapters?\s+)?(\d+)\s*[-–~～—]\s*(\d+)\s*(?:章)?\s*[）)]|(?:第|[Cc]hapters?\s+)(\d+)\s*[-–~～—]\s*(\d+)\s*(?:章)?/i;
+    const rangePattern =
+      /[（(]\s*(?:第|[Cc]hapters?\s+)?(\d+)\s*[-–~～—]\s*(\d+)\s*(?:章)?\s*[）)]|(?:第|[Cc]hapters?\s+)(\d+)\s*[-–~～—]\s*(\d+)\s*(?:章)?/i;
 
     const volumes: VolumeBoundary[] = [];
     for (const rawLine of lines) {
@@ -1242,7 +1323,10 @@ ${trimmed}\n`;
       const endCh = parseInt(rangeMatch[2] ?? rangeMatch[4] ?? "0", 10);
       if (startCh <= 0 || endCh <= 0) continue;
       const rangeIndex = rangeMatch.index ?? line.length;
-      const name = line.slice(0, rangeIndex).replace(/[（(]\s*$/, "").trim();
+      const name = line
+        .slice(0, rangeIndex)
+        .replace(/[（(]\s*$/, "")
+        .trim();
       if (name.length > 0) {
         volumes.push({ name, startCh, endCh });
       }
@@ -1264,7 +1348,12 @@ ${trimmed}\n`;
     const stripped = trimmed.replace(/^[\[\(]\s*/, "").replace(/\s*[\]\)]$/, "");
     return stripped
       .split(/[,，、\/]+/)
-      .map((item) => item.trim().replace(/^\*\*(.+)\*\*$/, "$1").trim())
+      .map((item) =>
+        item
+          .trim()
+          .replace(/^\*\*(.+)\*\*$/, "$1")
+          .trim(),
+      )
       .filter((item) => item.length > 0);
   }
 

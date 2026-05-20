@@ -96,10 +96,7 @@ describe("shouldPromoteHook — Phase 7 four-rule promotion", () => {
       startChapter: 3,
       payoffTiming: "slow-burn",
     });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(true);
     expect(decision.reasons).toContain("cross_volume");
   });
@@ -109,10 +106,7 @@ describe("shouldPromoteHook — Phase 7 four-rule promotion", () => {
       startChapter: 5,
       paysOffInArc: "第二卷中段揭晓",
     });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(true);
     expect(decision.reasons).toContain("cross_volume");
   });
@@ -122,10 +116,7 @@ describe("shouldPromoteHook — Phase 7 four-rule promotion", () => {
       startChapter: 5,
       paysOffInArc: "mid of volume 3",
     });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(true);
     expect(decision.reasons).toContain("cross_volume");
   });
@@ -138,20 +129,14 @@ describe("shouldPromoteHook — Phase 7 four-rule promotion", () => {
       coreHook: false,
       dependsOn: [],
     });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(false);
     expect(decision.reasons).toEqual([]);
   });
 
   it("does NOT promote when advancedCount is 1 (below threshold)", () => {
     const hook = makeHook({ hookId: "H1", startChapter: 5, advancedCount: 1 });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(false);
   });
 
@@ -163,10 +148,7 @@ describe("shouldPromoteHook — Phase 7 four-rule promotion", () => {
       advancedCount: 4,
       payoffTiming: "endgame",
     });
-    const decision = shouldPromoteHook(
-      hook,
-      makeContext({ volumeBoundaries: VOL_MAP }),
-    );
+    const decision = shouldPromoteHook(hook, makeContext({ volumeBoundaries: VOL_MAP }));
     expect(decision.promote).toBe(true);
     expect(new Set(decision.reasons)).toEqual(
       new Set(["core_hook", "depends_on", "advanced_count", "cross_volume"]),

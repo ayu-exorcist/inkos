@@ -3,10 +3,7 @@ import type {
   CurrentStateState,
   HooksState,
 } from "../models/runtime-state.js";
-import {
-  localizeHookPayoffTiming,
-  resolveHookPayoffTiming,
-} from "../utils/hook-lifecycle.js";
+import { localizeHookPayoffTiming, resolveHookPayoffTiming } from "../utils/hook-lifecycle.js";
 import {
   computeHookDiagnostics,
   renderHookDiagnosticMarker,
@@ -22,50 +19,51 @@ export function renderHooksProjection(
   // are visible columns, so writer and reviewer both see the causal chain, planned payoff arc,
   // stale threshold, and promotion flag. stale / blocked diagnostic flags are appended to the
   // status cell.
-  const headers = language === "en"
-    ? [
-      "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | payoff_timing | depends_on | pays_off_in_arc | core_hook | half_life | promoted | notes |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-    ]
-    : [
-      "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 上游依赖 | 回收卷 | 核心 | 半衰期 | 升级 | 备注 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-    ];
+  const headers =
+    language === "en"
+      ? [
+          "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | payoff_timing | depends_on | pays_off_in_arc | core_hook | half_life | promoted | notes |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+      : [
+          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 上游依赖 | 回收卷 | 核心 | 半衰期 | 升级 | 备注 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ];
 
   const currentChapter = options?.currentChapter;
-  const diagnostics = typeof currentChapter === "number"
-    ? computeHookDiagnostics({ hooks: state.hooks, currentChapter })
-    : null;
+  const diagnostics =
+    typeof currentChapter === "number"
+      ? computeHookDiagnostics({ hooks: state.hooks, currentChapter })
+      : null;
 
   const rows = [...state.hooks]
-    .sort((left, right) => (
-      left.startChapter - right.startChapter
-      || left.lastAdvancedChapter - right.lastAdvancedChapter
-      || left.hookId.localeCompare(right.hookId)
-    ))
+    .sort(
+      (left, right) =>
+        left.startChapter - right.startChapter ||
+        left.lastAdvancedChapter - right.lastAdvancedChapter ||
+        left.hookId.localeCompare(right.hookId),
+    )
     .map((hook) => {
       const diag = diagnostics?.get(hook.hookId);
       const marker = diag ? renderHookDiagnosticMarker(diag, language) : "";
-      const statusCell = marker
-        ? `${hook.status} (${marker})`
-        : hook.status;
-      return `| ${
-        [
-          hook.hookId,
-          hook.startChapter,
-          hook.type,
-          statusCell,
-          hook.lastAdvancedChapter,
-          hook.expectedPayoff,
-          localizeHookPayoffTiming(resolveHookPayoffTiming(hook), language),
-          renderDependsOnCell(hook.dependsOn ?? [], language),
-          hook.paysOffInArc ?? "",
-          renderCoreHookCell(hook.coreHook === true, language),
-          renderHalfLifeCell(hook.halfLifeChapters),
-          renderPromotedCell(hook.promoted, language),
-          hook.notes,
-        ].map(escapeTableCell).join(" | ")
-      } |`;
+      const statusCell = marker ? `${hook.status} (${marker})` : hook.status;
+      return `| ${[
+        hook.hookId,
+        hook.startChapter,
+        hook.type,
+        statusCell,
+        hook.lastAdvancedChapter,
+        hook.expectedPayoff,
+        localizeHookPayoffTiming(resolveHookPayoffTiming(hook), language),
+        renderDependsOnCell(hook.dependsOn ?? [], language),
+        hook.paysOffInArc ?? "",
+        renderCoreHookCell(hook.coreHook === true, language),
+        renderHalfLifeCell(hook.halfLifeChapters),
+        renderPromotedCell(hook.promoted, language),
+        hook.notes,
+      ]
+        .map(escapeTableCell)
+        .join(" | ")} |`;
     });
 
   return [title, "", ...headers, ...rows, ""].join("\n");
@@ -97,30 +95,34 @@ export function renderChapterSummariesProjection(
   language: "zh" | "en" = "zh",
 ): string {
   const title = language === "en" ? "# Chapter Summaries" : "# 章节摘要";
-  const headers = language === "en"
-    ? [
-      "| Chapter | Title | Characters | Key Events | State Changes | Hook Activity | Mood | Chapter Type |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-    ]
-    : [
-      "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-    ];
+  const headers =
+    language === "en"
+      ? [
+          "| Chapter | Title | Characters | Key Events | State Changes | Hook Activity | Mood | Chapter Type |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+      : [
+          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ];
 
   const rows = [...state.rows]
     .sort((left, right) => left.chapter - right.chapter)
-    .map((summary) => `| ${
-      [
-        summary.chapter,
-        summary.title,
-        summary.characters,
-        summary.events,
-        summary.stateChanges,
-        summary.hookActivity,
-        summary.mood,
-        summary.chapterType,
-      ].map(escapeTableCell).join(" | ")
-    } |`);
+    .map(
+      (summary) =>
+        `| ${[
+          summary.chapter,
+          summary.title,
+          summary.characters,
+          summary.events,
+          summary.stateChanges,
+          summary.hookActivity,
+          summary.mood,
+          summary.chapterType,
+        ]
+          .map(escapeTableCell)
+          .join(" | ")} |`,
+    );
 
   return [title, "", ...headers, ...rows, ""].join("\n");
 }
@@ -129,37 +131,38 @@ export function renderCurrentStateProjection(
   state: CurrentStateState,
   language: "zh" | "en" = "zh",
 ): string {
-  const layout = language === "en"
-    ? {
-      title: "# Current State",
-      tableHeader: "| Field | Value |",
-      labels: {
-        chapter: "Current Chapter",
-        location: "Current Location",
-        protagonistState: "Protagonist State",
-        goal: "Current Goal",
-        constraint: "Current Constraint",
-        alliances: "Current Alliances",
-        conflict: "Current Conflict",
-      },
-      placeholders: "(not set)",
-      additionalTitle: "## Additional State",
-    }
-    : {
-      title: "# 当前状态",
-      tableHeader: "| 字段 | 值 |",
-      labels: {
-        chapter: "当前章节",
-        location: "当前位置",
-        protagonistState: "主角状态",
-        goal: "当前目标",
-        constraint: "当前限制",
-        alliances: "当前敌我",
-        conflict: "当前冲突",
-      },
-      placeholders: "（未设定）",
-      additionalTitle: "## 其他状态",
-    };
+  const layout =
+    language === "en"
+      ? {
+          title: "# Current State",
+          tableHeader: "| Field | Value |",
+          labels: {
+            chapter: "Current Chapter",
+            location: "Current Location",
+            protagonistState: "Protagonist State",
+            goal: "Current Goal",
+            constraint: "Current Constraint",
+            alliances: "Current Alliances",
+            conflict: "Current Conflict",
+          },
+          placeholders: "(not set)",
+          additionalTitle: "## Additional State",
+        }
+      : {
+          title: "# 当前状态",
+          tableHeader: "| 字段 | 值 |",
+          labels: {
+            chapter: "当前章节",
+            location: "当前位置",
+            protagonistState: "主角状态",
+            goal: "当前目标",
+            constraint: "当前限制",
+            alliances: "当前敌我",
+            conflict: "当前冲突",
+          },
+          placeholders: "（未设定）",
+          additionalTitle: "## 其他状态",
+        };
 
   const slots = [
     {
@@ -188,9 +191,7 @@ export function renderCurrentStateProjection(
     },
   ] as const;
 
-  const knownPredicates = new Set(
-    slots.flatMap((slot) => slot.aliases.map(normalizePredicate)),
-  );
+  const knownPredicates = new Set(slots.flatMap((slot) => slot.aliases.map(normalizePredicate)));
   const lines = [
     layout.title,
     "",

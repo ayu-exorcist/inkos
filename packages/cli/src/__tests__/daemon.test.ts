@@ -80,9 +80,9 @@ describe("daemon command", () => {
 
     const { upCommand } = await import("../commands/daemon.js");
 
-    await expect(
-      upCommand.parseAsync(["node", "up", "--quiet"]),
-    ).rejects.toMatchObject({ code: 1 });
+    await expect(upCommand.parseAsync(["node", "up", "--quiet"])).rejects.toMatchObject({
+      code: 1,
+    });
 
     const pidPath = join("/project", "inkos.pid");
     expect(writeFileMock).toHaveBeenCalledWith(pidPath, expect.any(String), "utf-8");

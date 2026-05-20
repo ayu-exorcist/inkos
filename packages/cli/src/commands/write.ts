@@ -3,11 +3,24 @@ import { PipelineRunner, StateManager } from "@actalk/inkos-core";
 import { readdir, stat, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { loadConfig, buildPipelineConfig, findProjectRoot, getLegacyMigrationHint, resolveContext, resolveBookId, log, logError } from "../utils.js";
-import { formatWriteNextComplete, formatWriteNextProgress, formatWriteNextResultLines, resolveCliLanguage } from "../localization.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  getLegacyMigrationHint,
+  resolveContext,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
+import {
+  formatWriteNextComplete,
+  formatWriteNextProgress,
+  formatWriteNextResultLines,
+  resolveCliLanguage,
+} from "../localization.js";
 
-export const writeCommand = new Command("write")
-  .description("Write chapters");
+export const writeCommand = new Command("write").description("Write chapters");
 
 writeCommand
   .command("next")
@@ -33,7 +46,9 @@ writeCommand
       }
       const config = await loadConfig();
 
-      const pipeline = new PipelineRunner(buildPipelineConfig(config, root, { externalContext: context, quiet: opts.quiet }));
+      const pipeline = new PipelineRunner(
+        buildPipelineConfig(config, root, { externalContext: context, quiet: opts.quiet }),
+      );
 
       const count = parseInt(opts.count, 10);
       const wordCount = opts.words ? parseInt(opts.words, 10) : undefined;
@@ -62,9 +77,11 @@ writeCommand
 
         if (result.status === "state-degraded") {
           if (!opts.json) {
-            log(language === "en"
-              ? "State repair required before continuing. Stopping batch."
-              : "需要先修复 state，已停止后续连写。");
+            log(
+              language === "en"
+                ? "State repair required before continuing. Stopping batch."
+                : "需要先修复 state，已停止后续连写。",
+            );
           }
           break;
         }
@@ -114,7 +131,10 @@ writeCommand
       if (!opts.force) {
         const rl = createInterface({ input: process.stdin, output: process.stdout });
         const answer = await new Promise<string>((resolve) => {
-          rl.question(`Rewrite chapter ${chapter} of "${bookId}"? This will delete chapter ${chapter} and all later chapters. (y/N) `, resolve);
+          rl.question(
+            `Rewrite chapter ${chapter} of "${bookId}"? This will delete chapter ${chapter} and all later chapters. (y/N) `,
+            resolve,
+          );
         });
         rl.close();
         if (answer.toLowerCase() !== "y") {
@@ -129,7 +149,9 @@ writeCommand
       const restoreFrom = chapter - 1;
       const restoreSnapshotDir = join(bookDir, "story", "snapshots", String(restoreFrom));
       await stat(restoreSnapshotDir).catch(() => {
-        throw new Error(`Cannot rewrite chapter ${chapter}: missing snapshot for chapter ${restoreFrom}`);
+        throw new Error(
+          `Cannot rewrite chapter ${chapter}: missing snapshot for chapter ${restoreFrom}`,
+        );
       });
       const migrationHint = await getLegacyMigrationHint(root, bookId);
       if (migrationHint && !opts.json) {
@@ -163,13 +185,17 @@ writeCommand
       // Restore state to previous chapter's end-state (chapter 1 uses snapshot-0 from initBook)
       const restored = await state.restoreState(bookId, restoreFrom);
       if (!restored) {
-        throw new Error(`Cannot rewrite chapter ${chapter}: failed to restore snapshot for chapter ${restoreFrom}`);
+        throw new Error(
+          `Cannot rewrite chapter ${chapter}: failed to restore snapshot for chapter ${restoreFrom}`,
+        );
       }
       if (!opts.json) log(`State restored from chapter ${restoreFrom} snapshot.`);
 
       const nextChapter = await state.getNextChapterNumber(bookId);
       if (nextChapter !== chapter) {
-        throw new Error(`Cannot rewrite chapter ${chapter}: expected next chapter to be ${chapter}, but resolved to ${nextChapter}`);
+        throw new Error(
+          `Cannot rewrite chapter ${chapter}: expected next chapter to be ${chapter}, but resolved to ${nextChapter}`,
+        );
       }
 
       if (!opts.json) log(`Regenerating chapter ${chapter}...`);
@@ -177,9 +203,11 @@ writeCommand
       const wordCount = opts.words ? parseInt(opts.words, 10) : undefined;
 
       const config = await loadConfig();
-      const pipeline = new PipelineRunner(buildPipelineConfig(config, root, {
-        externalContext: opts.brief,
-      }));
+      const pipeline = new PipelineRunner(
+        buildPipelineConfig(config, root, {
+          externalContext: opts.brief,
+        }),
+      );
 
       const result = await pipeline.writeNextChapter(bookId, wordCount);
       const book = await state.loadBookConfig(bookId);
@@ -214,7 +242,10 @@ writeCommand
   .command("sync")
   .description("Rebuild truth files and SQLite indexes from the latest edited chapter body")
   .argument("<args...>", "Book ID (optional) and chapter number")
-  .option("--brief <text>", "One-off guidance for how to interpret the edited chapter while syncing")
+  .option(
+    "--brief <text>",
+    "One-off guidance for how to interpret the edited chapter while syncing",
+  )
   .option("--json", "Output JSON")
   .action(async (args: ReadonlyArray<string>, opts) => {
     try {
@@ -238,9 +269,11 @@ writeCommand
       const book = await state.loadBookConfig(bookId);
       const language = resolveCliLanguage(book.language);
       const config = await loadConfig();
-      const pipeline = new PipelineRunner(buildPipelineConfig(config, root, {
-        externalContext: opts.brief,
-      }));
+      const pipeline = new PipelineRunner(
+        buildPipelineConfig(config, root, {
+          externalContext: opts.brief,
+        }),
+      );
       const result = await pipeline.resyncChapterArtifacts(bookId, chapter);
 
       if (opts.json) {
@@ -270,7 +303,9 @@ writeCommand
 
 writeCommand
   .command("repair-state")
-  .description("Rebuild truth files for a persisted state-degraded chapter without rewriting body text")
+  .description(
+    "Rebuild truth files for a persisted state-degraded chapter without rewriting body text",
+  )
   .argument("<args...>", "Book ID (optional) and chapter number")
   .option("--json", "Output JSON")
   .action(async (args: ReadonlyArray<string>, opts) => {

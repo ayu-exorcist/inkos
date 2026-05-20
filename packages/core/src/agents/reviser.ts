@@ -3,7 +3,12 @@ import type { GenreProfile } from "../models/genre-profile.js";
 import type { BookRules } from "../models/book-rules.js";
 import type { LengthSpec } from "../models/length-governance.js";
 import type { AuditIssue } from "./continuity.js";
-import type { ChapterIntent, ChapterMemo, ContextPackage, RuleStack } from "../models/input-governance.js";
+import type {
+  ChapterIntent,
+  ChapterMemo,
+  ContextPackage,
+  RuleStack,
+} from "../models/input-governance.js";
 import { readGenreProfile, readBookLanguage, readBookRules } from "./rules-reader.js";
 import { countChapterLength } from "../utils/length-metrics.js";
 import { buildGovernedMemoryEvidenceBlocks } from "../utils/governed-context.js";
@@ -49,10 +54,7 @@ export interface ReviseOutput {
 
 type AutoOutputMode = "patch-only" | "rewrite-only" | "allow-full";
 
-function buildTieredIssueList(
-  issues: ReadonlyArray<AuditIssue>,
-  isEnglish: boolean,
-): string {
+function buildTieredIssueList(issues: ReadonlyArray<AuditIssue>, isEnglish: boolean): string {
   const critical: string[] = [];
   const high: string[] = [];
   const medium: string[] = [];
@@ -70,19 +72,25 @@ function buildTieredIssueList(
 
   const parts: string[] = [];
   if (critical.length > 0) {
-    parts.push(isEnglish
-      ? `## Critical — Must Fix\n${critical.join("\n")}`
-      : `## Critical（必须解决）\n${critical.join("\n")}`);
+    parts.push(
+      isEnglish
+        ? `## Critical — Must Fix\n${critical.join("\n")}`
+        : `## Critical（必须解决）\n${critical.join("\n")}`,
+    );
   }
   if (high.length > 0) {
-    parts.push(isEnglish
-      ? `## High — Should Improve\n${high.join("\n")}`
-      : `## High（应当改善）\n${high.join("\n")}`);
+    parts.push(
+      isEnglish
+        ? `## High — Should Improve\n${high.join("\n")}`
+        : `## High（应当改善）\n${high.join("\n")}`,
+    );
   }
   if (medium.length > 0) {
-    parts.push(isEnglish
-      ? `## Medium — Reference\n${medium.join("\n")}`
-      : `## Medium（参考建议）\n${medium.join("\n")}`);
+    parts.push(
+      isEnglish
+        ? `## Medium — Reference\n${medium.join("\n")}`
+        : `## Medium（参考建议）\n${medium.join("\n")}`,
+    );
   }
 
   return parts.join("\n\n");
@@ -90,8 +98,10 @@ function buildTieredIssueList(
 
 const MODE_DESCRIPTIONS: Record<ReviseMode, string> = {
   auto: "", // auto mode uses buildAutoSystemPrompt instead
-  polish: "润色：只改表达、节奏、段落呼吸，不改事实与剧情结论。禁止：增删段落、改变人名/地名/物品名、增加新情节或新对话、改变因果关系。只允许：替换用词、调整句序、修改标点节奏",
-  rewrite: "改写：允许重组问题段落、调整画面和叙述力度，但优先保留原文的绝大部分句段。除非问题跨越整章，否则禁止整章推倒重写；只能围绕问题段落及其直接上下文改写，同时保留核心事实与人物动机",
+  polish:
+    "润色：只改表达、节奏、段落呼吸，不改事实与剧情结论。禁止：增删段落、改变人名/地名/物品名、增加新情节或新对话、改变因果关系。只允许：替换用词、调整句序、修改标点节奏",
+  rewrite:
+    "改写：允许重组问题段落、调整画面和叙述力度，但优先保留原文的绝大部分句段。除非问题跨越整章，否则禁止整章推倒重写；只能围绕问题段落及其直接上下文改写，同时保留核心事实与人物动机",
   rework: "重写：可重构场景推进和冲突组织，但不改主设定和大事件结果",
   "anti-detect": `反检测改写：在保持剧情不变的前提下，降低AI生成可检测性。
 
@@ -105,7 +115,8 @@ const MODE_DESCRIPTIONS: Record<ReviseMode, string> = {
 7. 群像反应具体化：✗"全场震惊" → ✓"老陈的烟掉在裤子上，烫得他跳起来"
 8. 段落长度差异化：不再等长段落，有的段只有一句话，有的段七八行
 9. 消灭"不禁""仿佛""宛如"等AI标记词：换成具体感官描写`,
-  "spot-fix": "定点修复：只修改审稿意见指出的具体句子或段落，其余所有内容必须原封不动保留。修改范围限定在问题句子及其前后各一句。禁止改动无关段落",
+  "spot-fix":
+    "定点修复：只修改审稿意见指出的具体句子或段落，其余所有内容必须原封不动保留。修改范围限定在问题句子及其前后各一句。禁止改动无关段落",
 };
 
 export class ReviserAgent extends BaseAgent {
@@ -129,7 +140,18 @@ export class ReviserAgent extends BaseAgent {
       lengthSpec?: LengthSpec;
     },
   ): Promise<ReviseOutput> {
-    const [currentState, ledger, hooks, styleGuideRaw, volumeOutline, storyBible, characterMatrix, chapterSummaries, parentCanon, fanficCanon] = await Promise.all([
+    const [
+      currentState,
+      ledger,
+      hooks,
+      styleGuideRaw,
+      volumeOutline,
+      storyBible,
+      characterMatrix,
+      chapterSummaries,
+      parentCanon,
+      fanficCanon,
+    ] = await Promise.all([
       // Phase 5 consolidation: derive initial state from roles + seed hooks
       // when current_state.md is still the architect seed placeholder.
       readCurrentStateWithFallback(bookDir, "(文件不存在)"),
@@ -159,48 +181,55 @@ export class ReviserAgent extends BaseAgent {
     // body, and an empty string is NOT a usable style guide. Treat
     // missing/empty body as "no fallback available".
     const legacyRulesBody = parsedRules?.body?.trim();
-    const styleGuide = styleGuideRaw !== "(文件不存在)"
-      ? styleGuideRaw
-      : (legacyRulesBody || "(无文风指南)");
+    const styleGuide =
+      styleGuideRaw !== "(文件不存在)" ? styleGuideRaw : legacyRulesBody || "(无文风指南)";
 
     const isEnglish = (bookLanguage ?? gp.language) === "en";
     const resolvedLanguage = isEnglish ? "en" : "zh";
 
-    const issueList = mode === "auto"
-      ? buildTieredIssueList(issues, isEnglish)
-      : issues
-          .map((i) => `- [${i.severity}] ${i.category}: ${i.description}\n  ${isEnglish ? "Suggestion" : "建议"}: ${i.suggestion}`)
-          .join("\n");
+    const issueList =
+      mode === "auto"
+        ? buildTieredIssueList(issues, isEnglish)
+        : issues
+            .map(
+              (i) =>
+                `- [${i.severity}] ${i.category}: ${i.description}\n  ${isEnglish ? "Suggestion" : "建议"}: ${i.suggestion}`,
+            )
+            .join("\n");
 
     const numericalRule = gp.numericalSystem
-      ? (isEnglish
-          ? "\n3. Numerical errors must be fixed precisely — cross-check before and after"
-          : "\n3. 数值错误必须精确修正，前后对账")
+      ? isEnglish
+        ? "\n3. Numerical errors must be fixed precisely — cross-check before and after"
+        : "\n3. 数值错误必须精确修正，前后对账"
       : "";
     const protagonistBlock = bookRules?.protagonist
-      ? (isEnglish
-          ? `\n\nProtagonist lock: ${bookRules.protagonist.name} — ${bookRules.protagonist.personalityLock.join(", ")}. Revisions must not violate the protagonist profile.`
-          : `\n\n主角人设锁定：${bookRules.protagonist.name}，${bookRules.protagonist.personalityLock.join("、")}。修改不得违反人设。`)
+      ? isEnglish
+        ? `\n\nProtagonist lock: ${bookRules.protagonist.name} — ${bookRules.protagonist.personalityLock.join(", ")}. Revisions must not violate the protagonist profile.`
+        : `\n\n主角人设锁定：${bookRules.protagonist.name}，${bookRules.protagonist.personalityLock.join("、")}。修改不得违反人设。`
       : "";
     // Length guardrail only used by legacy modes (manual CLI revise).
     // Auto mode delegates length to normalize, not reviser.
-    const lengthGuardrail = mode !== "auto" && options?.lengthSpec
-      ? (isEnglish
+    const lengthGuardrail =
+      mode !== "auto" && options?.lengthSpec
+        ? isEnglish
           ? "\n8. Keep the chapter word count within the target range; only allow minor deviation when fixing critical issues truly requires it"
-          : "\n8. 保持章节字数在目标区间内；只有在修复关键问题确实需要时才允许轻微偏离")
-      : "";
+          : "\n8. 保持章节字数在目标区间内；只有在修复关键问题确实需要时才允许轻微偏离"
+        : "";
     const langPrefix = isEnglish
       ? `【LANGUAGE OVERRIDE】ALL output (FIXED_ISSUES, PATCHES, REVISED_CONTENT, UPDATED_STATE, UPDATED_HOOKS) MUST be in English.\n\n`
       : "";
-    const governedMode = Boolean(options?.chapterIntent && options?.contextPackage && options?.ruleStack);
-    const hooksWorkingSet = governedMode && options?.contextPackage
-      ? buildGovernedHookWorkingSet({
-          hooksMarkdown: hooks,
-          contextPackage: options.contextPackage,
-          chapterNumber,
-          language: resolvedLanguage,
-        })
-      : hooks;
+    const governedMode = Boolean(
+      options?.chapterIntent && options?.contextPackage && options?.ruleStack,
+    );
+    const hooksWorkingSet =
+      governedMode && options?.contextPackage
+        ? buildGovernedHookWorkingSet({
+            hooksMarkdown: hooks,
+            contextPackage: options.contextPackage,
+            chapterNumber,
+            language: resolvedLanguage,
+          })
+        : hooks;
     const chapterSummariesWorkingSet = governedMode
       ? filterSummaries(chapterSummaries, chapterNumber)
       : chapterSummaries;
@@ -214,30 +243,44 @@ export class ReviserAgent extends BaseAgent {
       : characterMatrix;
 
     const autoOutputMode = mode === "auto" ? resolveAutoOutputMode(issues) : "allow-full";
-    const systemPrompt = mode === "auto"
-      ? this.buildAutoSystemPrompt({ langPrefix, gp, protagonistBlock, numericalRule, lengthGuardrail, resolvedLanguage, lengthSpec: options?.lengthSpec, autoOutputMode })
-      : this.buildLegacySystemPrompt({ langPrefix, gp, protagonistBlock, numericalRule, lengthGuardrail, mode, resolvedLanguage });
+    const systemPrompt =
+      mode === "auto"
+        ? this.buildAutoSystemPrompt({
+            langPrefix,
+            gp,
+            protagonistBlock,
+            numericalRule,
+            lengthGuardrail,
+            resolvedLanguage,
+            lengthSpec: options?.lengthSpec,
+            autoOutputMode,
+          })
+        : this.buildLegacySystemPrompt({
+            langPrefix,
+            gp,
+            protagonistBlock,
+            numericalRule,
+            lengthGuardrail,
+            mode,
+            resolvedLanguage,
+          });
 
-    const ledgerBlock = gp.numericalSystem
-      ? `\n## 资源账本\n${ledger}`
-      : "";
+    const ledgerBlock = gp.numericalSystem ? `\n## 资源账本\n${ledger}` : "";
     const governedMemoryBlocks = options?.contextPackage
       ? buildGovernedMemoryEvidenceBlocks(options.contextPackage, resolvedLanguage)
       : undefined;
     const hookDebtBlock = governedMemoryBlocks?.hookDebtBlock ?? "";
-    const hooksBlock = governedMemoryBlocks?.hooksBlock
-      ?? `\n## 伏笔池\n${hooksWorkingSet}\n`;
-    const outlineBlock = volumeOutline !== "(文件不存在)"
-      ? `\n## 卷纲\n${volumeOutline}\n`
-      : "";
-    const bibleBlock = !governedMode && storyBible !== "(文件不存在)"
-      ? `\n## 世界观设定\n${storyBible}\n`
-      : "";
-    const matrixBlock = characterMatrixWorkingSet !== "(文件不存在)"
-      ? `\n## 角色交互矩阵\n${characterMatrixWorkingSet}\n`
-      : "";
-    const summariesBlock = governedMemoryBlocks?.summariesBlock
-      ?? (chapterSummariesWorkingSet !== "(文件不存在)"
+    const hooksBlock = governedMemoryBlocks?.hooksBlock ?? `\n## 伏笔池\n${hooksWorkingSet}\n`;
+    const outlineBlock = volumeOutline !== "(文件不存在)" ? `\n## 卷纲\n${volumeOutline}\n` : "";
+    const bibleBlock =
+      !governedMode && storyBible !== "(文件不存在)" ? `\n## 世界观设定\n${storyBible}\n` : "";
+    const matrixBlock =
+      characterMatrixWorkingSet !== "(文件不存在)"
+        ? `\n## 角色交互矩阵\n${characterMatrixWorkingSet}\n`
+        : "";
+    const summariesBlock =
+      governedMemoryBlocks?.summariesBlock ??
+      (chapterSummariesWorkingSet !== "(文件不存在)"
         ? `\n## 章节摘要\n${chapterSummariesWorkingSet}\n`
         : "");
     const volumeSummariesBlock = governedMemoryBlocks?.volumeSummariesBlock ?? "";
@@ -252,16 +295,22 @@ export class ReviserAgent extends BaseAgent {
     const fanficCanonBlock = hasFanficCanon
       ? `\n## 同人正典参照（修稿专用）\n本书为同人作品。修改时参照正典角色档案和世界规则，不可违反正典事实。角色对话必须保留原作语癖。\n${fanficCanon}\n`
       : "";
-    const reducedControlBlock = options?.contextPackage && options.ruleStack
-      ? this.buildReducedControlBlock(options.chapterMemo, options.chapterIntentData, options.chapterIntent, options.contextPackage, options.ruleStack)
-      : "";
+    const reducedControlBlock =
+      options?.contextPackage && options.ruleStack
+        ? this.buildReducedControlBlock(
+            options.chapterMemo,
+            options.chapterIntentData,
+            options.chapterIntent,
+            options.contextPackage,
+            options.ruleStack,
+          )
+        : "";
     // Length guardrail only in legacy modes — auto mode delegates length to normalize.
-    const lengthGuidanceBlock = mode !== "auto" && options?.lengthSpec
-      ? `\n## 字数护栏\n目标字数：${options.lengthSpec.target}\n允许区间：${options.lengthSpec.softMin}-${options.lengthSpec.softMax}\n极限区间：${options.lengthSpec.hardMin}-${options.lengthSpec.hardMax}\n如果修正后超出允许区间，请优先压缩冗余解释、重复动作和弱信息句，不得新增支线或删掉核心事实。\n`
-      : "";
-    const styleGuideBlock = reducedControlBlock.length === 0
-      ? `\n## 文风指南\n${styleGuide}`
-      : "";
+    const lengthGuidanceBlock =
+      mode !== "auto" && options?.lengthSpec
+        ? `\n## 字数护栏\n目标字数：${options.lengthSpec.target}\n允许区间：${options.lengthSpec.softMin}-${options.lengthSpec.softMax}\n极限区间：${options.lengthSpec.hardMin}-${options.lengthSpec.hardMax}\n如果修正后超出允许区间，请优先压缩冗余解释、重复动作和弱信息句，不得新增支线或删掉核心事实。\n`
+        : "";
+    const styleGuideBlock = reducedControlBlock.length === 0 ? `\n## 文风指南\n${styleGuide}` : "";
 
     const userPrompt = `请修正第${chapterNumber}章。
 
@@ -284,13 +333,7 @@ ${chapterContent}`;
       { temperature: 0.3 },
     );
 
-    const output = this.parseOutput(
-      response.content,
-      gp,
-      mode,
-      chapterContent,
-      autoOutputMode,
-    );
+    const output = this.parseOutput(response.content, gp, mode, chapterContent, autoOutputMode);
     const mergedOutput = governedMode
       ? {
           ...output,
@@ -311,9 +354,7 @@ ${chapterContent}`;
     autoOutputMode: AutoOutputMode = "allow-full",
   ): ReviseOutput {
     const extract = (tag: string): string => {
-      const regex = new RegExp(
-        `=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`,
-      );
+      const regex = new RegExp(`=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`);
       const match = content.match(regex);
       return match?.[1]?.trim() ?? "";
     };
@@ -329,9 +370,7 @@ ${chapterContent}`;
       wordCount: revisedContent.length,
       fixedIssues: applied ? fixedIssues : [],
       updatedState: extract("UPDATED_STATE") || "(状态卡未更新)",
-      updatedLedger: gp.numericalSystem
-        ? (extract("UPDATED_LEDGER") || "(账本未更新)")
-        : "",
+      updatedLedger: gp.numericalSystem ? extract("UPDATED_LEDGER") || "(账本未更新)" : "",
       updatedHooks: extract("UPDATED_HOOKS") || "(伏笔池未更新)",
     });
 
@@ -402,28 +441,40 @@ ${chapterContent}`;
     lengthSpec?: LengthSpec;
     autoOutputMode: AutoOutputMode;
   }): string {
-    const { langPrefix, gp, protagonistBlock, numericalRule, resolvedLanguage, lengthSpec, autoOutputMode } = params;
+    const {
+      langPrefix,
+      gp,
+      protagonistBlock,
+      numericalRule,
+      resolvedLanguage,
+      lengthSpec,
+      autoOutputMode,
+    } = params;
     // lengthGuardrail intentionally not used in auto mode — length constraint is embedded in REVISED_CONTENT description
     const en = resolvedLanguage === "en";
     const ledgerSection = gp.numericalSystem
-      ? (en ? "\n=== UPDATED_LEDGER ===\n(Full updated resource ledger)" : "\n=== UPDATED_LEDGER ===\n(更新后的完整资源账本)")
+      ? en
+        ? "\n=== UPDATED_LEDGER ===\n(Full updated resource ledger)"
+        : "\n=== UPDATED_LEDGER ===\n(更新后的完整资源账本)"
       : "";
     const rewriteLengthConstraint = lengthSpec
-      ? (en
-          ? `\n  HARD CONSTRAINT: The revised chapter must stay within ${lengthSpec.softMin}-${lengthSpec.softMax} characters (target: ${lengthSpec.target}, ±25%). This is non-negotiable — do not exceed this range.`
-          : `\n  硬性约束：重写后的章节必须控制在 ${lengthSpec.softMin}-${lengthSpec.softMax} 字以内（目标 ${lengthSpec.target} 字，±25%）。这是不可突破的底线。`)
+      ? en
+        ? `\n  HARD CONSTRAINT: The revised chapter must stay within ${lengthSpec.softMin}-${lengthSpec.softMax} characters (target: ${lengthSpec.target}, ±25%). This is non-negotiable — do not exceed this range.`
+        : `\n  硬性约束：重写后的章节必须控制在 ${lengthSpec.softMin}-${lengthSpec.softMax} 字以内（目标 ${lengthSpec.target} 字，±25%）。这是不可突破的底线。`
       : "";
 
-    const routingDirectiveEn = autoOutputMode === "rewrite-only"
-      ? "\n\nROUTING: The reviewer's blocking issues are structural / semantic (character collapse, mainline drift, missing payoff, timeline break, unpaid hook, memo drift, etc.). You MUST output REVISED_CONTENT — do not emit PATCHES, they cannot fix this class of problem. If you cannot safely rewrite, say so in FIXED_ISSUES and leave REVISED_CONTENT empty."
-      : autoOutputMode === "patch-only"
-        ? "\n\nROUTING: The reviewer's blocking issues are local (wording, paragraph shape, fatigue word, information boundary, knowledge pollution). You MUST output PATCHES only — do not rewrite the whole chapter. If patches are not possible, leave PATCHES empty."
-        : "";
-    const routingDirectiveZh = autoOutputMode === "rewrite-only"
-      ? "\n\n分流指令：reviewer 报告的阻塞问题属于结构/语义错（人设崩、主线偏、爽点缺、时间线错、伏笔未收、memo 偏离等）。你必须输出 REVISED_CONTENT——禁止输出 PATCHES，这类问题不能靠补丁修复。如果无法安全重写，在 FIXED_ISSUES 里说明并留空 REVISED_CONTENT。"
-      : autoOutputMode === "patch-only"
-        ? "\n\n分流指令：reviewer 报告的阻塞问题属于局部错（措辞、段落形状、疲劳词、信息越界、知识污染）。你必须只输出 PATCHES——不要整章改写。如果做不出补丁，留空 PATCHES。"
-        : "";
+    const routingDirectiveEn =
+      autoOutputMode === "rewrite-only"
+        ? "\n\nROUTING: The reviewer's blocking issues are structural / semantic (character collapse, mainline drift, missing payoff, timeline break, unpaid hook, memo drift, etc.). You MUST output REVISED_CONTENT — do not emit PATCHES, they cannot fix this class of problem. If you cannot safely rewrite, say so in FIXED_ISSUES and leave REVISED_CONTENT empty."
+        : autoOutputMode === "patch-only"
+          ? "\n\nROUTING: The reviewer's blocking issues are local (wording, paragraph shape, fatigue word, information boundary, knowledge pollution). You MUST output PATCHES only — do not rewrite the whole chapter. If patches are not possible, leave PATCHES empty."
+          : "";
+    const routingDirectiveZh =
+      autoOutputMode === "rewrite-only"
+        ? "\n\n分流指令：reviewer 报告的阻塞问题属于结构/语义错（人设崩、主线偏、爽点缺、时间线错、伏笔未收、memo 偏离等）。你必须输出 REVISED_CONTENT——禁止输出 PATCHES，这类问题不能靠补丁修复。如果无法安全重写，在 FIXED_ISSUES 里说明并留空 REVISED_CONTENT。"
+        : autoOutputMode === "patch-only"
+          ? "\n\n分流指令：reviewer 报告的阻塞问题属于局部错（措辞、段落形状、疲劳词、信息越界、知识污染）。你必须只输出 PATCHES——不要整章改写。如果做不出补丁，留空 PATCHES。"
+          : "";
 
     return en
       ? `${langPrefix}You are a professional ${gp.name} web-fiction revision editor. Fix the chapter according to the review notes.${protagonistBlock}${routingDirectiveEn}
@@ -535,8 +586,9 @@ ${ledgerSection}
   }): string {
     const { langPrefix, gp, protagonistBlock, numericalRule, lengthGuardrail, mode } = params;
     const modeDesc = MODE_DESCRIPTIONS[mode];
-    const outputFormat = mode === "spot-fix"
-      ? `=== FIXED_ISSUES ===
+    const outputFormat =
+      mode === "spot-fix"
+        ? `=== FIXED_ISSUES ===
 (逐条说明修正了什么，一行一条；如果无法安全定点修复，也在这里说明)
 
 === PATCHES ===
@@ -552,7 +604,7 @@ REPLACEMENT_TEXT:
 ${gp.numericalSystem ? "\n=== UPDATED_LEDGER ===\n(更新后的完整资源账本)" : ""}
 === UPDATED_HOOKS ===
 (更新后的完整伏笔池)`
-      : `=== FIXED_ISSUES ===
+        : `=== FIXED_ISSUES ===
 (逐条说明修正了什么，一行一条)
 
 === REVISED_CONTENT ===
@@ -587,6 +639,7 @@ ${outputFormat}`;
     try {
       return await readFile(path, "utf-8");
     } catch {
+      // failure expected, safe to ignore
       return "(文件不存在)";
     }
   }
@@ -598,13 +651,19 @@ ${outputFormat}`;
     contextPackage: ContextPackage,
     ruleStack: RuleStack,
   ): string {
-    const selectedContext = renderNarrativeSelectedContext(contextPackage.selectedContext, "zh")
-      .replace(/^### /gm, "- ");
-    const overrides = ruleStack.activeOverrides.length > 0
-      ? ruleStack.activeOverrides
-        .map((override) => `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`)
-        .join("\n")
-      : "- none";
+    const selectedContext = renderNarrativeSelectedContext(
+      contextPackage.selectedContext,
+      "zh",
+    ).replace(/^### /gm, "- ");
+    const overrides =
+      ruleStack.activeOverrides.length > 0
+        ? ruleStack.activeOverrides
+            .map(
+              (override) =>
+                `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`,
+            )
+            .join("\n")
+        : "- none";
     // Prefer memo-based narrative block; fall back to legacy intent markdown
     const narrativeBlock = memo
       ? renderMemoAsNarrativeBlock(memo, intent, "zh")

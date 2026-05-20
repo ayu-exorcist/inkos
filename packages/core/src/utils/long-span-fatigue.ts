@@ -1,10 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { analyzeChapterCadence } from "./chapter-cadence.js";
-import {
-  CADENCE_WINDOW_DEFAULTS,
-  LONG_SPAN_FATIGUE_THRESHOLDS,
-} from "./cadence-policy.js";
+import { CADENCE_WINDOW_DEFAULTS, LONG_SPAN_FATIGUE_THRESHOLDS } from "./cadence-policy.js";
 
 export interface LongSpanFatigueIssue {
   readonly severity: "warning";
@@ -65,7 +62,11 @@ export async function buildEnglishVarianceBrief(params: {
     rows: recentRows,
     language: "en",
   });
-  const sceneObligation = chooseSceneObligation(cadence, repeatedOpeningPatterns, repeatedEndingShapes);
+  const sceneObligation = chooseSceneObligation(
+    cadence,
+    repeatedOpeningPatterns,
+    repeatedEndingShapes,
+  );
 
   const lines = [
     "## English Variance Brief",
@@ -144,6 +145,7 @@ async function loadSummaryRows(path: string): Promise<SummaryRow[]> {
       .map((line) => parseSummaryRow(line))
       .filter((row): row is SummaryRow => row !== null);
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 }
@@ -158,7 +160,12 @@ async function loadPreviousChapterBodies(
     const files = await readdir(chaptersDir);
     const previousFiles = files
       .map((file) => ({ file, chapter: Number.parseInt(file.slice(0, 4), 10) }))
-      .filter((entry) => Number.isFinite(entry.chapter) && entry.chapter < currentChapter && entry.file.endsWith(".md"))
+      .filter(
+        (entry) =>
+          Number.isFinite(entry.chapter) &&
+          entry.chapter < currentChapter &&
+          entry.file.endsWith(".md"),
+      )
       .sort((left, right) => left.chapter - right.chapter)
       .slice(-limit);
 
@@ -166,11 +173,15 @@ async function loadPreviousChapterBodies(
       previousFiles.map((entry) => readFile(join(chaptersDir, entry.file), "utf-8")),
     );
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 }
 
-function mergeCurrentSummary(rows: ReadonlyArray<SummaryRow>, currentSummary?: string): SummaryRow[] {
+function mergeCurrentSummary(
+  rows: ReadonlyArray<SummaryRow>,
+  currentSummary?: string,
+): SummaryRow[] {
   const parsedCurrent = currentSummary ? parseSummaryRow(currentSummary) : null;
   if (!parsedCurrent) return [...rows];
 
@@ -181,7 +192,12 @@ function mergeCurrentSummary(rows: ReadonlyArray<SummaryRow>, currentSummary?: s
 
 function parseSummaryRow(line: string): SummaryRow | null {
   const trimmed = line.trim();
-  if (!trimmed.startsWith("|") || trimmed.includes("章节 |") || trimmed.includes("Chapter |") || trimmed.includes("---")) {
+  if (
+    !trimmed.startsWith("|") ||
+    trimmed.includes("章节 |") ||
+    trimmed.includes("Chapter |") ||
+    trimmed.includes("---")
+  ) {
     return null;
   }
 
@@ -220,7 +236,8 @@ function buildChapterTypeIssue(
       severity: "warning",
       category: "Pacing Monotony",
       description: `The last ${streak} chapter types have stayed on ${repeatedType}, which suggests macro pacing monotony.`,
-      suggestion: "Switch the next chapter's function instead of extending the same beat again. Rotate setup, payoff, reversal, and fallout more deliberately.",
+      suggestion:
+        "Switch the next chapter's function instead of extending the same beat again. Rotate setup, payoff, reversal, and fallout more deliberately.",
     };
   }
 
@@ -246,7 +263,8 @@ function buildMoodIssue(
       severity: "warning",
       category: "Mood Monotony",
       description: `High-tension mood has locked in for ${highTensionStreak} chapters (${recentMoods.join(" -> ")}), with no visible emotional release.`,
-      suggestion: "Insert a release beat, warmth, humor, intimacy, or reflective quiet before escalating again.",
+      suggestion:
+        "Insert a release beat, warmth, humor, intimacy, or reflective quiet before escalating again.",
     };
   }
 
@@ -272,7 +290,8 @@ function buildTitleIssue(
       severity: "warning",
       category: "Title Collapse",
       description: `Recent titles keep collapsing around "${repeatedToken}" (${count} hits in the current window), which makes chapter naming feel formulaic.`,
-      suggestion: "Change the next title anchor. Use a new image, action, consequence, or character vector instead of the same keyword shell.",
+      suggestion:
+        "Change the next title anchor. Use a new image, action, consequence, or character vector instead of the same keyword shell.",
     };
   }
 
@@ -294,7 +313,12 @@ async function loadRecentChapterBodies(
     const files = await readdir(chaptersDir);
     const previousFiles = files
       .map((file) => ({ file, chapter: Number.parseInt(file.slice(0, 4), 10) }))
-      .filter((entry) => Number.isFinite(entry.chapter) && entry.chapter < currentChapter && entry.file.endsWith(".md"))
+      .filter(
+        (entry) =>
+          Number.isFinite(entry.chapter) &&
+          entry.chapter < currentChapter &&
+          entry.file.endsWith(".md"),
+      )
       .sort((left, right) => left.chapter - right.chapter)
       .slice(-CADENCE_WINDOW_DEFAULTS.recentBoundaryPatternBodies);
 
@@ -308,6 +332,7 @@ async function loadRecentChapterBodies(
 
     return [...previousBodies, currentContent];
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 }
@@ -324,9 +349,12 @@ function buildSentencePatternIssue(
     return null;
   }
 
-  const normalized = sentences
-    .map((sentence) => normalizeSentence(sentence!, language));
-  if (normalized.some((sentence) => sentence.length < LONG_SPAN_FATIGUE_THRESHOLDS.boundarySentenceMinLength)) {
+  const normalized = sentences.map((sentence) => normalizeSentence(sentence!, language));
+  if (
+    normalized.some(
+      (sentence) => sentence.length < LONG_SPAN_FATIGUE_THRESHOLDS.boundarySentenceMinLength,
+    )
+  ) {
     return null;
   }
 
@@ -342,15 +370,17 @@ function buildSentencePatternIssue(
   const pairText = similarities.map((value) => value.toFixed(2)).join("/");
 
   if (language === "en") {
-    const category = boundary === "opening" ? "Opening Pattern Repetition" : "Ending Pattern Repetition";
+    const category =
+      boundary === "opening" ? "Opening Pattern Repetition" : "Ending Pattern Repetition";
     const position = boundary === "opening" ? "openings" : "endings";
     return {
       severity: "warning",
       category,
       description: `The last 3 chapter ${position} are highly similar (adjacent similarity ${pairText}), which risks a formulaic rhythm. Current ${boundary} signature: "${sample}".`,
-      suggestion: boundary === "opening"
-        ? "Change the next chapter opening vector. Start from action, consequence, or surprise instead of repeating the same camera move."
-        : "Change the next chapter landing pattern. End on consequence, decision, or a new variable instead of repeating the same explanatory cadence.",
+      suggestion:
+        boundary === "opening"
+          ? "Change the next chapter opening vector. Start from action, consequence, or surprise instead of repeating the same camera move."
+          : "Change the next chapter landing pattern. End on consequence, decision, or a new variable instead of repeating the same explanatory cadence.",
     };
   }
 
@@ -358,9 +388,10 @@ function buildSentencePatternIssue(
     severity: "warning",
     category: boundary === "opening" ? "开头同构" : "结尾同构",
     description: `最近3章${boundary === "opening" ? "开头" : "结尾"}句式高度相似（相邻相似度${pairText}），容易形成模板化${boundary === "opening" ? "开篇" : "章尾"}。当前句式近似“${sample}”。`,
-    suggestion: boundary === "opening"
-      ? "下一章换一个开篇入口，用动作、后果或异常信息切入，不要连续沿用同一种抬镜句。"
-      : "下一章换一个收束方式，用行动后果、角色决断或新变量落板，不要连续用解释性句子收尾。",
+    suggestion:
+      boundary === "opening"
+        ? "下一章换一个开篇入口，用动作、后果或异常信息切入，不要连续沿用同一种抬镜句。"
+        : "下一章换一个收束方式，用行动后果、角色决断或新变量落板，不要连续用解释性句子收尾。",
   };
 }
 
@@ -460,15 +491,10 @@ function extractBoundarySentence(content: string, boundary: "opening" | "ending"
 
 function normalizeSentence(sentence: string, language: "zh" | "en"): string {
   if (language === "en") {
-    return sentence
-      .toLowerCase()
-      .replace(ENGLISH_PUNCTUATION, "")
-      .trim();
+    return sentence.toLowerCase().replace(ENGLISH_PUNCTUATION, "").trim();
   }
 
-  return sentence
-    .replace(CHINESE_PUNCTUATION, "")
-    .toLowerCase();
+  return sentence.replace(CHINESE_PUNCTUATION, "").toLowerCase();
 }
 
 function summarizeSentence(sentence: string, language: "zh" | "en"): string {
@@ -519,7 +545,9 @@ function buildBigrams(value: string): Map<string, number> {
 
 function isMeaningfulValue(value: string): boolean {
   const normalized = value.trim().toLowerCase();
-  return normalized.length > 0 && normalized !== "none" && normalized !== "(none)" && normalized !== "无";
+  return (
+    normalized.length > 0 && normalized !== "none" && normalized !== "(none)" && normalized !== "无"
+  );
 }
 
 const ENGLISH_STOP_WORDS = new Set([

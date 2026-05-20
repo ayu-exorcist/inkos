@@ -1,6 +1,13 @@
 import { Command } from "commander";
 import { runAgentLoop } from "@actalk/inkos-core";
-import { loadConfig, createClient, findProjectRoot, resolveContext, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  createClient,
+  findProjectRoot,
+  resolveContext,
+  log,
+  logError,
+} from "../utils.js";
 
 export const agentCommand = new Command("agent")
   .description("Natural language agent mode (LLM orchestrates via tool-use)")
@@ -17,9 +24,7 @@ export const agentCommand = new Command("agent")
       const root = findProjectRoot();
       const context = await resolveContext(opts);
 
-      const fullInstruction = context
-        ? `${instruction}\n\n补充信息：${context}`
-        : instruction;
+      const fullInstruction = context ? `${instruction}\n\n补充信息：${context}` : instruction;
 
       const maxTurns = parseInt(opts.maxTurns, 10);
 
@@ -32,17 +37,19 @@ export const agentCommand = new Command("agent")
         fullInstruction,
         {
           maxTurns,
-          onToolCall: opts.quiet || opts.json
-            ? undefined
-            : (name, args) => {
-                log(`  [tool] ${name}(${JSON.stringify(args)})`);
-              },
-          onToolResult: opts.quiet || opts.json
-            ? undefined
-            : (name, result) => {
-                const preview = result.length > 200 ? `${result.slice(0, 200)}...` : result;
-                log(`  [result] ${name} → ${preview}`);
-              },
+          onToolCall:
+            opts.quiet || opts.json
+              ? undefined
+              : (name, args) => {
+                  log(`  [tool] ${name}(${JSON.stringify(args)})`);
+                },
+          onToolResult:
+            opts.quiet || opts.json
+              ? undefined
+              : (name, result) => {
+                  const preview = result.length > 200 ? `${result.slice(0, 200)}...` : result;
+                  log(`  [result] ${name} → ${preview}`);
+                },
           onMessage: opts.json
             ? undefined
             : (content) => {

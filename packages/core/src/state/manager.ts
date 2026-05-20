@@ -2,7 +2,10 @@ import { readFile, writeFile, mkdir, readdir, rm, stat, unlink, open } from "nod
 import { join } from "node:path";
 import type { BookConfig } from "../models/book.js";
 import type { ChapterMeta } from "../models/chapter.js";
-import { bootstrapStructuredStateFromMarkdown, resolveDurableStoryProgress } from "./state-bootstrap.js";
+import {
+  bootstrapStructuredStateFromMarkdown,
+  resolveDurableStoryProgress,
+} from "./state-bootstrap.js";
 
 export class StateManager {
   /** Books actively being written by this process — used for same-process stale lock detection. */
@@ -62,9 +65,14 @@ export class StateManager {
       const existing = await readFile(styleGuidePath, "utf-8");
       if (!existing.includes("写作方法论") && !existing.includes("Writing Methodology")) {
         const { buildWritingMethodologySection } = await import("../utils/writing-methodology.js");
-        await writeFile(styleGuidePath, `${existing}\n\n${buildWritingMethodologySection(language)}`, "utf-8");
+        await writeFile(
+          styleGuidePath,
+          `${existing}\n\n${buildWritingMethodologySection(language)}`,
+          "utf-8",
+        );
       }
     } catch {
+      // failure expected, safe to ignore
       const { buildWritingMethodologySection } = await import("../utils/writing-methodology.js");
       await writeFile(styleGuidePath, buildWritingMethodologySection(language), "utf-8");
     }
@@ -93,6 +101,7 @@ export class StateManager {
       const parsed = JSON.parse(raw) as { language?: unknown };
       return parsed.language === "zh" ? "zh" : "en";
     } catch {
+      // failure expected, safe to ignore
       return "en";
     }
   }
@@ -198,11 +207,7 @@ export class StateManager {
 
   async saveBookConfigAt(bookDir: string, config: BookConfig): Promise<void> {
     await mkdir(bookDir, { recursive: true });
-    await writeFile(
-      join(bookDir, "book.json"),
-      JSON.stringify(config, null, 2),
-      "utf-8",
-    );
+    await writeFile(join(bookDir, "book.json"), JSON.stringify(config, null, 2), "utf-8");
   }
 
   async ensureRuntimeState(bookId: string, fallbackChapter = 0): Promise<void> {
@@ -227,6 +232,7 @@ export class StateManager {
       }
       return bookIds;
     } catch {
+      // failure expected, safe to ignore
       return [];
     }
   }
@@ -257,6 +263,7 @@ export class StateManager {
         chapterNumbers.add(parseInt(match[1]!, 10));
       }
     } catch {
+      // failure expected, safe to ignore
       return 0;
     }
 
@@ -269,28 +276,19 @@ export class StateManager {
       const raw = await readFile(indexPath, "utf-8");
       return JSON.parse(raw);
     } catch {
+      // failure expected, safe to ignore
       return [];
     }
   }
 
-  async saveChapterIndex(
-    bookId: string,
-    index: ReadonlyArray<ChapterMeta>,
-  ): Promise<void> {
+  async saveChapterIndex(bookId: string, index: ReadonlyArray<ChapterMeta>): Promise<void> {
     await this.saveChapterIndexAt(this.bookDir(bookId), index);
   }
 
-  async saveChapterIndexAt(
-    bookDir: string,
-    index: ReadonlyArray<ChapterMeta>,
-  ): Promise<void> {
+  async saveChapterIndexAt(bookDir: string, index: ReadonlyArray<ChapterMeta>): Promise<void> {
     const chaptersDir = join(bookDir, "chapters");
     await mkdir(chaptersDir, { recursive: true });
-    await writeFile(
-      join(chaptersDir, "index.json"),
-      JSON.stringify(index, null, 2),
-      "utf-8",
-    );
+    await writeFile(join(chaptersDir, "index.json"), JSON.stringify(index, null, 2), "utf-8");
   }
 
   async snapshotState(bookId: string, chapterNumber: number): Promise<void> {
@@ -303,8 +301,13 @@ export class StateManager {
     await mkdir(snapshotDir, { recursive: true });
 
     const files = [
-      "current_state.md", "particle_ledger.md", "pending_hooks.md",
-      "chapter_summaries.md", "subplot_board.md", "emotional_arcs.md", "character_matrix.md",
+      "current_state.md",
+      "particle_ledger.md",
+      "pending_hooks.md",
+      "chapter_summaries.md",
+      "subplot_board.md",
+      "emotional_arcs.md",
+      "character_matrix.md",
     ];
     await Promise.all(
       files.map(async (f) => {
@@ -363,6 +366,7 @@ export class StateManager {
       try {
         await stat(requiredPath);
       } catch {
+        // failure expected, safe to ignore
         return false;
       }
     }
@@ -389,8 +393,13 @@ export class StateManager {
     const snapshotDir = join(storyDir, "snapshots", String(chapterNumber));
 
     const files = [
-      "current_state.md", "particle_ledger.md", "pending_hooks.md",
-      "chapter_summaries.md", "subplot_board.md", "emotional_arcs.md", "character_matrix.md",
+      "current_state.md",
+      "particle_ledger.md",
+      "pending_hooks.md",
+      "chapter_summaries.md",
+      "subplot_board.md",
+      "emotional_arcs.md",
+      "character_matrix.md",
     ];
     try {
       // current_state.md and pending_hooks.md are required;
@@ -413,6 +422,7 @@ export class StateManager {
             const content = await readFile(join(snapshotDir, f), "utf-8");
             await writeFile(targetPath, content, "utf-8");
           } catch {
+            // failure expected, safe to ignore
             await rm(targetPath, { force: true });
           }
         }),
@@ -442,6 +452,7 @@ export class StateManager {
 
       return true;
     } catch {
+      // failure expected, safe to ignore
       return false;
     }
   }
@@ -453,10 +464,7 @@ export class StateManager {
    *
    * Returns the list of chapter numbers that were discarded.
    */
-  async rollbackToChapter(
-    bookId: string,
-    targetChapter: number,
-  ): Promise<ReadonlyArray<number>> {
+  async rollbackToChapter(bookId: string, targetChapter: number): Promise<ReadonlyArray<number>> {
     const restored = await this.restoreState(bookId, targetChapter);
     if (!restored) {
       throw new Error(`Cannot restore snapshot for chapter ${targetChapter} in "${bookId}"`);
@@ -554,6 +562,7 @@ export class StateManager {
     try {
       await stat(path);
     } catch {
+      // failure expected, safe to ignore
       await writeFile(path, content, "utf-8");
     }
   }

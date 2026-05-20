@@ -74,21 +74,15 @@ describe("BookConfigSchema", () => {
   });
 
   it("rejects empty id", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, id: "" }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, id: "" })).toThrow();
   });
 
   it("rejects empty title", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, title: "" }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, title: "" })).toThrow();
   });
 
   it("rejects invalid platform", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, platform: "kindle" }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, platform: "kindle" })).toThrow();
   });
 
   it("accepts custom genre (string)", () => {
@@ -97,43 +91,30 @@ describe("BookConfigSchema", () => {
   });
 
   it("rejects invalid status", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, status: "archived" }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, status: "archived" })).toThrow();
   });
 
   it("rejects chapterWordCount below 1000", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, chapterWordCount: 500 }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, chapterWordCount: 500 })).toThrow();
   });
 
   it("rejects targetChapters below 1", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, targetChapters: 0 }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, targetChapters: 0 })).toThrow();
   });
 
   it("rejects non-integer targetChapters", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, targetChapters: 10.5 }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, targetChapters: 10.5 })).toThrow();
   });
 
   it("rejects invalid datetime strings", () => {
-    expect(() =>
-      BookConfigSchema.parse({ ...validBook, createdAt: "not-a-date" }),
-    ).toThrow();
+    expect(() => BookConfigSchema.parse({ ...validBook, createdAt: "not-a-date" })).toThrow();
   });
 });
 
 describe("PlatformSchema", () => {
-  it.each(["tomato", "feilu", "qidian", "other"] as const)(
-    "accepts '%s'",
-    (value) => {
-      expect(PlatformSchema.parse(value)).toBe(value);
-    },
-  );
+  it.each(["tomato", "feilu", "qidian", "other"] as const)("accepts '%s'", (value) => {
+    expect(PlatformSchema.parse(value)).toBe(value);
+  });
 
   it("rejects unknown platform", () => {
     expect(() => PlatformSchema.parse("amazon")).toThrow();
@@ -153,13 +134,7 @@ describe("PlatformSchema", () => {
 });
 
 describe("GenreSchema", () => {
-  const validGenres = [
-    "xuanhuan",
-    "xianxia",
-    "urban",
-    "horror",
-    "other",
-  ] as const;
+  const validGenres = ["xuanhuan", "xianxia", "urban", "horror", "other"] as const;
 
   it.each(validGenres)("accepts '%s'", (value) => {
     expect(GenreSchema.parse(value)).toBe(value);
@@ -264,27 +239,19 @@ describe("ChapterMetaSchema", () => {
   });
 
   it("rejects chapter number < 1", () => {
-    expect(() =>
-      ChapterMetaSchema.parse({ ...validChapter, number: 0 }),
-    ).toThrow();
+    expect(() => ChapterMetaSchema.parse({ ...validChapter, number: 0 })).toThrow();
   });
 
   it("rejects negative chapter number", () => {
-    expect(() =>
-      ChapterMetaSchema.parse({ ...validChapter, number: -1 }),
-    ).toThrow();
+    expect(() => ChapterMetaSchema.parse({ ...validChapter, number: -1 })).toThrow();
   });
 
   it("rejects invalid status", () => {
-    expect(() =>
-      ChapterMetaSchema.parse({ ...validChapter, status: "writing" }),
-    ).toThrow();
+    expect(() => ChapterMetaSchema.parse({ ...validChapter, status: "writing" })).toThrow();
   });
 
   it("rejects non-integer chapter number", () => {
-    expect(() =>
-      ChapterMetaSchema.parse({ ...validChapter, number: 1.5 }),
-    ).toThrow();
+    expect(() => ChapterMetaSchema.parse({ ...validChapter, number: 1.5 })).toThrow();
   });
 });
 
@@ -377,21 +344,15 @@ describe("ProjectConfigSchema", () => {
   });
 
   it("rejects wrong version", () => {
-    expect(() =>
-      ProjectConfigSchema.parse({ ...validProject, version: "1.0.0" }),
-    ).toThrow();
+    expect(() => ProjectConfigSchema.parse({ ...validProject, version: "1.0.0" })).toThrow();
   });
 
   it("rejects empty project name", () => {
-    expect(() =>
-      ProjectConfigSchema.parse({ ...validProject, name: "" }),
-    ).toThrow();
+    expect(() => ProjectConfigSchema.parse({ ...validProject, name: "" })).toThrow();
   });
 
   it("rejects missing LLM config", () => {
-    expect(() =>
-      ProjectConfigSchema.parse({ name: "p", version: "0.1.0" }),
-    ).toThrow();
+    expect(() => ProjectConfigSchema.parse({ name: "p", version: "0.1.0" })).toThrow();
   });
 });
 
@@ -676,9 +637,7 @@ describe("RuleStackSchema", () => {
 
   it("defaults override lists to empty", () => {
     const result = RuleStackSchema.parse({
-      layers: [
-        { id: "L1", name: "hard_facts", precedence: 100, scope: "global" },
-      ],
+      layers: [{ id: "L1", name: "hard_facts", precedence: 100, scope: "global" }],
     });
 
     expect(result.sections).toEqual({
@@ -703,17 +662,9 @@ describe("ChapterTraceSchema", () => {
   it("accepts trace metadata for planner/composer output", () => {
     const result = ChapterTraceSchema.parse({
       chapter: 8,
-      plannerInputs: [
-        "story/author_intent.md",
-        "story/current_focus.md",
-      ],
-      composerInputs: [
-        "story/runtime/chapter-0008.intent.md",
-      ],
-      selectedSources: [
-        "story/current_state.md",
-        "story/chapter_summaries.md#7",
-      ],
+      plannerInputs: ["story/author_intent.md", "story/current_focus.md"],
+      composerInputs: ["story/runtime/chapter-0008.intent.md"],
+      selectedSources: ["story/current_state.md", "story/chapter_summaries.md#7"],
       notes: ["current_focus locally overrides planning"],
     });
 

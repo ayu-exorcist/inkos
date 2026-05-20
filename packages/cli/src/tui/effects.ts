@@ -1,14 +1,47 @@
 /* ── TUI animation effects ── */
 
 import {
-  c, bold, dim, italic,
-  cyan, green, yellow, blue, magenta, red, gray, white,
-  brightCyan, brightGreen, brightYellow, brightBlue, brightMagenta, brightWhite,
-  bgCyan, bgBlue, bgMagenta, bgGreen, bgYellow, bgRed, bgGray,
-  clearLine, hideCursor, showCursor, reset,
-  badge, sleep, stripAnsi, box,
+  c,
+  bold,
+  dim,
+  italic,
+  cyan,
+  green,
+  yellow,
+  blue,
+  magenta,
+  red,
+  gray,
+  white,
+  brightCyan,
+  brightGreen,
+  brightYellow,
+  brightBlue,
+  brightMagenta,
+  brightWhite,
+  bgCyan,
+  bgBlue,
+  bgMagenta,
+  bgGreen,
+  bgYellow,
+  bgRed,
+  bgGray,
+  clearLine,
+  hideCursor,
+  showCursor,
+  reset,
+  badge,
+  sleep,
+  stripAnsi,
+  box,
 } from "./ansi.js";
-import { formatModeLabel, getTuiCopy, normalizeStageLabel, resolveTuiLocale, type TuiLocale } from "./i18n.js";
+import {
+  formatModeLabel,
+  getTuiCopy,
+  normalizeStageLabel,
+  resolveTuiLocale,
+  type TuiLocale,
+} from "./i18n.js";
 
 /* ── Operation themes ── */
 
@@ -29,7 +62,18 @@ export interface StyledHelpSection {
 const WAVE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const PULSE_FRAMES = ["◜", "◠", "◝", "◞", "◡", "◟"];
 const DOTS_FRAMES = ["·  ", "·· ", "···", " ··", "  ·", "   "];
-const SCAN_FRAMES = ["▱▱▱▱▱", "▰▱▱▱▱", "▰▰▱▱▱", "▰▰▰▱▱", "▰▰▰▰▱", "▰▰▰▰▰", "▱▰▰▰▰", "▱▱▰▰▰", "▱▱▱▰▰", "▱▱▱▱▰"];
+const SCAN_FRAMES = [
+  "▱▱▱▱▱",
+  "▰▱▱▱▱",
+  "▰▰▱▱▱",
+  "▰▰▰▱▱",
+  "▰▰▰▰▱",
+  "▰▰▰▰▰",
+  "▱▰▰▰▰",
+  "▱▱▰▰▰",
+  "▱▱▱▰▰",
+  "▱▱▱▱▰",
+];
 const WRITE_FRAMES = ["✎", "✎·", "✎··", "✎···", "✎····", "✎···", "✎··", "✎·"];
 
 export const THEMES: Record<string, OperationTheme> = {
@@ -115,9 +159,7 @@ export class ThemedSpinner {
       const icon = c(this.theme.icon, this.theme.color);
       const anim = c(f, this.theme.brightColor);
       const text = c(displayLabel, dim);
-      const time = this.elapsed >= 3000
-        ? c(` ${formatElapsed(this.elapsed)}`, gray)
-        : "";
+      const time = this.elapsed >= 3000 ? c(` ${formatElapsed(this.elapsed)}`, gray) : "";
       process.stdout.write(`${clearLine}  ${icon} ${text} ${anim}${time}`);
       this.frame++;
     }, 120);
@@ -192,7 +234,12 @@ export interface StartupModelInfo {
   readonly model: string;
 }
 
-export async function animateStartup(version: string, projectName: string, bookTitle?: string, modelInfo?: StartupModelInfo): Promise<void> {
+export async function animateStartup(
+  version: string,
+  projectName: string,
+  bookTitle?: string,
+  modelInfo?: StartupModelInfo,
+): Promise<void> {
   const isTTY = process.stdout.isTTY;
 
   if (isTTY) {
@@ -212,9 +259,7 @@ export async function animateStartup(version: string, projectName: string, bookT
     await sleep(100);
 
     // Project info strip
-    const infoParts = [
-      c("◇", cyan) + " " + c(projectName, white, bold),
-    ];
+    const infoParts = [c("◇", cyan) + " " + c(projectName, white, bold)];
     if (bookTitle) {
       infoParts.push(c("◇", cyan) + " " + c(bookTitle, brightCyan));
     }
@@ -277,37 +322,38 @@ export function formatResultCard(content: string, intent?: string): string {
 }
 
 export function intentToBadge(intent: string, locale: TuiLocale = resolveTuiLocale()): string {
-  const labels = locale === "en"
-    ? {
-        write_next: " WRITE ",
-        revise_chapter: " REVISE ",
-        rewrite_chapter: " REWRITE ",
-        update_focus: " FOCUS ",
-        explain_status: " STATUS ",
-        explain_failure: " DEBUG ",
-        pause_book: " PAUSE ",
-        list_books: " BOOKS ",
-        select_book: " SELECT ",
-        switch_mode: " MODE ",
-        rename_entity: " RENAME ",
-        patch_chapter_text: " PATCH ",
-        edit_truth: " TRUTH ",
-      }
-    : {
-        write_next: " 写作 ",
-        revise_chapter: " 修订 ",
-        rewrite_chapter: " 重写 ",
-        update_focus: " 焦点 ",
-        explain_status: " 状态 ",
-        explain_failure: " 调试 ",
-        pause_book: " 暂停 ",
-        list_books: " 作品 ",
-        select_book: " 选择 ",
-        switch_mode: " 模式 ",
-        rename_entity: " 改名 ",
-        patch_chapter_text: " 修补 ",
-        edit_truth: " 真相 ",
-      };
+  const labels =
+    locale === "en"
+      ? {
+          write_next: " WRITE ",
+          revise_chapter: " REVISE ",
+          rewrite_chapter: " REWRITE ",
+          update_focus: " FOCUS ",
+          explain_status: " STATUS ",
+          explain_failure: " DEBUG ",
+          pause_book: " PAUSE ",
+          list_books: " BOOKS ",
+          select_book: " SELECT ",
+          switch_mode: " MODE ",
+          rename_entity: " RENAME ",
+          patch_chapter_text: " PATCH ",
+          edit_truth: " TRUTH ",
+        }
+      : {
+          write_next: " 写作 ",
+          revise_chapter: " 修订 ",
+          rewrite_chapter: " 重写 ",
+          update_focus: " 焦点 ",
+          explain_status: " 状态 ",
+          explain_failure: " 调试 ",
+          pause_book: " 暂停 ",
+          list_books: " 作品 ",
+          select_book: " 选择 ",
+          switch_mode: " 模式 ",
+          rename_entity: " 改名 ",
+          patch_chapter_text: " 修补 ",
+          edit_truth: " 真相 ",
+        };
   const backgrounds: Record<string, string> = {
     write_next: bgMagenta,
     revise_chapter: bgBlue,
@@ -380,7 +426,11 @@ export function printStyledStatus(params: {
   readonly mode: string;
   readonly bookId?: string;
   readonly status: string;
-  readonly events: ReadonlyArray<{ readonly kind: string; readonly detail?: string; readonly status: string }>;
+  readonly events: ReadonlyArray<{
+    readonly kind: string;
+    readonly detail?: string;
+    readonly status: string;
+  }>;
 }): void {
   const locale = resolveTuiLocale();
   console.log();
@@ -396,7 +446,11 @@ export function formatStyledStatusLines(
     readonly mode: string;
     readonly bookId?: string;
     readonly status: string;
-    readonly events: ReadonlyArray<{ readonly kind: string; readonly detail?: string; readonly status: string }>;
+    readonly events: ReadonlyArray<{
+      readonly kind: string;
+      readonly detail?: string;
+      readonly status: string;
+    }>;
   },
 ): string[] {
   const copy = getTuiCopy(locale);
@@ -444,7 +498,9 @@ function formatElapsed(ms: number): string {
   return `${m}m${s % 60}s`;
 }
 
-export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()): StyledHelpSection[] {
+export function buildStyledHelpSections(
+  locale: TuiLocale = resolveTuiLocale(),
+): StyledHelpSection[] {
   if (locale === "en") {
     return [
       {
@@ -463,9 +519,7 @@ export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()):
       },
       {
         title: "Control",
-        commands: [
-          ["/focus <text>", "Update current focus"],
-        ],
+        commands: [["/focus <text>", "Update current focus"]],
       },
       {
         title: "Session",
@@ -495,9 +549,7 @@ export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()):
     },
     {
       title: "控制",
-      commands: [
-        ["/focus <text>", "更新当前焦点"],
-      ],
+      commands: [["/focus <text>", "更新当前焦点"]],
     },
     {
       title: "会话",
@@ -510,7 +562,10 @@ export function buildStyledHelpSections(locale: TuiLocale = resolveTuiLocale()):
   ];
 }
 
-function buildHelpFooter(locale: TuiLocale): { readonly title: string; readonly examples: readonly string[] } {
+function buildHelpFooter(locale: TuiLocale): {
+  readonly title: string;
+  readonly examples: readonly string[];
+} {
   if (locale === "en") {
     return {
       title: "Natural language also works:",

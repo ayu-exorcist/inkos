@@ -17,11 +17,46 @@ export interface ServicePreset {
 }
 
 export const SERVICE_PRESETS: Record<string, ServicePreset> = {
-  openai:      { providerFamily: "openai",    api: "openai-responses",   baseUrl: "https://api.openai.com/v1",                          label: "OpenAI",          temperatureRange: [0, 2], defaultTemperature: 1.0, writingTemperature: 1.0 },
-  anthropic:   { providerFamily: "anthropic", api: "anthropic-messages", baseUrl: "https://api.anthropic.com",                          label: "Anthropic",       temperatureRange: [0, 1], defaultTemperature: 1.0, writingTemperature: 1.0, temperatureHint: "不要同时改 temperature 和 top_p" },
-  deepseek:    { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://api.deepseek.com",                           label: "DeepSeek",        temperatureRange: [0, 2], defaultTemperature: 1.0, writingTemperature: 1.5, temperatureHint: "创意写作推荐 1.5" },
-  moonshot:    { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://api.moonshot.cn/v1",                         label: "Moonshot (Kimi)", temperatureRange: [0, 1], defaultTemperature: 0.3, writingTemperature: 1.0, temperatureHint: "kimi-k2.5 推荐 temperature=1.0" },
-  minimax:     {
+  openai: {
+    providerFamily: "openai",
+    api: "openai-responses",
+    baseUrl: "https://api.openai.com/v1",
+    label: "OpenAI",
+    temperatureRange: [0, 2],
+    defaultTemperature: 1.0,
+    writingTemperature: 1.0,
+  },
+  anthropic: {
+    providerFamily: "anthropic",
+    api: "anthropic-messages",
+    baseUrl: "https://api.anthropic.com",
+    label: "Anthropic",
+    temperatureRange: [0, 1],
+    defaultTemperature: 1.0,
+    writingTemperature: 1.0,
+    temperatureHint: "不要同时改 temperature 和 top_p",
+  },
+  deepseek: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://api.deepseek.com",
+    label: "DeepSeek",
+    temperatureRange: [0, 2],
+    defaultTemperature: 1.0,
+    writingTemperature: 1.5,
+    temperatureHint: "创意写作推荐 1.5",
+  },
+  moonshot: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://api.moonshot.cn/v1",
+    label: "Moonshot (Kimi)",
+    temperatureRange: [0, 1],
+    defaultTemperature: 0.3,
+    writingTemperature: 1.0,
+    temperatureHint: "kimi-k2.5 推荐 temperature=1.0",
+  },
+  minimax: {
     providerFamily: "openai",
     api: "openai-completions",
     baseUrl: "https://api.minimaxi.com/v1",
@@ -29,9 +64,17 @@ export const SERVICE_PRESETS: Record<string, ServicePreset> = {
     temperatureRange: [0, 2],
     defaultTemperature: 0.9,
     writingTemperature: 0.9,
-    knownModels: ["MiniMax-M2.7", "MiniMax-M2.7-highspeed", "MiniMax-M2.5", "MiniMax-M2.5-highspeed", "MiniMax-M2.1", "MiniMax-M2.1-highspeed", "MiniMax-M2"],
+    knownModels: [
+      "MiniMax-M2.7",
+      "MiniMax-M2.7-highspeed",
+      "MiniMax-M2.5",
+      "MiniMax-M2.5-highspeed",
+      "MiniMax-M2.1",
+      "MiniMax-M2.1-highspeed",
+      "MiniMax-M2",
+    ],
   },
-  bailian:     {
+  bailian: {
     providerFamily: "anthropic",
     api: "anthropic-messages",
     baseUrl: "https://dashscope.aliyuncs.com/apps/anthropic",
@@ -41,13 +84,49 @@ export const SERVICE_PRESETS: Record<string, ServicePreset> = {
     writingTemperature: 1.0,
     piProvider: "anthropic",
   },
-  zhipu:       { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://open.bigmodel.cn/api/paas/v4",               label: "智谱 GLM",        temperatureRange: [0, 1], defaultTemperature: 0.95, writingTemperature: 0.95, piProvider: "zai" },
-  siliconflow: { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://api.siliconflow.cn/v1",                      label: "硅基流动" },
-  ppio:        { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://api.ppinfra.com/v3/openai",                  label: "PPIO" },
-  openrouter:  { providerFamily: "openai",    api: "openai-responses",   baseUrl: "https://openrouter.ai/api/v1",                       label: "OpenRouter",      piProvider: "openrouter" },
-  kkaiapi:     { providerFamily: "openai",    api: "openai-completions", baseUrl: "https://api.kkaiapi.com/v1",                         label: "kkaiapi",         modelsBaseUrl: "https://api.kkaiapi.com/v1" },
-  ollama:      { providerFamily: "openai",    api: "openai-completions", baseUrl: "http://localhost:11434/v1",                          label: "Ollama (本地)" },
-  custom:      { providerFamily: "openai",    api: "openai-completions", baseUrl: "",                                                    label: "自定义端点" },
+  zhipu: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+    label: "智谱 GLM",
+    temperatureRange: [0, 1],
+    defaultTemperature: 0.95,
+    writingTemperature: 0.95,
+    piProvider: "zai",
+  },
+  siliconflow: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://api.siliconflow.cn/v1",
+    label: "硅基流动",
+  },
+  ppio: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://api.ppinfra.com/v3/openai",
+    label: "PPIO",
+  },
+  openrouter: {
+    providerFamily: "openai",
+    api: "openai-responses",
+    baseUrl: "https://openrouter.ai/api/v1",
+    label: "OpenRouter",
+    piProvider: "openrouter",
+  },
+  kkaiapi: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "https://api.kkaiapi.com/v1",
+    label: "kkaiapi",
+    modelsBaseUrl: "https://api.kkaiapi.com/v1",
+  },
+  ollama: {
+    providerFamily: "openai",
+    api: "openai-completions",
+    baseUrl: "http://localhost:11434/v1",
+    label: "Ollama (本地)",
+  },
+  custom: { providerFamily: "openai", api: "openai-completions", baseUrl: "", label: "自定义端点" },
 };
 
 export function resolveServicePreset(service: string): ServicePreset | undefined {
@@ -56,11 +135,12 @@ export function resolveServicePreset(service: string): ServicePreset | undefined
   if (!provider && !legacy) return undefined;
 
   return {
-    providerFamily: legacy?.providerFamily ?? (provider?.api.startsWith("anthropic") ? "anthropic" : "openai"),
+    providerFamily:
+      legacy?.providerFamily ?? (provider?.api.startsWith("anthropic") ? "anthropic" : "openai"),
     api: (provider?.api ?? legacy?.api ?? "openai-completions") as ServicePreset["api"],
     baseUrl: provider?.baseUrl ?? legacy?.baseUrl ?? "",
     label: provider?.label ?? legacy?.label ?? service,
-    ...(provider?.temperatureRange ?? legacy?.temperatureRange
+    ...((provider?.temperatureRange ?? legacy?.temperatureRange)
       ? { temperatureRange: provider?.temperatureRange ?? legacy?.temperatureRange }
       : {}),
     ...(provider?.defaultTemperature !== undefined || legacy?.defaultTemperature !== undefined
@@ -69,7 +149,7 @@ export function resolveServicePreset(service: string): ServicePreset | undefined
     ...(provider?.writingTemperature !== undefined || legacy?.writingTemperature !== undefined
       ? { writingTemperature: provider?.writingTemperature ?? legacy?.writingTemperature }
       : {}),
-    ...(provider?.temperatureHint ?? legacy?.temperatureHint
+    ...((provider?.temperatureHint ?? legacy?.temperatureHint)
       ? { temperatureHint: provider?.temperatureHint ?? legacy?.temperatureHint }
       : {}),
     ...(legacy?.knownModels ? { knownModels: legacy.knownModels } : {}),
@@ -117,6 +197,7 @@ export function guessServiceFromBaseUrl(baseUrl: string): string {
     try {
       if (baseUrl.includes(new URL(preset.baseUrl).hostname)) return key;
     } catch {
+      // failure expected, safe to ignore
       continue;
     }
   }
@@ -138,7 +219,11 @@ export interface ModelInfo {
   readonly maxOutput?: number;
 }
 
-function toModelInfo(inkosModel: { id: string; maxOutput: number; contextWindowTokens: number }): ModelInfo {
+function toModelInfo(inkosModel: {
+  id: string;
+  maxOutput: number;
+  contextWindowTokens: number;
+}): ModelInfo {
   return {
     id: inkosModel.id,
     name: inkosModel.id,
@@ -168,16 +253,27 @@ export async function listModelsForService(
   const byId = new Map<string, ModelInfo>();
 
   // 1) 先试 live /models probe
-  const probeBaseUrl = liveBaseUrl || provider?.modelsBaseUrl || provider?.baseUrl || resolveServiceModelsBaseUrl(service);
-  const providerFamily = preset?.providerFamily ?? (provider?.api.startsWith("anthropic") ? "anthropic" : "openai");
-  const canProbeWithoutApiKey = isApiKeyOptionalForEndpoint({ provider: providerFamily, baseUrl: probeBaseUrl });
+  const probeBaseUrl =
+    liveBaseUrl ||
+    provider?.modelsBaseUrl ||
+    provider?.baseUrl ||
+    resolveServiceModelsBaseUrl(service);
+  const providerFamily =
+    preset?.providerFamily ?? (provider?.api.startsWith("anthropic") ? "anthropic" : "openai");
+  const canProbeWithoutApiKey = isApiKeyOptionalForEndpoint({
+    provider: providerFamily,
+    baseUrl: probeBaseUrl,
+  });
   if ((apiKey || canProbeWithoutApiKey) && probeBaseUrl) {
     const probed = await probeModelsFromUpstream(probeBaseUrl, apiKey ?? "", 10_000);
     if (probed.length > 0) {
       const { lookupModel } = await import("./providers/lookup.js");
       for (const m of probed) {
         const card = lookupModel(service, m.id);
-        byId.set(m.id, card ? toModelInfo(card) : { id: m.id, name: m.name, contextWindow: m.contextWindow });
+        byId.set(
+          m.id,
+          card ? toModelInfo(card) : { id: m.id, name: m.name, contextWindow: m.contextWindow },
+        );
       }
     }
   }
@@ -201,7 +297,9 @@ export async function listModelsForService(
   return Array.from(byId.values());
 }
 
-export async function listServicesWithModelCount(): Promise<ReadonlyArray<{ service: string; label: string; modelCount: number }>> {
+export async function listServicesWithModelCount(): Promise<
+  ReadonlyArray<{ service: string; label: string; modelCount: number }>
+> {
   const result: { service: string; label: string; modelCount: number }[] = [];
   for (const [key, preset] of Object.entries(SERVICE_PRESETS)) {
     if (key === "custom") {

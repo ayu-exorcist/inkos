@@ -3,13 +3,36 @@ name: System Apocalypse
 id: system-apocalypse
 language: en
 chapterTypes: ["Survival", "Combat", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: true
 powerScaling: true
 eraResearch: false
 pacingRule: "Early (ch 1-15): survival pressure every chapter. Mid (ch 15-50): power-up + faction politics every 3-5 chapters. Late: expansion and existential threats."
-satisfactionTypes: ["Survival Against Odds", "Level Up", "Territory Claimed", "Faction Victory", "System Secret Revealed", "Societal Rebuild Milestone"]
-auditDimensions: [1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Survival Against Odds",
+    "Level Up",
+    "Territory Claimed",
+    "Faction Victory",
+    "System Secret Revealed",
+    "Societal Rebuild Milestone",
+  ]
+auditDimensions: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

@@ -108,22 +108,28 @@ export function formatWriteNextResultLines(
   ];
 
   if (result.revised) {
-    lines.push(localize(language, {
-      zh: "  自动修正：已执行（已修复关键问题）",
-      en: "  Auto-revised: YES (critical issues were fixed)",
-    }));
+    lines.push(
+      localize(language, {
+        zh: "  自动修正：已执行（已修复关键问题）",
+        en: "  Auto-revised: YES (critical issues were fixed)",
+      }),
+    );
   }
 
-  lines.push(localize(language, {
-    zh: `  状态：${result.status}`,
-    en: `  Status: ${result.status}`,
-  }));
+  lines.push(
+    localize(language, {
+      zh: `  状态：${result.status}`,
+      en: `  Status: ${result.status}`,
+    }),
+  );
 
   if (result.issues.length > 0) {
-    lines.push(localize(language, {
-      zh: "  问题：",
-      en: "  Issues:",
-    }));
+    lines.push(
+      localize(language, {
+        zh: "  问题：",
+        en: "  Issues:",
+      }),
+    );
     for (const issue of result.issues) {
       lines.push(`    [${issue.severity}] ${issue.category}: ${issue.description}`);
     }
@@ -150,10 +156,7 @@ export function formatImportChaptersDiscovery(
   });
 }
 
-export function formatImportChaptersResume(
-  language: CliLanguage,
-  resumeFrom: number,
-): string {
+export function formatImportChaptersResume(language: CliLanguage, resumeFrom: number): string {
   return localize(language, {
     zh: `从第 ${resumeFrom} 章继续导入。`,
     en: `Resuming from chapter ${resumeFrom}.`,

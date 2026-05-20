@@ -2,7 +2,14 @@ import { Command } from "commander";
 import { PipelineRunner, StateManager, splitChapters } from "@actalk/inkos-core";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 import {
   formatImportCanonComplete,
   formatImportCanonStart,
@@ -12,8 +19,7 @@ import {
   resolveCliLanguage,
 } from "../localization.js";
 
-export const importCommand = new Command("import")
-  .description("Import external data into a book");
+export const importCommand = new Command("import").description("Import external data into a book");
 
 importCommand
   .command("canon")
@@ -37,11 +43,17 @@ importCommand
       await pipeline.importCanon(targetBookId, opts.from);
 
       if (opts.json) {
-        log(JSON.stringify({
-          targetBookId,
-          parentBookId: opts.from,
-          output: "story/parent_canon.md",
-        }, null, 2));
+        log(
+          JSON.stringify(
+            {
+              targetBookId,
+              parentBookId: opts.from,
+              output: "story/parent_canon.md",
+            },
+            null,
+            2,
+          ),
+        );
       } else {
         for (const line of formatImportCanonComplete(language)) {
           log(line);
@@ -59,12 +71,20 @@ importCommand
 
 importCommand
   .command("chapters")
-  .description("Import existing chapters for continuation writing. Reverse-engineers all truth files.")
+  .description(
+    "Import existing chapters for continuation writing. Reverse-engineers all truth files.",
+  )
   .argument("[book-id]", "Target book ID (auto-detected if only one book)")
-  .requiredOption("--from <path>", "Path to a text file (auto-split) or directory of .md/.txt files")
+  .requiredOption(
+    "--from <path>",
+    "Path to a text file (auto-split) or directory of .md/.txt files",
+  )
   .option("--split <regex>", "Custom regex for chapter splitting (single-file mode)")
   .option("--resume-from <n>", "Resume from chapter N (for interrupted imports)", parseInt)
-  .option("--series", "Treat as a new series (shared universe, independent story) instead of direct continuation")
+  .option(
+    "--series",
+    "Treat as a new series (shared universe, independent story) instead of direct continuation",
+  )
   .option("--json", "Output JSON")
   .action(async (bookIdArg: string | undefined, opts) => {
     try {
@@ -79,7 +99,7 @@ importCommand
       if (existingChapterCount > 0 && !opts.resumeFrom) {
         throw new Error(
           `Book "${bookId}" already has ${existingChapterCount} chapter(s). ` +
-          `Use --resume-from <n> to append, or delete existing chapters first.`
+            `Use --resume-from <n> to append, or delete existing chapters first.`,
         );
       }
 
@@ -91,9 +111,7 @@ importCommand
       if (fromStat.isDirectory()) {
         // Directory mode: read each .md/.txt file in sorted order
         const entries = await readdir(fromPath);
-        const textFiles = entries
-          .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
-          .sort();
+        const textFiles = entries.filter((f) => f.endsWith(".md") || f.endsWith(".txt")).sort();
 
         if (textFiles.length === 0) {
           throw new Error(`No .md or .txt files found in ${fromPath}`);
@@ -114,7 +132,7 @@ importCommand
         if (chapters.length === 0) {
           throw new Error(
             `No chapters found in ${fromPath}. ` +
-            `Default pattern matches "第X章" and "Chapter X". Use --split to provide a custom regex.`,
+              `Default pattern matches "第X章" and "Chapter X". Use --split to provide a custom regex.`,
           );
         }
       }

@@ -86,9 +86,7 @@ ${buildSettlerOutputFormat(genreProfile)}
 }
 
 function buildSettlerOutputFormat(gp: GenreProfile): string {
-  const chapterTypeExample = gp.chapterTypes.length > 0
-    ? gp.chapterTypes[0]
-    : "主线推进";
+  const chapterTypeExample = gp.chapterTypes.length > 0 ? gp.chapterTypes[0] : "主线推进";
 
   return `=== POST_SETTLEMENT ===
 （简要说明本章有哪些状态变动、伏笔推进、结算注意事项；允许 Markdown 表格或要点）
@@ -190,25 +188,23 @@ export function buildSettlerUserPrompt(params: {
   readonly governedControlBlock?: string;
   readonly validationFeedback?: string;
 }): string {
-  const ledgerBlock = params.ledger
-    ? `\n## 当前资源账本\n${params.ledger}\n`
-    : "";
+  const ledgerBlock = params.ledger ? `\n## 当前资源账本\n${params.ledger}\n` : "";
 
-  const summariesBlock = params.chapterSummaries !== "(文件尚未创建)"
-    ? `\n## 已有章节摘要\n${params.chapterSummaries}\n`
-    : "";
+  const summariesBlock =
+    params.chapterSummaries !== "(文件尚未创建)"
+      ? `\n## 已有章节摘要\n${params.chapterSummaries}\n`
+      : "";
 
-  const subplotBlock = params.subplotBoard !== "(文件尚未创建)"
-    ? `\n## 当前支线进度板\n${params.subplotBoard}\n`
-    : "";
+  const subplotBlock =
+    params.subplotBoard !== "(文件尚未创建)" ? `\n## 当前支线进度板\n${params.subplotBoard}\n` : "";
 
-  const emotionalBlock = params.emotionalArcs !== "(文件尚未创建)"
-    ? `\n## 当前情感弧线\n${params.emotionalArcs}\n`
-    : "";
+  const emotionalBlock =
+    params.emotionalArcs !== "(文件尚未创建)" ? `\n## 当前情感弧线\n${params.emotionalArcs}\n` : "";
 
-  const matrixBlock = params.characterMatrix !== "(文件尚未创建)"
-    ? `\n## 当前角色交互矩阵\n${params.characterMatrix}\n`
-    : "";
+  const matrixBlock =
+    params.characterMatrix !== "(文件尚未创建)"
+      ? `\n## 当前角色交互矩阵\n${params.characterMatrix}\n`
+      : "";
 
   const observationsBlock = params.observations
     ? `\n## 观察日志（由 Observer 提取，包含本章所有事实变化）\n${params.observations}\n\n基于以上观察日志和正文，更新所有追踪文件。确保观察日志中的每一项变化都反映在对应的文件中。\n`
@@ -217,9 +213,7 @@ export function buildSettlerUserPrompt(params: {
     ? `\n## 已选长程证据\n${params.selectedEvidenceBlock}\n`
     : "";
   const controlBlock = params.governedControlBlock ?? "";
-  const outlineBlock = controlBlock.length === 0
-    ? `\n## 卷纲\n${params.volumeOutline}\n`
-    : "";
+  const outlineBlock = controlBlock.length === 0 ? `\n## 卷纲\n${params.volumeOutline}\n` : "";
   const validationFeedbackBlock = params.validationFeedback
     ? `\n## 状态校验反馈\n${params.validationFeedback}\n\n请严格纠正这些矛盾，只修正 truth files，不要改写正文，不要引入正文中不存在的新事实。\n`
     : "";

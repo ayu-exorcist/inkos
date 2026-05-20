@@ -25,12 +25,15 @@ export const updateCommand = new Command("update")
       // Don't downgrade development versions
       const current = currentVersion.split(".").map(Number);
       const remote = remoteVersion.split(".").map(Number);
-      const isNewer = current[0]! > remote[0]! ||
+      const isNewer =
+        current[0]! > remote[0]! ||
         (current[0] === remote[0] && current[1]! > remote[1]!) ||
         (current[0] === remote[0] && current[1] === remote[1] && current[2]! > remote[2]!);
 
       if (isNewer) {
-        log(`You're running a newer development version (${currentVersion} > ${remoteVersion}). Skipping.`);
+        log(
+          `You're running a newer development version (${currentVersion} > ${remoteVersion}). Skipping.`,
+        );
         return;
       }
 

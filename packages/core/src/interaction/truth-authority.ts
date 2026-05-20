@@ -1,9 +1,4 @@
-export type TruthAuthority =
-  | "direction"
-  | "foundation"
-  | "rules"
-  | "runtime-truth"
-  | "memory";
+export type TruthAuthority = "direction" | "foundation" | "rules" | "runtime-truth" | "memory";
 
 const NORMALIZED_TRUTH_FILES = new Set([
   "author_intent.md",

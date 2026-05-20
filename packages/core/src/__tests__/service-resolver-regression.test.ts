@@ -5,13 +5,13 @@ import { tmpdir } from "node:os";
 
 // Simulate pi-ai returning MiniMax's stale Anthropic-compatible route.
 // Our resolveServiceModel should override it with the current OpenAI-compatible preset.
-vi.mock("@mariozechner/pi-ai", () => ({
+vi.mock("@earendil-works/pi-ai", () => ({
   getModel: vi.fn((provider: string, modelId: string) => {
     if (modelId === "MiniMax-M2.7") {
       return {
         id: "MiniMax-M2.7",
         name: "MiniMax-M2.7",
-        api: "anthropic-messages",        // stale pi-ai metadata
+        api: "anthropic-messages", // stale pi-ai metadata
         provider: "minimax",
         baseUrl: "https://api.minimax.io/anthropic",
         reasoning: true,
@@ -66,7 +66,9 @@ describe("resolveServiceModel regression — preset baseUrl override", () => {
 
   it("customBaseUrl overrides both preset and pi-ai", async () => {
     const result = await resolveServiceModel(
-      "minimax", "MiniMax-M2.7", root,
+      "minimax",
+      "MiniMax-M2.7",
+      root,
       "https://custom-proxy.example.com/v1",
     );
 

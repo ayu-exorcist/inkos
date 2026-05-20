@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { parseWriterOutput, parseCreativeOutput, type ParsedWriterOutput } from "../agents/writer-parser.js";
+import {
+  parseWriterOutput,
+  parseCreativeOutput,
+  type ParsedWriterOutput,
+} from "../agents/writer-parser.js";
 import type { GenreProfile } from "../models/genre-profile.js";
 import { countChapterLength } from "../utils/length-metrics.js";
 
@@ -94,30 +98,21 @@ describe("WriterAgent parseOutput", () => {
   // -------------------------------------------------------------------------
 
   it("returns default title when CHAPTER_TITLE is missing", () => {
-    const output = [
-      "=== CHAPTER_CONTENT ===",
-      "Some content here.",
-    ].join("\n");
+    const output = ["=== CHAPTER_CONTENT ===", "Some content here."].join("\n");
 
     const result = callParseOutput(42, output);
     expect(result.title).toBe("第42章");
   });
 
   it("returns an English default title when CHAPTER_TITLE is missing in English mode", () => {
-    const output = [
-      "=== CHAPTER_CONTENT ===",
-      "Some content here.",
-    ].join("\n");
+    const output = ["=== CHAPTER_CONTENT ===", "Some content here."].join("\n");
 
     const result = callParseOutput(42, output, defaultGenreProfile, "en_words");
     expect(result.title).toBe("Chapter 42");
   });
 
   it("returns empty content when CHAPTER_CONTENT is missing", () => {
-    const output = [
-      "=== CHAPTER_TITLE ===",
-      "A Title",
-    ].join("\n");
+    const output = ["=== CHAPTER_TITLE ===", "A Title"].join("\n");
 
     const result = callParseOutput(1, output);
     expect(result.content).toBe("");
@@ -237,10 +232,7 @@ describe("WriterAgent parseOutput", () => {
 
   it("correctly counts Chinese characters in wordCount", () => {
     const chineseContent = "这是一段测试文本，包含二十个中文字符加上标点符号。";
-    const output = [
-      "=== CHAPTER_CONTENT ===",
-      chineseContent,
-    ].join("\n");
+    const output = ["=== CHAPTER_CONTENT ===", chineseContent].join("\n");
 
     const result = callParseOutput(1, output);
     // wordCount is content.length which counts each character (including punctuation)
@@ -249,10 +241,7 @@ describe("WriterAgent parseOutput", () => {
 
   it("counts English content with the shared counting helper when requested", () => {
     const englishContent = "He looked at the sky.";
-    const output = [
-      "=== CHAPTER_CONTENT ===",
-      englishContent,
-    ].join("\n");
+    const output = ["=== CHAPTER_CONTENT ===", englishContent].join("\n");
 
     const result = callParseOutput(1, output, defaultGenreProfile, "en_words");
     expect(result.wordCount).toBe(countChapterLength(englishContent, "en_words"));

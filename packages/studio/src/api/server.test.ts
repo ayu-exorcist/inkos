@@ -42,71 +42,136 @@ type ServicePresetMock = {
   knownModels: string[];
 };
 const SERVICE_PRESETS_MOCK: Record<string, ServicePresetMock> = {
-  openai: { providerFamily: "openai", baseUrl: "https://api.openai.com/v1", modelsBaseUrl: "https://api.openai.com/v1", knownModels: [] as string[] },
-  anthropic: { providerFamily: "anthropic", baseUrl: "https://api.anthropic.com", modelsBaseUrl: "https://api.anthropic.com", knownModels: [] as string[] },
-  minimax: { providerFamily: "openai", baseUrl: "https://api.minimaxi.com/v1", modelsBaseUrl: "https://api.minimaxi.com/v1", knownModels: [] as string[] },
-  bailian: { providerFamily: "anthropic", baseUrl: "https://dashscope.aliyuncs.com/apps/anthropic", modelsBaseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", knownModels: [] as string[] },
-  google: { providerFamily: "openai", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", modelsBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", knownModels: [] as string[] },
-  kkaiapi: { providerFamily: "openai", baseUrl: "https://api.kkaiapi.com/v1", modelsBaseUrl: "https://api.kkaiapi.com/v1", knownModels: [] as string[] },
-  ollama: { providerFamily: "openai", baseUrl: "http://localhost:11434/v1", modelsBaseUrl: "http://localhost:11434/v1", knownModels: [] as string[] },
+  openai: {
+    providerFamily: "openai",
+    baseUrl: "https://api.openai.com/v1",
+    modelsBaseUrl: "https://api.openai.com/v1",
+    knownModels: [] as string[],
+  },
+  anthropic: {
+    providerFamily: "anthropic",
+    baseUrl: "https://api.anthropic.com",
+    modelsBaseUrl: "https://api.anthropic.com",
+    knownModels: [] as string[],
+  },
+  minimax: {
+    providerFamily: "openai",
+    baseUrl: "https://api.minimaxi.com/v1",
+    modelsBaseUrl: "https://api.minimaxi.com/v1",
+    knownModels: [] as string[],
+  },
+  bailian: {
+    providerFamily: "anthropic",
+    baseUrl: "https://dashscope.aliyuncs.com/apps/anthropic",
+    modelsBaseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    knownModels: [] as string[],
+  },
+  google: {
+    providerFamily: "openai",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    modelsBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    knownModels: [] as string[],
+  },
+  kkaiapi: {
+    providerFamily: "openai",
+    baseUrl: "https://api.kkaiapi.com/v1",
+    modelsBaseUrl: "https://api.kkaiapi.com/v1",
+    knownModels: [] as string[],
+  },
+  ollama: {
+    providerFamily: "openai",
+    baseUrl: "http://localhost:11434/v1",
+    modelsBaseUrl: "http://localhost:11434/v1",
+    knownModels: [] as string[],
+  },
   custom: { providerFamily: "openai", baseUrl: "", knownModels: [] as string[] },
 };
 const resolveServicePresetMock = vi.fn((service: string) => SERVICE_PRESETS_MOCK[service]);
-const resolveServiceProviderFamilyMock = vi.fn((service: string) => resolveServicePresetMock(service)?.providerFamily);
+const resolveServiceProviderFamilyMock = vi.fn(
+  (service: string) => resolveServicePresetMock(service)?.providerFamily,
+);
 const resolveServiceModelsBaseUrlMock = vi.fn((service: string) => {
   const preset = SERVICE_PRESETS_MOCK[service];
   return preset?.modelsBaseUrl ?? preset?.baseUrl;
 });
-const listModelsForServiceMock = vi.fn(async (service: string, apiKey?: string, liveBaseUrl?: string) => {
-  const preset = resolveServicePresetMock(service);
-  if (!preset) return [];
-  if (preset.knownModels.length > 0) {
-    return preset.knownModels.map((id) => ({ id, name: id, reasoning: false, contextWindow: 0 }));
-  }
-  const modelsBaseUrl = liveBaseUrl ?? resolveServiceModelsBaseUrlMock(service);
-  const allowsNoKey = Boolean(modelsBaseUrl?.startsWith("http://localhost") || modelsBaseUrl?.startsWith("http://127.0.0.1"));
-  if ((!apiKey && !allowsNoKey) || !modelsBaseUrl) return [];
-  const res = await fetch(`${modelsBaseUrl.replace(/\/$/, "")}/models`, {
-    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) return [];
-  const json = await res.json() as { data?: Array<{ id: string }> };
-  return (json.data ?? []).map((model) => ({
-    id: model.id,
-    name: model.id,
-    reasoning: false,
-    contextWindow: 0,
-  }));
-});
+const listModelsForServiceMock = vi.fn(
+  async (service: string, apiKey?: string, liveBaseUrl?: string) => {
+    const preset = resolveServicePresetMock(service);
+    if (!preset) return [];
+    if (preset.knownModels.length > 0) {
+      return preset.knownModels.map((id) => ({ id, name: id, reasoning: false, contextWindow: 0 }));
+    }
+    const modelsBaseUrl = liveBaseUrl ?? resolveServiceModelsBaseUrlMock(service);
+    const allowsNoKey = Boolean(
+      modelsBaseUrl?.startsWith("http://localhost") ||
+      modelsBaseUrl?.startsWith("http://127.0.0.1"),
+    );
+    if ((!apiKey && !allowsNoKey) || !modelsBaseUrl) return [];
+    const res = await fetch(`${modelsBaseUrl.replace(/\/$/, "")}/models`, {
+      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { data?: Array<{ id: string }> };
+    return (json.data ?? []).map((model) => ({
+      id: model.id,
+      name: model.id,
+      reasoning: false,
+      contextWindow: 0,
+    }));
+  },
+);
 const endpointIdsByGroup = {
   overseas: ["anthropic", "google", "mistral", "openai", "xai"],
   china: [
-    "ai360", "baichuan", "bailian", "deepseek", "hunyuan", "internlm", "longcat",
-    "minimax", "moonshot", "sensenova", "spark", "stepfun", "tencentcloud",
-    "volcengine", "wenxin", "xiaomimimo", "zeroone", "zhipu",
+    "ai360",
+    "baichuan",
+    "bailian",
+    "deepseek",
+    "hunyuan",
+    "internlm",
+    "longcat",
+    "minimax",
+    "moonshot",
+    "sensenova",
+    "spark",
+    "stepfun",
+    "tencentcloud",
+    "volcengine",
+    "wenxin",
+    "xiaomimimo",
+    "zeroone",
+    "zhipu",
   ],
   aggregator: ["kkaiapi", "openrouter", "newapi", "siliconcloud"],
   local: ["githubCopilot", "ollama"],
   codingPlan: [
-    "astronCodingPlan", "bailianCodingPlan", "glmCodingPlan", "kimiCodingPlan", "kimicode",
-    "minimaxCodingPlan", "opencodeCodingPlan", "volcengineCodingPlan",
+    "astronCodingPlan",
+    "bailianCodingPlan",
+    "glmCodingPlan",
+    "kimiCodingPlan",
+    "kimicode",
+    "minimaxCodingPlan",
+    "opencodeCodingPlan",
+    "volcengineCodingPlan",
   ],
 } as const;
 const endpointMocks = [
-  ...Object.entries(endpointIdsByGroup).flatMap(([group, ids]) => ids.map((id) => ({
-    id,
-    label: id,
-    group,
-    ...(id === "google" ? { checkModel: "gemini-2.5-flash" } : {}),
-    ...(id === "minimax" ? { checkModel: "MiniMax-M2.7" } : {}),
-    ...(id === "ollama" ? { checkModel: "llama3.2:3b" } : {}),
-    ...(id === "volcengine" ? { checkModel: "doubao-lite-32k" } : {}),
-    models: [
-      { id: `${id}-model`, maxOutput: 4096, contextWindowTokens: 32768, enabled: true },
-      { id: `${id}-disabled`, maxOutput: 4096, contextWindowTokens: 32768, enabled: false },
-    ],
-  }))),
+  ...Object.entries(endpointIdsByGroup).flatMap(([group, ids]) =>
+    ids.map((id) => ({
+      id,
+      label: id,
+      group,
+      ...(id === "google" ? { checkModel: "gemini-2.5-flash" } : {}),
+      ...(id === "minimax" ? { checkModel: "MiniMax-M2.7" } : {}),
+      ...(id === "ollama" ? { checkModel: "llama3.2:3b" } : {}),
+      ...(id === "volcengine" ? { checkModel: "doubao-lite-32k" } : {}),
+      models: [
+        { id: `${id}-model`, maxOutput: 4096, contextWindowTokens: 32768, enabled: true },
+        { id: `${id}-disabled`, maxOutput: 4096, contextWindowTokens: 32768, enabled: false },
+      ],
+    })),
+  ),
   { id: "custom", label: "自定义端点", models: [] },
 ];
 const getAllEndpointsMock = vi.fn(() => endpointMocks);
@@ -139,7 +204,7 @@ vi.mock("@actalk/inkos-core", async (importOriginal) => {
     }
 
     async loadBookConfig(bookId?: string): Promise<never> {
-      return await loadBookConfigMock(bookId) as never;
+      return (await loadBookConfigMock(bookId)) as never;
     }
 
     async loadChapterIndex(bookId: string): Promise<[]> {
@@ -243,7 +308,9 @@ vi.mock("@actalk/inkos-core", async (importOriginal) => {
     listModelsForService: listModelsForServiceMock,
     getAllEndpoints: getAllEndpointsMock,
     probeModelsFromUpstream: probeModelsFromUpstreamMock,
-    fetchWithProxy: vi.fn((input: Parameters<typeof fetch>[0], init?: RequestInit) => fetch(input, init)),
+    fetchWithProxy: vi.fn((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+      fetch(input, init),
+    ),
     GLOBAL_ENV_PATH: join(tmpdir(), "inkos-global.env"),
   };
 });
@@ -297,7 +364,11 @@ describe("createStudioServer daemon lifecycle", () => {
     loadChapterIndexMock.mockReset();
     loadBookConfigMock.mockReset();
     await mkdir(join(root, "books", "demo-book", "chapters"), { recursive: true });
-    await writeFile(join(root, "books", "demo-book", "chapters", "0003_Demo.md"), "# Demo\n\nBody", "utf-8");
+    await writeFile(
+      join(root, "books", "demo-book", "chapters", "0003_Demo.md"),
+      "# Demo\n\nBody",
+      "utf-8",
+    );
     runRadarMock.mockResolvedValue({
       marketSummary: "Fresh market summary",
       recommendations: [],
@@ -363,7 +434,10 @@ describe("createStudioServer daemon lifecycle", () => {
     });
     resolveSessionActiveBookMock.mockResolvedValue(undefined);
     loadProjectConfigMock.mockImplementation(async () => {
-      const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8")) as Record<string, unknown>;
+      const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8")) as Record<
+        string,
+        unknown
+      >;
       return {
         ...cloneProjectConfig(),
         ...raw,
@@ -427,16 +501,16 @@ describe("createStudioServer daemon lifecycle", () => {
     createAndPersistBookSessionMock.mockResolvedValue(defaultBookSession);
     loadBookSessionMock.mockResolvedValue(defaultBookSession);
     persistBookSessionMock.mockResolvedValue(undefined);
-    appendBookSessionMessageMock.mockImplementation(
-      (session: unknown, _msg: unknown) => session,
-    );
+    appendBookSessionMessageMock.mockImplementation((session: unknown, _msg: unknown) => session);
     appendManualSessionMessagesMock.mockResolvedValue(undefined);
     renameBookSessionMock.mockResolvedValue(null);
     deleteBookSessionMock.mockResolvedValue(undefined);
-    migrateBookSessionMock.mockImplementation(async (_root: string, _sessionId: string, bookId: string) => ({
-      ...defaultBookSession,
-      bookId,
-    }));
+    migrateBookSessionMock.mockImplementation(
+      async (_root: string, _sessionId: string, bookId: string) => ({
+        ...defaultBookSession,
+        bookId,
+      }),
+    );
     runAgentSessionMock.mockResolvedValue({
       responseText: "Agent response.",
       messages: [],
@@ -511,24 +585,35 @@ describe("createStudioServer daemon lifecycle", () => {
     await mkdir(storyDir, { recursive: true });
     await Promise.all([
       writeFile(join(storyDir, "author_intent.md"), "# Author Intent\n\nStay cold.\n", "utf-8"),
-      writeFile(join(storyDir, "current_focus.md"), "# Current Focus\n\nReturn to the old case.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# Current Focus\n\nReturn to the old case.\n",
+        "utf-8",
+      ),
     ]);
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
-    const readAuthorIntent = await app.request("http://localhost/api/v1/books/demo-book/truth/author_intent.md");
+    const readAuthorIntent = await app.request(
+      "http://localhost/api/v1/books/demo-book/truth/author_intent.md",
+    );
     expect(readAuthorIntent.status).toBe(200);
     await expect(readAuthorIntent.json()).resolves.toMatchObject({
       file: "author_intent.md",
       content: "# Author Intent\n\nStay cold.\n",
     });
 
-    const updateCurrentFocus = await app.request("http://localhost/api/v1/books/demo-book/truth/current_focus.md", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: "# Current Focus\n\nPull focus back to the harbor trail.\n" }),
-    });
+    const updateCurrentFocus = await app.request(
+      "http://localhost/api/v1/books/demo-book/truth/current_focus.md",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "# Current Focus\n\nPull focus back to the harbor trail.\n",
+        }),
+      },
+    );
     expect(updateCurrentFocus.status).toBe(200);
 
     await expect(readFile(join(storyDir, "current_focus.md"), "utf-8")).resolves.toBe(
@@ -594,10 +679,12 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/doctor");
 
     expect(response.status).toBe(200);
-    expect(createLLMClientMock).toHaveBeenCalledWith(expect.objectContaining({
-      model: "fresh-model",
-      baseUrl: "https://fresh.example.com/v1",
-    }));
+    expect(createLLMClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "fresh-model",
+        baseUrl: "https://fresh.example.com/v1",
+      }),
+    );
     expect(chatCompletionMock).toHaveBeenCalledWith(
       expect.anything(),
       "fresh-model",
@@ -644,14 +731,18 @@ describe("createStudioServer daemon lifecycle", () => {
     await expect(response.json()).resolves.toMatchObject({
       llmConnected: true,
     });
-    expect(createLLMClientMock).toHaveBeenCalledWith(expect.objectContaining({
-      stream: true,
-      apiFormat: "chat",
-    }));
-    expect(createLLMClientMock).toHaveBeenCalledWith(expect.objectContaining({
-      stream: false,
-      apiFormat: "chat",
-    }));
+    expect(createLLMClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stream: true,
+        apiFormat: "chat",
+      }),
+    );
+    expect(createLLMClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stream: false,
+        apiFormat: "chat",
+      }),
+    );
   });
 
   it("reloads latest llm config for radar scans without restarting the studio server", async () => {
@@ -774,14 +865,22 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("returns all bank services with group fields and custom services", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadSecretsMock.mockResolvedValue({
       services: {
         moonshot: { apiKey: "sk-moonshot" },
@@ -794,7 +893,9 @@ describe("createStudioServer daemon lifecycle", () => {
 
     const res = await app.request("http://localhost/api/v1/services");
     expect(res.status).toBe(200);
-    const body = await res.json() as { services: Array<{ service: string; group?: string; connected: boolean }> };
+    const body = (await res.json()) as {
+      services: Array<{ service: string; group?: string; connected: boolean }>;
+    };
     const bank = body.services.filter((s) => !s.service.startsWith("custom"));
     expect(bank.length).toBe(37);
     expect(bank.every((s) => typeof s.group === "string")).toBe(true);
@@ -822,7 +923,9 @@ describe("createStudioServer daemon lifecycle", () => {
 
     const response = await app.request("http://localhost/api/v1/services/models");
     expect(response.status).toBe(200);
-    const body = await response.json() as { groups: Array<{ service: string; models: Array<{ id: string }> }> };
+    const body = (await response.json()) as {
+      groups: Array<{ service: string; models: Array<{ id: string }> }>;
+    };
     expect(body.groups.map((g) => g.service)).toEqual(["moonshot"]);
     expect(body.groups[0]?.models).toEqual([
       { id: "moonshot-model", name: "moonshot-model", maxOutput: 4096, contextWindow: 32768 },
@@ -842,7 +945,12 @@ describe("createStudioServer daemon lifecycle", () => {
         group: "overseas",
         models: [
           { id: "gemini-2.5-flash", maxOutput: 65536, contextWindowTokens: 1114112, enabled: true },
-          { id: "gemini-3.1-flash-image-preview", maxOutput: 32768, contextWindowTokens: 163840, enabled: true },
+          {
+            id: "gemini-3.1-flash-image-preview",
+            maxOutput: 32768,
+            contextWindowTokens: 163840,
+            enabled: true,
+          },
           { id: "text-embedding-004", maxOutput: 2048, contextWindowTokens: 2048, enabled: true },
         ],
       },
@@ -853,19 +961,29 @@ describe("createStudioServer daemon lifecycle", () => {
 
     const response = await app.request("http://localhost/api/v1/services/models");
     expect(response.status).toBe(200);
-    const body = await response.json() as { groups: Array<{ service: string; models: Array<{ id: string }> }> };
+    const body = (await response.json()) as {
+      groups: Array<{ service: string; models: Array<{ id: string }> }>;
+    };
     expect(body.groups[0]?.models.map((m) => m.id)).toEqual(["gemini-2.5-flash"]);
   });
 
   it("returns custom model groups through the slow probe path", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadSecretsMock.mockResolvedValue({
       services: {
         "custom:内网GPT": { apiKey: "sk-corp" },
@@ -896,9 +1014,24 @@ describe("createStudioServer daemon lifecycle", () => {
   it("filters non-text models out of live service model lists", async () => {
     loadSecretsMock.mockResolvedValue({ services: { google: { apiKey: "sk-google" } } });
     listModelsForServiceMock.mockResolvedValueOnce([
-      { id: "gemini-2.5-flash", name: "gemini-2.5-flash", reasoning: false, contextWindow: 1114112 },
-      { id: "gemini-3.1-flash-image-preview", name: "gemini-3.1-flash-image-preview", reasoning: false, contextWindow: 163840 },
-      { id: "text-embedding-004", name: "text-embedding-004", reasoning: false, contextWindow: 2048 },
+      {
+        id: "gemini-2.5-flash",
+        name: "gemini-2.5-flash",
+        reasoning: false,
+        contextWindow: 1114112,
+      },
+      {
+        id: "gemini-3.1-flash-image-preview",
+        name: "gemini-3.1-flash-image-preview",
+        reasoning: false,
+        contextWindow: 163840,
+      },
+      {
+        id: "text-embedding-004",
+        name: "text-embedding-004",
+        reasoning: false,
+        contextWindow: 2048,
+      },
     ]);
 
     const { createStudioServer } = await import("./server.js");
@@ -907,9 +1040,7 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/services/google/models?refresh=1");
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      models: [
-        { id: "gemini-2.5-flash", name: "gemini-2.5-flash", contextWindow: 1114112 },
-      ],
+      models: [{ id: "gemini-2.5-flash", name: "gemini-2.5-flash", contextWindow: 1114112 }],
     });
   });
 
@@ -926,9 +1057,7 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/services/ollama/models?refresh=1");
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      models: [
-        { id: "qwen3.6:35b-a3b", name: "qwen3.6:35b-a3b" },
-      ],
+      models: [{ id: "qwen3.6:35b-a3b", name: "qwen3.6:35b-a3b" }],
     });
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:11434/v1/models",
@@ -986,16 +1115,31 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("merges service config patches instead of overwriting existing services", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "moonshot", temperature: 1, apiFormat: "chat", stream: true },
-          { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1", temperature: 0.9, apiFormat: "responses", stream: false },
-        ],
-        defaultModel: "kimi-k2.5",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "moonshot", temperature: 1, apiFormat: "chat", stream: true },
+              {
+                service: "custom",
+                name: "内网GPT",
+                baseUrl: "https://llm.internal.corp/v1",
+                temperature: 0.9,
+                apiFormat: "responses",
+                stream: false,
+              },
+            ],
+            defaultModel: "kimi-k2.5",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -1019,27 +1163,48 @@ describe("createStudioServer daemon lifecycle", () => {
     const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8"));
     expect(raw.llm.services).toEqual([
       { service: "moonshot", temperature: 0.5, apiFormat: "responses", stream: false },
-      { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1", temperature: 0.9, apiFormat: "responses", stream: false },
+      {
+        service: "custom",
+        name: "内网GPT",
+        baseUrl: "https://llm.internal.corp/v1",
+        temperature: 0.9,
+        apiFormat: "responses",
+        stream: false,
+      },
     ]);
   });
 
   it("refreshes top-level llm mirror when switching from custom baseUrl to a preset service", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        provider: "openai",
-        service: "custom",
-        configSource: "studio",
-        baseUrl: "https://www.openclaudecode.cn/v1",
-        model: "gpt-5.4",
-        apiFormat: "chat",
-        stream: true,
-        services: [
-          { service: "custom", name: "Global LLM", baseUrl: "https://www.openclaudecode.cn/v1", apiFormat: "chat", stream: true },
-        ],
-        defaultModel: "gpt-5.4",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            provider: "openai",
+            service: "custom",
+            configSource: "studio",
+            baseUrl: "https://www.openclaudecode.cn/v1",
+            model: "gpt-5.4",
+            apiFormat: "chat",
+            stream: true,
+            services: [
+              {
+                service: "custom",
+                name: "Global LLM",
+                baseUrl: "https://www.openclaudecode.cn/v1",
+                apiFormat: "chat",
+                stream: true,
+              },
+            ],
+            defaultModel: "gpt-5.4",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -1050,9 +1215,7 @@ describe("createStudioServer daemon lifecycle", () => {
       body: JSON.stringify({
         service: "kkaiapi",
         defaultModel: "deepseek-v4-flash",
-        services: [
-          { service: "kkaiapi", temperature: 0.7, apiFormat: "chat", stream: true },
-        ],
+        services: [{ service: "kkaiapi", temperature: 0.7, apiFormat: "chat", stream: true }],
       }),
     });
 
@@ -1067,17 +1230,32 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("deletes a custom service config and stored secret", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        service: "custom:内网GPT",
-        defaultModel: "corp-chat",
-        services: [
-          { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1", temperature: 0.9, apiFormat: "chat", stream: false },
-          { service: "moonshot", temperature: 1, apiFormat: "chat", stream: true },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            service: "custom:内网GPT",
+            defaultModel: "corp-chat",
+            services: [
+              {
+                service: "custom",
+                name: "内网GPT",
+                baseUrl: "https://llm.internal.corp/v1",
+                temperature: 0.9,
+                apiFormat: "chat",
+                stream: false,
+              },
+              { service: "moonshot", temperature: 1, apiFormat: "chat", stream: true },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadSecretsMock.mockResolvedValue({
       services: {
         "custom:内网GPT": { apiKey: "sk-corp" },
@@ -1088,9 +1266,12 @@ describe("createStudioServer daemon lifecycle", () => {
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
-    const response = await app.request("http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT", {
-      method: "DELETE",
-    });
+    const response = await app.request(
+      "http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT",
+      {
+        method: "DELETE",
+      },
+    );
 
     expect(response.status).toBe(200);
     const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8"));
@@ -1107,25 +1288,41 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("reports config source and detected env overrides for Studio switching", async () => {
-    await writeFile(join(root, ".env"), [
-      "INKOS_LLM_PROVIDER=openai",
-      "INKOS_LLM_BASE_URL=https://project.example.com/v1",
-      "INKOS_LLM_MODEL=gpt-5.4",
-      "INKOS_LLM_API_KEY=sk-project",
-    ].join("\n"), "utf-8");
-    await writeFile(join(tmpdir(), "inkos-global.env"), [
-      "INKOS_LLM_PROVIDER=openai",
-      "INKOS_LLM_BASE_URL=https://global.example.com/v1",
-      "INKOS_LLM_MODEL=gpt-4o",
-      "INKOS_LLM_API_KEY=sk-global",
-    ].join("\n"), "utf-8");
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        ...projectConfig.llm,
-        configSource: "env",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, ".env"),
+      [
+        "INKOS_LLM_PROVIDER=openai",
+        "INKOS_LLM_BASE_URL=https://project.example.com/v1",
+        "INKOS_LLM_MODEL=gpt-5.4",
+        "INKOS_LLM_API_KEY=sk-project",
+      ].join("\n"),
+      "utf-8",
+    );
+    await writeFile(
+      join(tmpdir(), "inkos-global.env"),
+      [
+        "INKOS_LLM_PROVIDER=openai",
+        "INKOS_LLM_BASE_URL=https://global.example.com/v1",
+        "INKOS_LLM_MODEL=gpt-4o",
+        "INKOS_LLM_API_KEY=sk-global",
+      ].join("\n"),
+      "utf-8",
+    );
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            ...projectConfig.llm,
+            configSource: "env",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -1155,16 +1352,22 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("allows switching config source without overwriting services", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "moonshot", temperature: 1 },
-        ],
-        defaultModel: "kimi-k2.5",
-        configSource: "env",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "moonshot", temperature: 1 }],
+            defaultModel: "kimi-k2.5",
+            configSource: "env",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -1179,24 +1382,30 @@ describe("createStudioServer daemon lifecycle", () => {
 
     const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8"));
     expect(raw.llm.configSource).toBe("studio");
-    expect(raw.llm.services).toEqual([
-      { service: "moonshot", temperature: 1 },
-    ]);
+    expect(raw.llm.services).toEqual([{ service: "moonshot", temperature: 1 }]);
     expect(raw.llm.defaultModel).toBe("kimi-k2.5");
   });
 
   it("returns the saved default service and model for Studio chat selection", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "google", temperature: 1 },
-          { service: "moonshot", temperature: 0.7 },
-        ],
-        service: "moonshot",
-        defaultModel: "kimi-k2.5",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "google", temperature: 1 },
+              { service: "moonshot", temperature: 0.7 },
+            ],
+            service: "moonshot",
+            defaultModel: "kimi-k2.5",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -1226,22 +1435,31 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("tests and lists models for custom services using baseUrl and stored config", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
-        ],
-        defaultModel: "corp-chat",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "custom", name: "内网GPT", baseUrl: "https://llm.internal.corp/v1" },
+            ],
+            defaultModel: "corp-chat",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadSecretsMock.mockResolvedValue({
       services: {
         "custom:内网GPT": { apiKey: "sk-corp" },
       },
     });
 
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: [{ id: "corp-chat" }] }),
@@ -1256,18 +1474,23 @@ describe("createStudioServer daemon lifecycle", () => {
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
-    const testResponse = await app.request("http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiKey: "sk-corp", baseUrl: "https://llm.internal.corp/v1" }),
-    });
+    const testResponse = await app.request(
+      "http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT/test",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: "sk-corp", baseUrl: "https://llm.internal.corp/v1" }),
+      },
+    );
     expect(testResponse.status).toBe(200);
     await expect(testResponse.json()).resolves.toMatchObject({
       ok: true,
       models: [{ id: "corp-chat", name: "corp-chat" }],
     });
 
-    const modelsResponse = await app.request("http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT/models");
+    const modelsResponse = await app.request(
+      "http://localhost/api/v1/services/custom%3A%E5%86%85%E7%BD%91GPT/models",
+    );
     expect(modelsResponse.status).toBe(200);
     await expect(modelsResponse.json()).resolves.toMatchObject({
       models: [{ id: "corp-chat", name: "corp-chat" }],
@@ -1275,20 +1498,32 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("does not probe stale global fallback models for custom services when /models is unavailable", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        configSource: "env",
-        services: [
-          { service: "custom", name: "MiniMax", baseUrl: "https://api.minimax.com/v1" },
-        ],
-      },
-    }, null, 2), "utf-8");
-    await writeFile(join(root, ".env"), [
-      "INKOS_LLM_MODEL=MiniMax-M2.7",
-      "INKOS_LLM_BASE_URL=https://api.minimax.com/v1",
-      "INKOS_LLM_API_KEY=sk-minimax",
-    ].join("\n"), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            configSource: "env",
+            services: [
+              { service: "custom", name: "MiniMax", baseUrl: "https://api.minimax.com/v1" },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+    await writeFile(
+      join(root, ".env"),
+      [
+        "INKOS_LLM_MODEL=MiniMax-M2.7",
+        "INKOS_LLM_BASE_URL=https://api.minimax.com/v1",
+        "INKOS_LLM_API_KEY=sk-minimax",
+      ].join("\n"),
+      "utf-8",
+    );
 
     createLLMClientMock.mockImplementation(((cfg: unknown) => cfg) as any);
     chatCompletionMock.mockImplementation(async (client: any) => {
@@ -1331,15 +1566,29 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("falls back to the detected/default model when custom /models is unavailable", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        defaultModel: "MiniMax-M2.7",
-        services: [
-          { service: "custom", name: "MiniMax", baseUrl: "https://api.minimax.com/v1", apiFormat: "chat", stream: false },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            defaultModel: "MiniMax-M2.7",
+            services: [
+              {
+                service: "custom",
+                name: "MiniMax",
+                baseUrl: "https://api.minimax.com/v1",
+                apiFormat: "chat",
+                stream: false,
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     getServiceApiKeyMock.mockResolvedValue("sk-minimax");
 
     const fetchMock = vi.fn().mockResolvedValue({
@@ -1388,7 +1637,7 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(400);
-    const json = await response.json() as { ok: boolean; error: string };
+    const json = (await response.json()) as { ok: boolean; error: string };
     expect(json.ok).toBe(false);
     expect(json.error).toContain("401");
     expect(json.error).not.toMatch(/kkaiapi/i);
@@ -1396,15 +1645,21 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("uses the MiniMax OpenAI-compatible preset during service probe", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "minimax", apiFormat: "chat", stream: false },
-        ],
-        defaultModel: "MiniMax-M2.7",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "minimax", apiFormat: "chat", stream: false }],
+            defaultModel: "MiniMax-M2.7",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -1414,7 +1669,11 @@ describe("createStudioServer daemon lifecycle", () => {
     vi.stubGlobal("fetch", fetchMock as typeof fetch);
     createLLMClientMock.mockImplementation(((cfg: unknown) => cfg) as any);
     chatCompletionMock.mockImplementation(async (client: any, model: string) => {
-      if (client.provider === "openai" && client.baseUrl === "https://api.minimaxi.com/v1" && model === "MiniMax-M2.7") {
+      if (
+        client.provider === "openai" &&
+        client.baseUrl === "https://api.minimaxi.com/v1" &&
+        model === "MiniMax-M2.7"
+      ) {
         return {
           content: "pong",
           usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
@@ -1449,15 +1708,21 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("uses the bank endpoint check model before the global default during service probe", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "google", apiFormat: "chat", stream: false },
-        ],
-        defaultModel: "MiniMax-M2.7",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "google", apiFormat: "chat", stream: false }],
+            defaultModel: "MiniMax-M2.7",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -1540,11 +1805,7 @@ describe("createStudioServer daemon lifecycle", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        data: [
-          { id: "model-one" },
-          { id: "model-two" },
-          { id: "model-three" },
-        ],
+        data: [{ id: "model-one" }, { id: "model-two" }, { id: "model-three" }],
       }),
     });
     vi.stubGlobal("fetch", fetchMock as typeof fetch);
@@ -1623,15 +1884,21 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("uses discovered Ollama models without requiring an API key or the built-in check model", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "ollama", apiFormat: "chat", stream: true },
-        ],
-        defaultModel: "llama3.2:3b",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "ollama", apiFormat: "chat", stream: true }],
+            defaultModel: "llama3.2:3b",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -1663,15 +1930,21 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("does not fall back to the global default model when a bank endpoint probe fails", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "google", apiFormat: "chat", stream: false },
-        ],
-        defaultModel: "MiniMax-M2.7",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "google", apiFormat: "chat", stream: false }],
+            defaultModel: "MiniMax-M2.7",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -1702,18 +1975,26 @@ describe("createStudioServer daemon lifecycle", () => {
       ok: false,
       error: expect.stringContaining("gemini-2.5-flash"),
     });
-    expect(new Set(chatCompletionMock.mock.calls.map((call) => call[1]))).toEqual(new Set(["gemini-2.5-flash"]));
+    expect(new Set(chatCompletionMock.mock.calls.map((call) => call[1]))).toEqual(
+      new Set(["gemini-2.5-flash"]),
+    );
   });
 
   it("returns a Google-specific diagnostic when Gemini probe returns 400", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "google", apiFormat: "chat", stream: false },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "google", apiFormat: "chat", stream: false }],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -1723,7 +2004,9 @@ describe("createStudioServer daemon lifecycle", () => {
     vi.stubGlobal("fetch", fetchMock as typeof fetch);
     createLLMClientMock.mockImplementation(((cfg: unknown) => cfg) as any);
     chatCompletionMock.mockRejectedValue(
-      new Error("API 返回 400（请求参数错误）。常见原因：\n  1. temperature / max_tokens 超出模型约束（如 Moonshot kimi-k2.X 强制 temperature=1）\n  (baseUrl: https://generativelanguage.googleapis.com/v1beta/openai, model: gemini-2.5-flash)"),
+      new Error(
+        "API 返回 400（请求参数错误）。常见原因：\n  1. temperature / max_tokens 超出模型约束（如 Moonshot kimi-k2.X 强制 temperature=1）\n  (baseUrl: https://generativelanguage.googleapis.com/v1beta/openai, model: gemini-2.5-flash)",
+      ),
     );
 
     const { createStudioServer } = await import("./server.js");
@@ -1740,7 +2023,7 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(400);
-    const json = await response.json() as { error?: string };
+    const json = (await response.json()) as { error?: string };
     expect(json.error).toContain("Google Gemini 测试连接失败");
     expect(json.error).toContain("测试模型：gemini-2.5-flash");
     expect(json.error).toContain("API Key 是否来自 Google AI Studio");
@@ -1750,15 +2033,21 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("does not return OpenAI-compatible Bailian models from the Anthropic channel connection test", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "bailian", apiFormat: "chat", stream: false },
-        ],
-        defaultModel: "qwen-max",
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [{ service: "bailian", apiFormat: "chat", stream: false }],
+            defaultModel: "qwen-max",
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadSecretsMock.mockResolvedValue({ services: { bailian: { apiKey: "sk-bailian" } } });
     const bailianEndpoint = endpointMocks.find((ep) => ep.id === "bailian");
     expect(bailianEndpoint).toBeDefined();
@@ -1773,7 +2062,8 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       if (url === "https://dashscope.aliyuncs.com/compatible-mode/v1/models") {
         return {
           ok: true,
@@ -1790,7 +2080,11 @@ describe("createStudioServer daemon lifecycle", () => {
     vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
     createLLMClientMock.mockImplementation(((cfg: unknown) => cfg) as any);
     chatCompletionMock.mockImplementation(async (client: any, model: string) => {
-      if (client.provider === "anthropic" && client.baseUrl === "https://dashscope.aliyuncs.com/apps/anthropic" && model === "qwen-max") {
+      if (
+        client.provider === "anthropic" &&
+        client.baseUrl === "https://dashscope.aliyuncs.com/apps/anthropic" &&
+        model === "qwen-max"
+      ) {
         return {
           content: "pong",
           usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
@@ -1813,7 +2107,7 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json() as { models: Array<{ id: string }> };
+    const body = (await response.json()) as { models: Array<{ id: string }> };
     expect(body.models.map((m) => m.id)).toEqual(["qwen-max", "kimi-k2.5"]);
     expect(body.models.some((m) => m.id === "kimi-k2.6")).toBe(false);
     expect(body.models.some((m) => m.id === "deepseek-v3.2")).toBe(false);
@@ -1824,16 +2118,25 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("keys cached model lists by baseUrl so custom endpoints do not leak stale results", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "custom", name: "Switcher", baseUrl: "https://a.example.com/v1" },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "custom", name: "Switcher", baseUrl: "https://a.example.com/v1" },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       if (url === "https://a.example.com/v1/models") {
         return {
           ok: true,
@@ -1859,22 +2162,34 @@ describe("createStudioServer daemon lifecycle", () => {
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
-    const first = await app.request("http://localhost/api/v1/services/custom%3ASwitcher/models?apiKey=sk-shared-tail");
+    const first = await app.request(
+      "http://localhost/api/v1/services/custom%3ASwitcher/models?apiKey=sk-shared-tail",
+    );
     expect(first.status).toBe(200);
     await expect(first.json()).resolves.toMatchObject({
       models: [{ id: "model-a", name: "model-a" }],
     });
 
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        services: [
-          { service: "custom", name: "Switcher", baseUrl: "https://b.example.com/v1" },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            services: [
+              { service: "custom", name: "Switcher", baseUrl: "https://b.example.com/v1" },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
-    const second = await app.request("http://localhost/api/v1/services/custom%3ASwitcher/models?apiKey=sk-shared-tail");
+    const second = await app.request(
+      "http://localhost/api/v1/services/custom%3ASwitcher/models?apiKey=sk-shared-tail",
+    );
     expect(second.status).toBe(200);
     await expect(second.json()).resolves.toMatchObject({
       models: [{ id: "model-b", name: "model-b" }],
@@ -1962,15 +2277,21 @@ describe("createStudioServer daemon lifecycle", () => {
     await mkdir(join(root, "books", "demo"), { recursive: true });
     await writeFile(join(root, "books", "demo", "cover.png"), Buffer.from("private-book-image"));
 
-    const ok = await app.request("http://localhost/api/v1/project/files/shorts/demo/final/cover.png");
+    const ok = await app.request(
+      "http://localhost/api/v1/project/files/shorts/demo/final/cover.png",
+    );
     expect(ok.status).toBe(200);
     expect(ok.headers.get("content-type")).toContain("image/png");
     expect(Buffer.from(await ok.arrayBuffer()).toString("utf-8")).toBe("fake-png");
 
-    const unsupported = await app.request("http://localhost/api/v1/project/files/shorts/demo/final/cover.txt");
+    const unsupported = await app.request(
+      "http://localhost/api/v1/project/files/shorts/demo/final/cover.txt",
+    );
     expect(unsupported.status).toBe(415);
 
-    const unsupportedRoot = await app.request("http://localhost/api/v1/project/files/books/demo/cover.png");
+    const unsupportedRoot = await app.request(
+      "http://localhost/api/v1/project/files/books/demo/cover.png",
+    );
     expect(unsupportedRoot.status).toBe(400);
 
     const traversal = await app.request("http://localhost/api/v1/project/files/../inkos.json");
@@ -1979,8 +2300,16 @@ describe("createStudioServer daemon lifecycle", () => {
 
   it("rejects create requests when a complete book with the same id already exists", async () => {
     await mkdir(join(root, "books", "existing-book", "story"), { recursive: true });
-    await writeFile(join(root, "books", "existing-book", "book.json"), JSON.stringify({ id: "existing-book" }), "utf-8");
-    await writeFile(join(root, "books", "existing-book", "story", "story_bible.md"), "# existing", "utf-8");
+    await writeFile(
+      join(root, "books", "existing-book", "book.json"),
+      JSON.stringify({ id: "existing-book" }),
+      "utf-8",
+    );
+    await writeFile(
+      join(root, "books", "existing-book", "story", "story_bible.md"),
+      "# existing",
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2001,11 +2330,15 @@ describe("createStudioServer daemon lifecycle", () => {
       error: expect.stringContaining('Book "existing-book" already exists'),
     });
     expect(processProjectInteractionRequestMock).not.toHaveBeenCalled();
-    await expect(access(join(root, "books", "existing-book", "story", "story_bible.md"))).resolves.toBeUndefined();
+    await expect(
+      access(join(root, "books", "existing-book", "story", "story_bible.md")),
+    ).resolves.toBeUndefined();
   });
 
   it("reports async create failures through the create-status endpoint", async () => {
-    processProjectInteractionRequestMock.mockRejectedValueOnce(new Error("INKOS_LLM_API_KEY not set"));
+    processProjectInteractionRequestMock.mockRejectedValueOnce(
+      new Error("INKOS_LLM_API_KEY not set"),
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2034,7 +2367,9 @@ describe("createStudioServer daemon lifecycle", () => {
 
   it("surfaces LLM config errors during create instead of masking them as internal errors", async () => {
     loadProjectConfigMock.mockRejectedValueOnce(
-      new Error("Studio LLM API key not set. Open Studio services and save an API key for the selected service."),
+      new Error(
+        "Studio LLM API key not set. Open Studio services and save an API key for the selected service.",
+      ),
     );
 
     const { createStudioServer } = await import("./server.js");
@@ -2052,7 +2387,7 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(400);
-    const json = await response.json() as { error: { code: string; message: string } };
+    const json = (await response.json()) as { error: { code: string; message: string } };
     expect(json.error.code).toBe("LLM_CONFIG_ERROR");
     expect(json.error.message).toContain("Studio LLM API key not set");
     expect(json.error.message).not.toMatch(/kkaiapi/i);
@@ -2087,9 +2422,12 @@ describe("createStudioServer daemon lifecycle", () => {
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
-    const response = await app.request("http://localhost/api/v1/books/demo-book/chapters/3/reject", {
-      method: "POST",
-    });
+    const response = await app.request(
+      "http://localhost/api/v1/books/demo-book/chapters/3/reject",
+      {
+        method: "POST",
+      },
+    );
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -2123,37 +2461,47 @@ describe("createStudioServer daemon lifecycle", () => {
 
     expect(response.status).toBe(200);
     expect(createInteractionToolsFromDepsMock).toHaveBeenCalledTimes(1);
-    expect(processProjectInteractionRequestMock).toHaveBeenCalledWith(expect.objectContaining({
-      projectRoot: root,
-      request: {
-        intent: "create_book",
-        title: "New Book",
-        genre: "urban",
-        language: "zh",
-        platform: "qidian",
-        chapterWordCount: 2600,
-        targetChapters: 88,
-        blurb: "主角在旧城查账洗白，卷一先追账本。",
-      },
-    }));
+    expect(processProjectInteractionRequestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectRoot: root,
+        request: {
+          intent: "create_book",
+          title: "New Book",
+          genre: "urban",
+          language: "zh",
+          platform: "qidian",
+          chapterWordCount: 2600,
+          targetChapters: 88,
+          blurb: "主角在旧城查账洗白，卷一先追账本。",
+        },
+      }),
+    );
   });
 
   it("creates books with Studio Ollama config without requiring an API key", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        configSource: "studio",
-        service: "ollama",
-        provider: "openai",
-        baseUrl: "http://localhost:11434/v1",
-        model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-        apiKey: "",
-        services: [{ service: "ollama", apiFormat: "chat", stream: false }],
-        defaultModel: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-        apiFormat: "chat",
-        stream: false,
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            configSource: "studio",
+            service: "ollama",
+            provider: "openai",
+            baseUrl: "http://localhost:11434/v1",
+            model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+            apiKey: "",
+            services: [{ service: "ollama", apiFormat: "chat", stream: false }],
+            defaultModel: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+            apiFormat: "chat",
+            stream: false,
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2171,11 +2519,13 @@ describe("createStudioServer daemon lifecycle", () => {
 
     expect(response.status).toBe(200);
     expect(loadProjectConfigMock).toHaveBeenCalledWith(root, { consumer: "studio" });
-    expect(createLLMClientMock).toHaveBeenCalledWith(expect.objectContaining({
-      service: "ollama",
-      model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-      apiKey: "",
-    }));
+    expect(createLLMClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: "ollama",
+        model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+        apiKey: "",
+      }),
+    );
     expect(pipelineConfigs.at(-1)).toMatchObject({
       model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
     });
@@ -2222,16 +2572,18 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(processProjectInteractionRequestMock).toHaveBeenCalledWith(expect.objectContaining({
-      projectRoot: root,
-      activeBookId: "demo-book",
-      request: expect.objectContaining({
-        intent: "export_book",
-        bookId: "demo-book",
-        format: "md",
-        approvedOnly: true,
+    expect(processProjectInteractionRequestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectRoot: root,
+        activeBookId: "demo-book",
+        request: expect.objectContaining({
+          intent: "export_book",
+          bookId: "demo-book",
+          format: "md",
+          approvedOnly: true,
+        }),
       }),
-    }));
+    );
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
       chapters: 2,
@@ -2308,31 +2660,33 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("routes /api/agent through runAgentSession and returns response + sessionId", async () => {
-    runAgentSessionMock.mockImplementationOnce(async (config: { onEvent?: (event: unknown) => void }) => {
-      config.onEvent?.({
-        type: "tool_execution_start",
-        toolName: "sub_agent",
-        toolCallId: "tool-writer-1",
-        args: { agent: "writer" },
-      });
-      config.onEvent?.({
-        type: "tool_execution_end",
-        toolName: "sub_agent",
-        toolCallId: "tool-writer-1",
-        isError: false,
-        result: {
-          content: [{ type: "text", text: "Chapter written for demo-book. Word count: 1800." }],
-          details: { kind: "chapter_written", bookId: "demo-book", chapterNumber: 4 },
-        },
-      });
-      return {
-        responseText: "Completed write_next for demo-book.",
-        messages: [
-          { role: "user", content: "检查当前状态" },
-          { role: "assistant", content: "Completed write_next for demo-book." },
-        ],
-      };
-    });
+    runAgentSessionMock.mockImplementationOnce(
+      async (config: { onEvent?: (event: unknown) => void }) => {
+        config.onEvent?.({
+          type: "tool_execution_start",
+          toolName: "sub_agent",
+          toolCallId: "tool-writer-1",
+          args: { agent: "writer" },
+        });
+        config.onEvent?.({
+          type: "tool_execution_end",
+          toolName: "sub_agent",
+          toolCallId: "tool-writer-1",
+          isError: false,
+          result: {
+            content: [{ type: "text", text: "Chapter written for demo-book. Word count: 1800." }],
+            details: { kind: "chapter_written", bookId: "demo-book", chapterNumber: 4 },
+          },
+        });
+        return {
+          responseText: "Completed write_next for demo-book.",
+          messages: [
+            { role: "user", content: "检查当前状态" },
+            { role: "assistant", content: "Completed write_next for demo-book." },
+          ],
+        };
+      },
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2340,7 +2694,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "检查当前状态", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "检查当前状态",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -2366,7 +2724,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "继续", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "继续",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -2390,10 +2752,14 @@ describe("createStudioServer daemon lifecycle", () => {
   it("passes configured long-form writing review retries into Studio write-next", async () => {
     await writeFile(
       join(root, "inkos.json"),
-      JSON.stringify({
-        ...cloneProjectConfig(),
-        writing: { reviewRetries: 3 },
-      }, null, 2),
+      JSON.stringify(
+        {
+          ...cloneProjectConfig(),
+          writing: { reviewRetries: 3 },
+        },
+        null,
+        2,
+      ),
       "utf-8",
     );
 
@@ -2407,22 +2773,26 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(pipelineConfigs.at(-1)).toEqual(expect.objectContaining({
-      writingReviewRetries: 3,
-    }));
+    expect(pipelineConfigs.at(-1)).toEqual(
+      expect.objectContaining({
+        writingReviewRetries: 3,
+      }),
+    );
   });
 
   it("handles explicit chat chapter edits outside the InkOS writing agent", async () => {
-    loadChapterIndexMock.mockResolvedValueOnce([{
-      number: 3,
-      title: "Demo",
-      status: "ready-for-review",
-      wordCount: 4,
-      createdAt: "2026-04-12T00:00:00.000Z",
-      updatedAt: "2026-04-12T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    loadChapterIndexMock.mockResolvedValueOnce([
+      {
+        number: 3,
+        title: "Demo",
+        status: "ready-for-review",
+        wordCount: 4,
+        createdAt: "2026-04-12T00:00:00.000Z",
+        updatedAt: "2026-04-12T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2445,14 +2815,17 @@ describe("createStudioServer daemon lifecycle", () => {
         activeBookId: "demo-book",
       },
     });
-    await expect(readFile(join(root, "books", "demo-book", "chapters", "0003_Demo.md"), "utf-8"))
-      .resolves.toContain("Body updated");
+    await expect(
+      readFile(join(root, "books", "demo-book", "chapters", "0003_Demo.md"), "utf-8"),
+    ).resolves.toContain("Body updated");
     expect(saveChapterIndexMock).toHaveBeenCalledWith("demo-book", [
       expect.objectContaining({
         number: 3,
         status: "audit-failed",
         wordCount: expect.any(Number),
-        auditIssues: expect.arrayContaining(["[warning] Chat external edit requires review before continuation."]),
+        auditIssues: expect.arrayContaining([
+          "[warning] Chat external edit requires review before continuation.",
+        ]),
       }),
     ]);
     expect(runAgentSessionMock).not.toHaveBeenCalled();
@@ -2479,15 +2852,20 @@ describe("createStudioServer daemon lifecycle", () => {
     await expect(response.json()).resolves.toMatchObject({
       response: expect.stringContaining("已直接编辑 covers/demo/cover-prompt.md"),
     });
-    await expect(readFile(join(root, "covers", "demo", "cover-prompt.md"), "utf-8"))
-      .resolves.toContain("标题字压到最大");
+    await expect(
+      readFile(join(root, "covers", "demo", "cover-prompt.md"), "utf-8"),
+    ).resolves.toContain("标题字压到最大");
     expect(saveChapterIndexMock).not.toHaveBeenCalled();
     expect(runAgentSessionMock).not.toHaveBeenCalled();
   });
 
   it("rejects chat artifact edits against source files instead of routing to the agent", async () => {
     await mkdir(join(root, "packages", "core", "src"), { recursive: true });
-    await writeFile(join(root, "packages", "core", "src", "index.ts"), "export const value = 1;\n", "utf-8");
+    await writeFile(
+      join(root, "packages", "core", "src", "index.ts"),
+      "export const value = 1;\n",
+      "utf-8",
+    );
 
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
@@ -2502,10 +2880,11 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(400);
-    const body = await response.json() as { error: { code: string } };
+    const body = (await response.json()) as { error: { code: string } };
     expect(body.error.code).toBe("UNSUPPORTED_CHAT_EDIT_TARGET");
-    await expect(readFile(join(root, "packages", "core", "src", "index.ts"), "utf-8"))
-      .resolves.toContain("value");
+    await expect(
+      readFile(join(root, "packages", "core", "src", "index.ts"), "utf-8"),
+    ).resolves.toContain("value");
     expect(runAgentSessionMock).not.toHaveBeenCalled();
   });
 
@@ -2639,7 +3018,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "检查当前状态", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "检查当前状态",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -2686,7 +3069,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "检查当前状态", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "检查当前状态",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -2700,17 +3087,34 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("allows /api/agent to use explicit service+model when Studio config has no defaultModel", async () => {
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        configSource: "studio",
-        services: [
-          { service: "custom", name: "CodexForMe", baseUrl: "https://api-vip.codex-for.me/v1", apiFormat: "responses", stream: false },
-        ],
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            configSource: "studio",
+            services: [
+              {
+                service: "custom",
+                name: "CodexForMe",
+                baseUrl: "https://api-vip.codex-for.me/v1",
+                apiFormat: "responses",
+                stream: false,
+              },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadProjectConfigMock.mockImplementation(async () => {
-      const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8")) as Record<string, unknown>;
+      const raw = JSON.parse(await readFile(join(root, "inkos.json"), "utf-8")) as Record<
+        string,
+        unknown
+      >;
       return {
         ...cloneProjectConfig(),
         ...raw,
@@ -2771,23 +3175,29 @@ describe("createStudioServer daemon lifecycle", () => {
       contextWindow: 0,
       maxTokens: 16384,
     };
-    await writeFile(join(root, "inkos.json"), JSON.stringify({
-      ...projectConfig,
-      llm: {
-        configSource: "studio",
-        service: "ollama",
-        provider: "openai",
-        baseUrl: "http://localhost:11434/v1",
-        model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-        apiKey: "",
-        services: [
-          { service: "ollama", apiFormat: "chat", stream: false },
-        ],
-        defaultModel: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-        apiFormat: "chat",
-        stream: false,
-      },
-    }, null, 2), "utf-8");
+    await writeFile(
+      join(root, "inkos.json"),
+      JSON.stringify(
+        {
+          ...projectConfig,
+          llm: {
+            configSource: "studio",
+            service: "ollama",
+            provider: "openai",
+            baseUrl: "http://localhost:11434/v1",
+            model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+            apiKey: "",
+            services: [{ service: "ollama", apiFormat: "chat", stream: false }],
+            defaultModel: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+            apiFormat: "chat",
+            stream: false,
+          },
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
     loadBookSessionMock.mockResolvedValueOnce({
       sessionId: "agent-session-1",
       bookId: null,
@@ -2835,11 +3245,13 @@ describe("createStudioServer daemon lifecycle", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(createLLMClientMock).toHaveBeenCalledWith(expect.objectContaining({
-      service: "ollama",
-      model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-      apiKey: "",
-    }));
+    expect(createLLMClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: "ollama",
+        model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
+        apiKey: "",
+      }),
+    );
     expect(pipelineConfigs.at(-1)).toMatchObject({
       client: expect.objectContaining({ _apiKey: "" }),
       model: "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
@@ -2851,7 +3263,11 @@ describe("createStudioServer daemon lifecycle", () => {
 
   it("rejects explicit non-text models before running the agent", async () => {
     resolveServiceModelMock.mockResolvedValue({
-      model: { id: "gemini-3.1-flash-image-preview", provider: "google", api: "openai-completions" },
+      model: {
+        id: "gemini-3.1-flash-image-preview",
+        provider: "google",
+        api: "openai-completions",
+      },
       apiKey: "sk-google",
     });
 
@@ -2887,7 +3303,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "检查当前状态", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "检查当前状态",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(500);
@@ -2912,7 +3332,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "nihao", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "nihao",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(502);
@@ -2926,11 +3350,14 @@ describe("createStudioServer daemon lifecycle", () => {
   });
 
   it("returns the agent final assistant error without replacing it with an empty-response probe", async () => {
-    const upstreamError = "400 The `reasoning_content` in the thinking mode must be passed back to the API.";
+    const upstreamError =
+      "400 The `reasoning_content` in the thinking mode must be passed back to the API.";
     runAgentSessionMock.mockResolvedValueOnce({
       responseText: "",
       errorMessage: upstreamError,
-      messages: [{ role: "assistant", content: [], stopReason: "error", errorMessage: upstreamError }],
+      messages: [
+        { role: "assistant", content: [], stopReason: "error", errorMessage: upstreamError },
+      ],
     });
 
     const { createStudioServer } = await import("./server.js");
@@ -2939,7 +3366,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "nihao", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "nihao",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(502);
@@ -2958,7 +3389,9 @@ describe("createStudioServer daemon lifecycle", () => {
     runAgentSessionMock.mockResolvedValueOnce({
       responseText: "",
       errorMessage: upstreamError,
-      messages: [{ role: "assistant", content: [], stopReason: "error", errorMessage: upstreamError }],
+      messages: [
+        { role: "assistant", content: [], stopReason: "error", errorMessage: upstreamError },
+      ],
     });
 
     const { createStudioServer } = await import("./server.js");
@@ -2967,7 +3400,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "nihao", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "nihao",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(502);
@@ -2997,7 +3434,11 @@ describe("createStudioServer daemon lifecycle", () => {
     const response = await app.request("http://localhost/api/v1/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instruction: "nihao", activeBookId: "demo-book", sessionId: "agent-session-1" }),
+      body: JSON.stringify({
+        instruction: "nihao",
+        activeBookId: "demo-book",
+        sessionId: "agent-session-1",
+      }),
     });
 
     expect(response.status).toBe(200);
@@ -3035,28 +3476,30 @@ describe("createStudioServer daemon lifecycle", () => {
       createdAt: "2026-04-12T00:00:00.000Z",
       updatedAt: "2026-04-12T00:00:00.000Z",
     }));
-    runAgentSessionMock.mockImplementationOnce(async (config: { onEvent?: (event: unknown) => void }) => {
-      config.onEvent?.({
-        type: "tool_execution_start",
-        toolCallId: "tool-1",
-        toolName: "sub_agent",
-        args: { agent: "architect", title: "New Book" },
-      });
-      config.onEvent?.({
-        type: "tool_execution_end",
-        toolCallId: "tool-1",
-        toolName: "sub_agent",
-        isError: false,
-        result: {
-          content: [{ type: "text", text: "Book created." }],
-          details: { kind: "book_created", bookId: "new-book", title: "New Book" },
-        },
-      });
-      return {
-        responseText: "",
-        messages: [{ role: "user", content: "/new New Book" }],
-      };
-    });
+    runAgentSessionMock.mockImplementationOnce(
+      async (config: { onEvent?: (event: unknown) => void }) => {
+        config.onEvent?.({
+          type: "tool_execution_start",
+          toolCallId: "tool-1",
+          toolName: "sub_agent",
+          args: { agent: "architect", title: "New Book" },
+        });
+        config.onEvent?.({
+          type: "tool_execution_end",
+          toolCallId: "tool-1",
+          toolName: "sub_agent",
+          isError: false,
+          result: {
+            content: [{ type: "text", text: "Book created." }],
+            details: { kind: "book_created", bookId: "new-book", title: "New Book" },
+          },
+        });
+        return {
+          responseText: "",
+          messages: [{ role: "user", content: "/new New Book" }],
+        };
+      },
+    );
     chatCompletionMock.mockResolvedValueOnce({
       content: "建书完成。",
       usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
@@ -3107,9 +3550,7 @@ describe("createStudioServer daemon lifecycle", () => {
       projectRoot: root,
       activeBookId: "demo-book",
       automationMode: "auto",
-      messages: [
-        { role: "user", content: "continue", timestamp: 1 },
-      ],
+      messages: [{ role: "user", content: "continue", timestamp: 1 }],
     });
     resolveSessionActiveBookMock.mockResolvedValue("demo-book");
 

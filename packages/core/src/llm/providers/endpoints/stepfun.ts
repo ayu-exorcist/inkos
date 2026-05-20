@@ -29,7 +29,17 @@ export const STEPFUN: InkosEndpoint = {
     { id: "step-2-16k-exp", maxOutput: 4096, contextWindowTokens: 16000, releasedAt: "2025-01-15" },
     { id: "step-1v-8k", maxOutput: 4096, contextWindowTokens: 8000 },
     { id: "step-1v-32k", maxOutput: 4096, contextWindowTokens: 32000 },
-    { id: "step-1o-vision-32k", maxOutput: 4096, contextWindowTokens: 32000, releasedAt: "2025-01-22" },
-    { id: "step-1o-turbo-vision", maxOutput: 4096, contextWindowTokens: 32000, releasedAt: "2025-02-14" },
+    {
+      id: "step-1o-vision-32k",
+      maxOutput: 4096,
+      contextWindowTokens: 32000,
+      releasedAt: "2025-01-22",
+    },
+    {
+      id: "step-1o-turbo-vision",
+      maxOutput: 4096,
+      contextWindowTokens: 32000,
+      releasedAt: "2025-02-14",
+    },
   ],
 };

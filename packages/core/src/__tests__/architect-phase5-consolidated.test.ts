@@ -155,7 +155,7 @@ const CONSOLIDATED_RESPONSE = [
   "",
   "=== SECTION: book_rules ===",
   "---",
-  "version: \"1.0\"",
+  'version: "1.0"',
   "protagonist:",
   "  name: 林辞",
   "  personalityLock: [沉默, 执拗]",
@@ -178,7 +178,8 @@ const CONSOLIDATED_RESPONSE = [
 describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
   it("the zh prompt advertises exactly 5 SECTION headers (NO current_state, NO rhythm_principles)", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -186,15 +187,10 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
     const messages = chat.mock.calls[0]?.[0] as Array<{ role: string; content: string }>;
     const system = messages[0]?.content ?? "";
 
-    const headers = [...system.matchAll(/^=== SECTION: ([a-z_]+) ===$/gim)]
-      .map((match) => match[1]);
-    expect(headers).toEqual([
-      "story_frame",
-      "volume_map",
-      "roles",
-      "book_rules",
-      "pending_hooks",
-    ]);
+    const headers = [...system.matchAll(/^=== SECTION: ([a-z_]+) ===$/gim)].map(
+      (match) => match[1],
+    );
+    expect(headers).toEqual(["story_frame", "volume_map", "roles", "book_rules", "pending_hooks"]);
     // rhythm_principles is explicitly NOT a standalone section — it still
     // lives inside the last paragraph of volume_map.
     expect(headers).not.toContain("rhythm_principles");
@@ -205,7 +201,8 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
 
   it("the prompt forbids duplication across sections (dedup rule)", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -225,7 +222,8 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
 
   it("the prompt carries explicit per-section char budget markers (NO current_state budget)", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -242,7 +240,8 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
 
   it("the rhythm principles prompt allows a mix of universal + concrete (≥3 concretized, rest may stay universal)", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -260,22 +259,18 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
 
   it("the English prompt also carries the 5-section / dedup / budget rules and rhythm universal allowance", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     const enBook: BookConfig = { ...baseBook(), language: "en" };
     await agent.generateFoundation(enBook);
     const system = (chat.mock.calls[0]?.[0] as Array<{ content: string }>)[0]?.content ?? "";
 
-    const headers = [...system.matchAll(/^=== SECTION: ([a-z_]+) ===$/gim)]
-      .map((match) => match[1]);
-    expect(headers).toEqual([
-      "story_frame",
-      "volume_map",
-      "roles",
-      "book_rules",
-      "pending_hooks",
-    ]);
+    const headers = [...system.matchAll(/^=== SECTION: ([a-z_]+) ===$/gim)].map(
+      (match) => match[1],
+    );
+    expect(headers).toEqual(["story_frame", "volume_map", "roles", "book_rules", "pending_hooks"]);
     expect(system).toContain("story_frame ≤ 3000 chars");
     expect(system).not.toContain("current_state 500-800 chars");
     expect(system).toContain("YAML only");
@@ -286,7 +281,8 @@ describe("Phase 5 consolidation — 7→5 sections, prompt contract", () => {
 
   it("book_rules prompt block instructs YAML only, no prose", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -315,8 +311,10 @@ describe("Phase 5 consolidation — parser accepts 5-section output (current_sta
   it("accepts a response with no current_state section and seeds the placeholder on disk", async () => {
     const agent = buildAgent();
     // CONSOLIDATED_RESPONSE already omits current_state — feed it straight in.
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     const out = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, out, false, "zh");
@@ -360,7 +358,7 @@ describe("Phase 5 consolidation — parser accepts 5-section output (current_sta
       "从独行到托付。",
       "=== SECTION: book_rules ===",
       "---",
-      "version: \"1.0\"",
+      'version: "1.0"',
       "---",
       "",
       "## 叙事视角",
@@ -377,8 +375,10 @@ describe("Phase 5 consolidation — parser accepts 5-section output (current_sta
     ].join("\n");
 
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: legacyResponse, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: legacyResponse, usage: ZERO_USAGE });
 
     const out = await agent.generateFoundation(baseBook());
 
@@ -405,8 +405,10 @@ describe("Phase 5 consolidation — readCurrentStateWithFallback derives initial
     // CONSOLIDATED_RESPONSE emits no current_state section — writeFoundationFiles
     // seeds the placeholder, which triggers the fallback reader.
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: CONSOLIDATED_RESPONSE, usage: ZERO_USAGE });
 
     const out = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, out, false, "zh");
@@ -425,7 +427,8 @@ describe("Phase 5 consolidation — readCurrentStateWithFallback derives initial
   it("returns the file content as-is when current_state.md already has runtime content", async () => {
     const storyDir = join(bookDir, "story");
     await mkdir(storyDir, { recursive: true });
-    const runtime = "# 当前状态\n\n- 第 5 章后主角正式加入合作社。\n- 与体制的关系：明面协作、暗中抵抗。\n";
+    const runtime =
+      "# 当前状态\n\n- 第 5 章后主角正式加入合作社。\n- 与体制的关系：明面协作、暗中抵抗。\n";
     await writeFile(join(storyDir, "current_state.md"), runtime, "utf-8");
 
     const derived = await readCurrentStateWithFallback(bookDir, "(missing)");
@@ -435,9 +438,13 @@ describe("Phase 5 consolidation — readCurrentStateWithFallback derives initial
   it("isCurrentStateSeedPlaceholder correctly identifies seeds vs real content", () => {
     expect(isCurrentStateSeedPlaceholder("")).toBe(true);
     expect(isCurrentStateSeedPlaceholder("# 当前状态\n\n> 建书时占位。后续章节补。\n")).toBe(true);
-    expect(isCurrentStateSeedPlaceholder("# Current State\n\n> Seeded at book creation.\n")).toBe(true);
+    expect(isCurrentStateSeedPlaceholder("# Current State\n\n> Seeded at book creation.\n")).toBe(
+      true,
+    );
     // A real consolidator-appended block — no seed marker
-    expect(isCurrentStateSeedPlaceholder("# 当前状态\n\n- 主角现状一二三\n- 体制关系四五六\n")).toBe(false);
+    expect(
+      isCurrentStateSeedPlaceholder("# 当前状态\n\n- 主角现状一二三\n- 体制关系四五六\n"),
+    ).toBe(false);
     // A long file that happens to contain the seed marker in prose — NOT a seed
     const longContent = "# 当前状态\n\n" + "一段很长的实际内容。".repeat(200) + "\n建书时占位\n";
     expect(isCurrentStateSeedPlaceholder(longContent)).toBe(false);

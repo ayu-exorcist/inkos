@@ -29,26 +29,22 @@ describe("StateValidatorAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "{\"warnings\":[],\"passed\":true}",
-          "",
-          "## Notes",
-          "Trailing markdown can still mention braces like } without changing the verdict.",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        '{"warnings":[],"passed":true}',
+        "",
+        "## Notes",
+        "Trailing markdown can still mention braces like } without changing the verdict.",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
-    await expect(agent.validate(
-      "Chapter body.",
-      3,
-      "old state",
-      "new state",
-      "old hooks",
-      "new hooks",
-      "en",
-    )).resolves.toEqual({
+    await expect(
+      agent.validate("Chapter body.", 3, "old state", "new state", "old hooks", "new hooks", "en"),
+    ).resolves.toEqual({
       warnings: [],
       passed: true,
     });
@@ -71,10 +67,9 @@ describe("StateValidatorAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    const chatSpy = vi.spyOn(
-      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
-      "chat",
-    ).mockResolvedValue({ content: "PASS", usage: ZERO_USAGE });
+    const chatSpy = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+      .mockResolvedValue({ content: "PASS", usage: ZERO_USAGE });
 
     await agent.validate("Body.", 1, "old", "new state", "old hooks", "new hooks", "zh");
 
@@ -100,10 +95,9 @@ describe("StateValidatorAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    const chatSpy = vi.spyOn(
-      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
-      "chat",
-    ).mockResolvedValue({ content: "PASS", usage: ZERO_USAGE });
+    const chatSpy = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+      .mockResolvedValue({ content: "PASS", usage: ZERO_USAGE });
 
     await agent.validate(
       "正文确认：第五条规则才是天黑后不准出宿舍。",
@@ -145,21 +139,17 @@ describe("StateValidatorAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: "",
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: "",
+      usage: ZERO_USAGE,
+    });
 
     // Empty response throws (fail-closed)
-    await expect(agent.validate(
-      "Chapter body.",
-      3,
-      "old state",
-      "new state",
-      "old hooks",
-      "new hooks",
-      "en",
-    )).rejects.toThrow("empty response");
+    await expect(
+      agent.validate("Chapter body.", 3, "old state", "new state", "old hooks", "new hooks", "en"),
+    ).rejects.toThrow("empty response");
   });
 });

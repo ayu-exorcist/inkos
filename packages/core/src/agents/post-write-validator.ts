@@ -16,10 +16,7 @@ export interface PostWriteViolation {
   readonly suggestion: string;
 }
 
-export function normalizePostWriteSurface(
-  content: string,
-  languageOverride?: "zh" | "en",
-): string {
+export function normalizePostWriteSurface(content: string, languageOverride?: "zh" | "en"): string {
   let normalized = stripPostWriteMetaLines(content);
   if (languageOverride !== "en") {
     normalized = normalized.replace(/——+/g, "，");
@@ -29,9 +26,10 @@ export function normalizePostWriteSurface(
 
 function stripPostWriteMetaLines(content: string): string {
   const lines = content.split(/\r?\n/);
-  const filtered = lines.filter((line) =>
-    !/^\s*\[(?:polisher|writer|reviser|reviewer)-note\]\s*/i.test(line)
-    && !/^\s*\[(?:润色|写作|修订|审稿)备注\]\s*/.test(line)
+  const filtered = lines.filter(
+    (line) =>
+      !/^\s*\[(?:polisher|writer|reviser|reviewer)-note\]\s*/i.test(line) &&
+      !/^\s*\[(?:润色|写作|修订|审稿)备注\]\s*/.test(line),
   );
   return filtered.join("\n");
 }
@@ -62,9 +60,18 @@ const META_NARRATION_PATTERNS = [
 
 /** 分析报告式术语（禁止出现在正文中） */
 const REPORT_TERMS = [
-  "核心动机", "信息边界", "信息落差", "核心风险", "利益最大化",
-  "当前处境", "行为约束", "性格过滤", "情绪外化", "锚定效应",
-  "沉没成本", "认知共鸣",
+  "核心动机",
+  "信息边界",
+  "信息落差",
+  "核心风险",
+  "利益最大化",
+  "当前处境",
+  "行为约束",
+  "性格过滤",
+  "情绪外化",
+  "锚定效应",
+  "沉没成本",
+  "认知共鸣",
 ];
 
 /** 作者说教词 */
@@ -138,9 +145,10 @@ export function validatePostWrite(
   }
 
   // 4. 高疲劳词检查（从 genreProfile 读取，单章每词 ≤ 1次）
-  const fatigueWords = bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
-    ? bookRules.fatigueWordsOverride
-    : genreProfile.fatigueWords;
+  const fatigueWords =
+    bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
+      ? bookRules.fatigueWordsOverride
+      : genreProfile.fatigueWords;
   for (const word of fatigueWords) {
     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const matches = content.match(new RegExp(escaped, "g"));
@@ -180,7 +188,7 @@ export function validatePostWrite(
     violations.push({
       rule: "报告术语",
       severity: "error",
-      description: `正文中出现分析报告术语：${foundTerms.map(t => `"${t}"`).join("、")}`,
+      description: `正文中出现分析报告术语：${foundTerms.map((t) => `"${t}"`).join("、")}`,
       suggestion: "这些术语只能用于 PRE_WRITE_CHECK 内部推理，正文中用口语化表达替代",
     });
   }
@@ -194,8 +202,8 @@ export function validatePostWrite(
       rule: isEnglish ? "chapter-number-reference" : "章节号指称",
       severity: "error",
       description: isEnglish
-        ? `Chapter text contains explicit chapter number references: ${unique.map(r => `"${r}"`).join(", ")}. Characters do not know they are in a numbered chapter.`
-        : `正文中出现了章节号指称：${unique.map(r => `"${r}"`).join("、")}。角色不知道自己在第几章。`,
+        ? `Chapter text contains explicit chapter number references: ${unique.map((r) => `"${r}"`).join(", ")}. Characters do not know they are in a numbered chapter.`
+        : `正文中出现了章节号指称：${unique.map((r) => `"${r}"`).join("、")}。角色不知道自己在第几章。`,
       suggestion: isEnglish
         ? "Replace with natural references: 'that night', 'when the warehouse burned', 'the incident at the dock'"
         : '改成自然表达："那天晚上"、"仓库出事那次"、"码头上的事"',
@@ -213,7 +221,7 @@ export function validatePostWrite(
     violations.push({
       rule: "作者说教",
       severity: "warning",
-      description: `出现说教词：${foundSermons.map(w => `"${w}"`).join("、")}`,
+      description: `出现说教词：${foundSermons.map((w) => `"${w}"`).join("、")}`,
       suggestion: "删除说教词，让读者自己从情节中判断",
     });
   }
@@ -235,8 +243,8 @@ export function validatePostWrite(
   // 9. 连续"了"字检查（3句以上连续含"了"）
   const sentences = content
     .split(/[。！？]/)
-    .map(s => s.trim())
-    .filter(s => s.length > 2);
+    .map((s) => s.trim())
+    .filter((s) => s.length > 2);
 
   let consecutiveLe = 0;
   let maxConsecutiveLe = 0;
@@ -260,10 +268,10 @@ export function validatePostWrite(
   // 10. 段落长度检查（手机阅读适配：50-250字/段为宜）
   const paragraphs = content
     .split(/\n\s*\n/)
-    .map(p => p.trim())
-    .filter(p => p.length > 0);
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
 
-  const longParagraphs = paragraphs.filter(p => p.length > 300);
+  const longParagraphs = paragraphs.filter((p) => p.length > 300);
   if (longParagraphs.length >= 2) {
     violations.push({
       rule: "段落过长",
@@ -310,7 +318,11 @@ export function detectCrossChapterRepetition(
 
   if (isEnglish) {
     // Extract 3-word phrases from current chapter
-    const words = currentContent.toLowerCase().replace(/[^\w\s']/g, "").split(/\s+/).filter(w => w.length > 2);
+    const words = currentContent
+      .toLowerCase()
+      .replace(/[^\w\s']/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
     const phraseCounts = new Map<string, number>();
     for (let i = 0; i < words.length - 2; i++) {
       const phrase = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
@@ -390,13 +402,15 @@ export function detectParagraphLengthDrift(
           rule: "Paragraph density drift",
           severity: "warning",
           description: `Average paragraph length dropped from ${Math.round(recent.averageLength)} to ${Math.round(current.averageLength)} characters (${dropPercent}% shorter) compared with recent chapters.`,
-          suggestion: "Let action, observation, and reaction share paragraphs more often instead of cutting every beat into a single short line.",
+          suggestion:
+            "Let action, observation, and reaction share paragraphs more often instead of cutting every beat into a single short line.",
         }
       : {
           rule: "段落密度漂移",
           severity: "warning",
           description: `当前章平均段长从近期章节的${Math.round(recent.averageLength)}字降到${Math.round(current.averageLength)}字，缩短了${dropPercent}%。`,
-          suggestion: "不要把每个动作都切成单独短句；适当把动作、观察和反应并入同一段，恢复段落层次。",
+          suggestion:
+            "不要把每个动作都切成单独短句；适当把动作、观察和反应并入同一段，恢复段落层次。",
         },
   ];
 }
@@ -410,7 +424,17 @@ function validatePostWriteEnglish(
   const violations: PostWriteViolation[] = [];
 
   // 1. AI-tell word density (from en-prompt-sections IRON LAW 3)
-  const aiTellWords = ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "embark", "comprehensive", "nuanced"];
+  const aiTellWords = [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "embark",
+    "comprehensive",
+    "nuanced",
+  ];
   for (const word of aiTellWords) {
     const regex = new RegExp(`\\b${word}\\b`, "gi");
     const matches = content.match(regex);
@@ -440,23 +464,31 @@ function validatePostWriteEnglish(
 
   // 2.5. Multi-character scene with almost no direct exchange
   const quotedLines = content.match(/"[^"]+"/g) ?? [];
-  const englishNames = [...new Set(
-    (content.match(/\b[A-Z][a-z]{2,}\b/g) ?? [])
-      .filter((name) => !ENGLISH_NAME_STOP_WORDS.has(name)),
-  )];
+  const englishNames = [
+    ...new Set(
+      (content.match(/\b[A-Z][a-z]{2,}\b/g) ?? []).filter(
+        (name) => !ENGLISH_NAME_STOP_WORDS.has(name),
+      ),
+    ),
+  ];
   if (englishNames.length >= 2 && quotedLines.length < 2 && content.length >= 120) {
     violations.push({
       rule: "Dialogue pressure",
       severity: "warning",
       description: `Multi-character scene appears to rely on narration with almost no direct exchange (${englishNames.slice(0, 3).join(", ")}).`,
-      suggestion: "Add at least one resistance-bearing exchange so characters push back, withhold, or pressure each other directly.",
+      suggestion:
+        "Add at least one resistance-bearing exchange so characters push back, withhold, or pressure each other directly.",
     });
   }
 
   // 3. Book-specific prohibitions
   if (bookRules?.prohibitions) {
     for (const prohibition of bookRules.prohibitions) {
-      if (prohibition.length >= 2 && prohibition.length <= 50 && content.toLowerCase().includes(prohibition.toLowerCase())) {
+      if (
+        prohibition.length >= 2 &&
+        prohibition.length <= 50 &&
+        content.toLowerCase().includes(prohibition.toLowerCase())
+      ) {
         violations.push({
           rule: "Book prohibition",
           severity: "error",
@@ -468,9 +500,10 @@ function validatePostWriteEnglish(
   }
 
   // 4. Genre fatigue words
-  const fatigueWords = bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
-    ? bookRules.fatigueWordsOverride
-    : genreProfile.fatigueWords;
+  const fatigueWords =
+    bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
+      ? bookRules.fatigueWordsOverride
+      : genreProfile.fatigueWords;
   for (const word of fatigueWords) {
     const regex = new RegExp(`\\b${word}\\b`, "gi");
     const matches = content.match(regex);
@@ -502,7 +535,8 @@ function appendParagraphShapeWarnings(
             rule: "Paragraph fragmentation",
             severity: "warning",
             description: `${shape.shortParagraphs.length} of ${shape.paragraphs.length} paragraphs are shorter than ${shape.shortThreshold} characters.`,
-            suggestion: "Merge adjacent action, observation, and reaction beats so the chapter does not collapse into one-line paragraphs.",
+            suggestion:
+              "Merge adjacent action, observation, and reaction beats so the chapter does not collapse into one-line paragraphs.",
           }
         : {
             rule: "段落过碎",
@@ -520,7 +554,8 @@ function appendParagraphShapeWarnings(
             rule: "Consecutive short paragraphs",
             severity: "warning",
             description: `${shape.maxConsecutiveShort} short paragraphs appear back to back.`,
-            suggestion: "Break the one-beat-per-paragraph rhythm by folding connected beats into fuller paragraphs.",
+            suggestion:
+              "Break the one-beat-per-paragraph rhythm by folding connected beats into fuller paragraphs.",
           }
         : {
             rule: "连续短段",
@@ -551,10 +586,13 @@ function analyzeParagraphShape(content: string, language: "zh" | "en"): Paragrap
   // Exclude dialogue lines from short paragraph counting — dialogue is naturally short
   const narrativeParagraphs = paragraphs.filter((p) => !isDialogueParagraph(p));
   const shortThreshold = language === "en" ? 120 : 35;
-  const shortParagraphs = narrativeParagraphs.filter((paragraph) => paragraph.length < shortThreshold);
-  const averageLength = paragraphs.length > 0
-    ? paragraphs.reduce((sum, paragraph) => sum + paragraph.length, 0) / paragraphs.length
-    : 0;
+  const shortParagraphs = narrativeParagraphs.filter(
+    (paragraph) => paragraph.length < shortThreshold,
+  );
+  const averageLength =
+    paragraphs.length > 0
+      ? paragraphs.reduce((sum, paragraph) => sum + paragraph.length, 0) / paragraphs.length
+      : 0;
 
   let maxConsecutiveShort = 0;
   let currentConsecutive = 0;
@@ -571,7 +609,8 @@ function analyzeParagraphShape(content: string, language: "zh" | "en"): Paragrap
     paragraphs,
     shortThreshold,
     shortParagraphs,
-    shortRatio: narrativeParagraphs.length > 0 ? shortParagraphs.length / narrativeParagraphs.length : 0,
+    shortRatio:
+      narrativeParagraphs.length > 0 ? shortParagraphs.length / narrativeParagraphs.length : 0,
     averageLength,
     maxConsecutiveShort,
   };
@@ -612,7 +651,24 @@ const CHINESE_TITLE_STOP_WORDS = new Set([
   "回头",
 ]);
 
-const CHINESE_TITLE_STOP_CHARS = new Set(["的", "了", "着", "一", "只", "从", "在", "和", "与", "把", "被", "有", "没", "里", "又", "才"]);
+const CHINESE_TITLE_STOP_CHARS = new Set([
+  "的",
+  "了",
+  "着",
+  "一",
+  "只",
+  "从",
+  "在",
+  "和",
+  "与",
+  "把",
+  "被",
+  "有",
+  "没",
+  "里",
+  "又",
+  "才",
+]);
 
 /**
  * Detect duplicate or near-duplicate chapter titles.
@@ -676,16 +732,19 @@ export function resolveDuplicateTitle(
 
   const duplicateIssues = detectDuplicateTitle(trimmed, existingTitles);
   if (duplicateIssues.length > 0) {
-    const regenerated = regenerateDuplicateTitle(trimmed, existingTitles, language, options?.content);
+    const regenerated = regenerateDuplicateTitle(
+      trimmed,
+      existingTitles,
+      language,
+      options?.content,
+    );
     if (regenerated && detectDuplicateTitle(regenerated, existingTitles).length === 0) {
       return { title: regenerated, issues: duplicateIssues };
     }
 
     let counter = 2;
     while (counter < 100) {
-      const candidate = language === "en"
-        ? `${trimmed} (${counter})`
-        : `${trimmed}（${counter}）`;
+      const candidate = language === "en" ? `${trimmed} (${counter})` : `${trimmed}（${counter}）`;
       if (detectDuplicateTitle(candidate, existingTitles).length === 0) {
         return { title: candidate, issues: duplicateIssues };
       }
@@ -702,9 +761,9 @@ export function resolveDuplicateTitle(
 
   const regenerated = regenerateCollapsedTitle(trimmed, existingTitles, language, options?.content);
   if (
-    regenerated
-    && detectDuplicateTitle(regenerated, existingTitles).length === 0
-    && detectTitleCollapse(regenerated, existingTitles, language).length === 0
+    regenerated &&
+    detectDuplicateTitle(regenerated, existingTitles).length === 0 &&
+    detectTitleCollapse(regenerated, existingTitles, language).length === 0
   ) {
     return { title: regenerated, issues: collapseIssues };
   }
@@ -748,7 +807,8 @@ function detectTitleCollapse(
           rule: "title-collapse",
           severity: "warning",
           description: `Chapter title "${newTitle}" keeps leaning on the recent "${titlePressure.repeatedToken}" title shell.`,
-          suggestion: "Rename the chapter around a new image, action, consequence, or character focus.",
+          suggestion:
+            "Rename the chapter around a new image, action, consequence, or character focus.",
         }
       : {
           rule: "title-collapse",
@@ -769,16 +829,15 @@ function regenerateDuplicateTitle(
     return undefined;
   }
 
-  const qualifier = language === "en"
-    ? extractEnglishTitleQualifier(baseTitle, existingTitles, content)
-    : extractChineseTitleQualifier(baseTitle, existingTitles, content);
+  const qualifier =
+    language === "en"
+      ? extractEnglishTitleQualifier(baseTitle, existingTitles, content)
+      : extractChineseTitleQualifier(baseTitle, existingTitles, content);
   if (!qualifier) {
     return undefined;
   }
 
-  return language === "en"
-    ? `${baseTitle}: ${qualifier}`
-    : `${baseTitle}：${qualifier}`;
+  return language === "en" ? `${baseTitle}: ${qualifier}` : `${baseTitle}：${qualifier}`;
 }
 
 function regenerateCollapsedTitle(
@@ -791,9 +850,10 @@ function regenerateCollapsedTitle(
     return undefined;
   }
 
-  const fresh = language === "en"
-    ? extractEnglishTitleQualifier(baseTitle, existingTitles, content)
-    : extractChineseTitleQualifier(baseTitle, existingTitles, content);
+  const fresh =
+    language === "en"
+      ? extractEnglishTitleQualifier(baseTitle, existingTitles, content)
+      : extractChineseTitleQualifier(baseTitle, existingTitles, content);
   if (!fresh) {
     return undefined;
   }
@@ -817,9 +877,7 @@ function extractEnglishTitleQualifier(
   }
 
   const second = words.find((word) => word !== first && !blocked.has(word));
-  return second
-    ? `${capitalize(first)} ${capitalize(second)}`
-    : capitalize(first);
+  return second ? `${capitalize(first)} ${capitalize(second)}` : capitalize(first);
 }
 
 function extractChineseTitleQualifier(

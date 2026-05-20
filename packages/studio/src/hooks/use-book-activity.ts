@@ -31,11 +31,7 @@ const BOOK_COLLECTION_REFRESH_EVENTS = new Set([
   "audit:error",
 ]);
 
-const DAEMON_STATUS_REFRESH_EVENTS = new Set([
-  "daemon:started",
-  "daemon:stopped",
-  "daemon:error",
-]);
+const DAEMON_STATUS_REFRESH_EVENTS = new Set(["daemon:started", "daemon:stopped", "daemon:error"]);
 
 export interface BookActivity {
   readonly writing: boolean;
@@ -99,7 +95,10 @@ export function deriveActiveBookIds(messages: ReadonlyArray<SSEMessage>): Readon
   return active;
 }
 
-export function deriveBookActivity(messages: ReadonlyArray<SSEMessage>, bookId: string): BookActivity {
+export function deriveBookActivity(
+  messages: ReadonlyArray<SSEMessage>,
+  bookId: string,
+): BookActivity {
   let writing = false;
   let drafting = false;
   let lastError: string | null = null;
@@ -167,7 +166,7 @@ export function applyBookCollectionEvent(
     if (existingIndex < 0) {
       return [...books, book];
     }
-    return books.map((candidate, index) => index === existingIndex ? book : candidate);
+    return books.map((candidate, index) => (index === existingIndex ? book : candidate));
   }
 
   if (message.event === "book:deleted") {

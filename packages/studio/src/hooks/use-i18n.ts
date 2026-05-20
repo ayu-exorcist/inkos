@@ -26,7 +26,10 @@ const strings = {
   "book.draftOnly": { zh: "仅草稿", en: "Draft Only" },
   "book.approveAll": { zh: "全部通过", en: "Approve All" },
   "book.analytics": { zh: "数据分析", en: "Analytics" },
-  "book.noChapters": { zh: "暂无章节，点击「写下一章」开始", en: 'No chapters yet. Click "Write Next" to start.' },
+  "book.noChapters": {
+    zh: "暂无章节，点击「写下一章」开始",
+    en: 'No chapters yet. Click "Write Next" to start.',
+  },
   "book.approve": { zh: "通过", en: "Approve" },
   "book.reject": { zh: "驳回", en: "Reject" },
   "book.words": { zh: "字", en: "words" },
@@ -91,12 +94,21 @@ const strings = {
 
   // Book Detail extras
   "book.deleteBook": { zh: "删除书籍", en: "Delete Book" },
-  "book.confirmDelete": { zh: "确认删除此书及所有章节？", en: "Delete this book and all chapters?" },
+  "book.confirmDelete": {
+    zh: "确认删除此书及所有章节？",
+    en: "Delete this book and all chapters?",
+  },
   "book.settings": { zh: "书籍设置", en: "Book Settings" },
   "book.status": { zh: "状态", en: "Status" },
   "book.drafting": { zh: "草稿中...", en: "Drafting..." },
-  "book.pipelineWriting": { zh: "后台正在写作，本页会在完成后自动刷新。", en: "Background writing is running. This page will refresh automatically when it finishes." },
-  "book.pipelineDrafting": { zh: "后台正在生成草稿，本页会在完成后自动刷新。", en: "Background drafting is running. This page will refresh automatically when it finishes." },
+  "book.pipelineWriting": {
+    zh: "后台正在写作，本页会在完成后自动刷新。",
+    en: "Background writing is running. This page will refresh automatically when it finishes.",
+  },
+  "book.pipelineDrafting": {
+    zh: "后台正在生成草稿，本页会在完成后自动刷新。",
+    en: "Background drafting is running. This page will refresh automatically when it finishes.",
+  },
   "book.pipelineFailed": { zh: "后台任务失败", en: "Background job failed" },
   "book.save": { zh: "保存", en: "Save" },
   "book.saving": { zh: "保存中...", en: "Saving..." },
@@ -122,7 +134,10 @@ const strings = {
   "style.sourceName": { zh: "来源名称", en: "Source Name" },
   "style.sourceExample": { zh: "如：参考小说", en: "e.g. Reference Novel" },
   "style.textSample": { zh: "文本样本", en: "Text Sample" },
-  "style.pasteHint": { zh: "粘贴参考文本进行文风分析...", en: "Paste reference text for style analysis..." },
+  "style.pasteHint": {
+    zh: "粘贴参考文本进行文风分析...",
+    en: "Paste reference text for style analysis...",
+  },
   "style.analyze": { zh: "分析", en: "Analyze" },
   "style.analyzing": { zh: "分析中...", en: "Analyzing..." },
   "style.results": { zh: "分析结果", en: "Analysis Results" },
@@ -135,7 +150,10 @@ const strings = {
   "style.importToBook": { zh: "导入到书籍", en: "Import to Book" },
   "style.selectBook": { zh: "选择书籍...", en: "Select book..." },
   "style.importGuide": { zh: "导入文风指南", en: "Import Style Guide" },
-  "style.emptyHint": { zh: "粘贴文本并点击分析查看文风档案", en: "Paste text and click Analyze to see style profile" },
+  "style.emptyHint": {
+    zh: "粘贴文本并点击分析查看文风档案",
+    en: "Paste text and click Analyze to see style profile",
+  },
 
   // Import
   "import.title": { zh: "导入工具", en: "Import Tools" },
@@ -157,7 +175,10 @@ const strings = {
   "radar.scan": { zh: "扫描市场", en: "Scan Market" },
   "radar.scanning": { zh: "扫描中...", en: "Scanning..." },
   "radar.summary": { zh: "市场概要", en: "Market Summary" },
-  "radar.emptyHint": { zh: "点击「扫描市场」分析当前趋势和机会", en: "Click \"Scan Market\" to analyze trends and opportunities" },
+  "radar.emptyHint": {
+    zh: "点击「扫描市场」分析当前趋势和机会",
+    en: 'Click "Scan Market" to analyze trends and opportunities',
+  },
   "radar.history": { zh: "扫描历史", en: "Scan History" },
 
   // Doctor
@@ -170,8 +191,14 @@ const strings = {
   "doctor.llmApi": { zh: "LLM API 连接", en: "LLM API connectivity" },
   "doctor.connected": { zh: "已连接", en: "Connected" },
   "doctor.failed": { zh: "失败", en: "Failed" },
-  "doctor.allPassed": { zh: "所有检查通过 — 环境健康", en: "All checks passed — environment is healthy" },
-  "doctor.someFailed": { zh: "部分检查失败 — 请查看配置", en: "Some checks failed — review configuration" },
+  "doctor.allPassed": {
+    zh: "所有检查通过 — 环境健康",
+    en: "All checks passed — environment is healthy",
+  },
+  "doctor.someFailed": {
+    zh: "部分检查失败 — 请查看配置",
+    en: "Some checks failed — review configuration",
+  },
 
   // Genre extras
   "genre.createNew": { zh: "创建新题材", en: "Create New Genre" },
@@ -221,7 +248,10 @@ const strings = {
   "truth.selectHint": { zh: "选择文件查看内容", en: "Select a file to view" },
 
   // Dashboard
-  "dash.subtitle": { zh: "管理你的文学宇宙和 AI 辅助草稿。", en: "Manage your literary universe and AI-assisted drafts." },
+  "dash.subtitle": {
+    zh: "管理你的文学宇宙和 AI 辅助草稿。",
+    en: "Manage your literary universe and AI-assisted drafts.",
+  },
 
   // Chapter Reader extras
   "reader.openingManuscript": { zh: "打开书稿中...", en: "Opening manuscript..." },

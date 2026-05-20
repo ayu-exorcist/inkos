@@ -41,17 +41,24 @@ export class ChapterAnalyzerAgent extends BaseAgent {
 
   async analyzeChapter(input: AnalyzeChapterInput): Promise<AnalyzeChapterOutput> {
     const { book, bookDir, chapterNumber, chapterContent, chapterTitle } = input;
-    const { profile: genreProfile, body: genreBody } =
-      await readGenreProfile(this.ctx.projectRoot, book.genre);
+    const { profile: genreProfile, body: genreBody } = await readGenreProfile(
+      this.ctx.projectRoot,
+      book.genre,
+    );
     const resolvedLanguage = book.language ?? genreProfile.language;
 
     // Read current truth files (same set as writer.ts). Phase 5: prefer the
     // new prose outline (story_frame / volume_map) and roles/ directory.
     const placeholder = this.missingFilePlaceholder(resolvedLanguage);
     const [
-      currentState, ledger, hooks,
-      subplotBoard, emotionalArcs, characterMatrix,
-      storyBible, volumeOutline,
+      currentState,
+      ledger,
+      hooks,
+      subplotBoard,
+      emotionalArcs,
+      characterMatrix,
+      storyBible,
+      volumeOutline,
     ] = await Promise.all([
       // Phase 5 consolidation: derive initial state from roles + seed hooks
       // when current_state.md is still the architect seed placeholder.
@@ -81,32 +88,38 @@ export class ChapterAnalyzerAgent extends BaseAgent {
     const governedMemoryBlocks = input.contextPackage
       ? buildGovernedMemoryEvidenceBlocks(input.contextPackage, resolvedLanguage)
       : undefined;
-    const hooksWorkingSet = governedMode && input.contextPackage
-      ? buildGovernedHookWorkingSet({
-          hooksMarkdown: hooks,
-          contextPackage: input.contextPackage,
-          chapterIntent: input.chapterIntent,
-          chapterNumber,
-          language: resolvedLanguage,
-        })
-      : hooks;
-    const subplotWorkingSet = governedMode
-      ? filterSubplots(subplotBoard)
-      : subplotBoard;
+    const hooksWorkingSet =
+      governedMode && input.contextPackage
+        ? buildGovernedHookWorkingSet({
+            hooksMarkdown: hooks,
+            contextPackage: input.contextPackage,
+            chapterIntent: input.chapterIntent,
+            chapterNumber,
+            language: resolvedLanguage,
+          })
+        : hooks;
+    const subplotWorkingSet = governedMode ? filterSubplots(subplotBoard) : subplotBoard;
     const emotionalWorkingSet = governedMode
       ? filterEmotionalArcs(emotionalArcs, chapterNumber)
       : emotionalArcs;
-    const matrixWorkingSet = governedMode && input.chapterIntent && input.contextPackage
-      ? buildGovernedCharacterMatrixWorkingSet({
-          matrixMarkdown: characterMatrix,
-          chapterIntent: input.chapterIntent,
-          contextPackage: input.contextPackage,
-          protagonistName: bookRules?.protagonist?.name,
-        })
-      : characterMatrix;
-    const reducedControlBlock = governedMode && input.chapterIntent && input.contextPackage && input.ruleStack
-      ? this.buildReducedControlBlock(input.chapterIntent, input.contextPackage, input.ruleStack, resolvedLanguage)
-      : "";
+    const matrixWorkingSet =
+      governedMode && input.chapterIntent && input.contextPackage
+        ? buildGovernedCharacterMatrixWorkingSet({
+            matrixMarkdown: characterMatrix,
+            chapterIntent: input.chapterIntent,
+            contextPackage: input.contextPackage,
+            protagonistName: bookRules?.protagonist?.name,
+          })
+        : characterMatrix;
+    const reducedControlBlock =
+      governedMode && input.chapterIntent && input.contextPackage && input.ruleStack
+        ? this.buildReducedControlBlock(
+            input.chapterIntent,
+            input.contextPackage,
+            input.ruleStack,
+            resolvedLanguage,
+          )
+        : "";
 
     const systemPrompt = this.buildSystemPrompt(
       book,
@@ -128,50 +141,52 @@ export class ChapterAnalyzerAgent extends BaseAgent {
       subplotBoard: subplotWorkingSet,
       emotionalArcs: emotionalWorkingSet,
       characterMatrix: matrixWorkingSet,
-      bibleBlock: !governedMode && storyBible !== this.missingFilePlaceholder(resolvedLanguage)
-        ? resolvedLanguage === "en"
-          ? `\n## Story Bible\n${storyBible}\n`
-          : `\n## 世界观设定\n${storyBible}\n`
-        : "",
-      outlineOrControlBlock: reducedControlBlock || (
-        volumeOutline !== this.missingFilePlaceholder(resolvedLanguage)
+      bibleBlock:
+        !governedMode && storyBible !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Story Bible\n${storyBible}\n`
+            : `\n## 世界观设定\n${storyBible}\n`
+          : "",
+      outlineOrControlBlock:
+        reducedControlBlock ||
+        (volumeOutline !== this.missingFilePlaceholder(resolvedLanguage)
           ? resolvedLanguage === "en"
             ? `\n## Volume Outline\n${volumeOutline}\n`
             : `\n## 卷纲\n${volumeOutline}\n`
-          : ""
-      ),
-      hooksBlock: governedMemoryBlocks?.hooksBlock
-        ?? (
-          hooksWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
-            ? resolvedLanguage === "en"
-              ? `\n## Current Hooks\n${hooksWorkingSet}\n`
-              : `\n## 当前伏笔池\n${hooksWorkingSet}\n`
-            : ""
-        ),
-      summariesBlock: governedMemoryBlocks?.summariesBlock
-        ?? (
-          chapterSummaries !== this.missingFilePlaceholder(resolvedLanguage)
-            ? resolvedLanguage === "en"
-              ? `\n## Existing Chapter Summaries\n${chapterSummaries}\n`
-              : `\n## 已有章节摘要\n${chapterSummaries}\n`
-            : ""
-        ),
+          : ""),
+      hooksBlock:
+        governedMemoryBlocks?.hooksBlock ??
+        (hooksWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Current Hooks\n${hooksWorkingSet}\n`
+            : `\n## 当前伏笔池\n${hooksWorkingSet}\n`
+          : ""),
+      summariesBlock:
+        governedMemoryBlocks?.summariesBlock ??
+        (chapterSummaries !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Existing Chapter Summaries\n${chapterSummaries}\n`
+            : `\n## 已有章节摘要\n${chapterSummaries}\n`
+          : ""),
       volumeSummariesBlock: governedMemoryBlocks?.volumeSummariesBlock ?? "",
-      subplotBlock: subplotWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
-        ? resolvedLanguage === "en"
-          ? `\n## Current Subplot Board\n${subplotWorkingSet}\n`
-          : `\n## 当前支线进度板\n${subplotWorkingSet}\n`
-        : "",
-      emotionalBlock: emotionalWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
-        ? resolvedLanguage === "en"
-          ? `\n## Current Emotional Arcs\n${emotionalWorkingSet}\n`
-          : `\n## 当前情感弧线\n${emotionalWorkingSet}\n`
-        : "",
-      matrixBlock: matrixWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
-        ? resolvedLanguage === "en"
-          ? `\n## Current Character Matrix\n${matrixWorkingSet}\n`
-          : `\n## 当前角色交互矩阵\n${matrixWorkingSet}\n`
-        : "",
+      subplotBlock:
+        subplotWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Current Subplot Board\n${subplotWorkingSet}\n`
+            : `\n## 当前支线进度板\n${subplotWorkingSet}\n`
+          : "",
+      emotionalBlock:
+        emotionalWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Current Emotional Arcs\n${emotionalWorkingSet}\n`
+            : `\n## 当前情感弧线\n${emotionalWorkingSet}\n`
+          : "",
+      matrixBlock:
+        matrixWorkingSet !== this.missingFilePlaceholder(resolvedLanguage)
+          ? resolvedLanguage === "en"
+            ? `\n## Current Character Matrix\n${matrixWorkingSet}\n`
+            : `\n## 当前角色交互矩阵\n${matrixWorkingSet}\n`
+          : "",
     });
 
     const response = await this.chat(
@@ -189,11 +204,9 @@ export class ChapterAnalyzerAgent extends BaseAgent {
 
     // If LLM didn't return a title, use the one from input or derive from chapter number
     if (
-      chapterTitle
-      && (
-        output.title === this.defaultChapterTitle(chapterNumber, resolvedLanguage)
-        || output.title === `第${chapterNumber}章`
-      )
+      chapterTitle &&
+      (output.title === this.defaultChapterTitle(chapterNumber, resolvedLanguage) ||
+        output.title === `第${chapterNumber}章`)
     ) {
       return {
         ...output,
@@ -455,13 +468,9 @@ ${bookRulesBody ? `## 本书规则\n\n${bookRulesBody}` : ""}
     readonly outlineOrControlBlock: string;
   }): string {
     if (params.language === "en") {
-      const titleLine = params.chapterTitle
-        ? `Chapter Title: ${params.chapterTitle}\n`
-        : "";
+      const titleLine = params.chapterTitle ? `Chapter Title: ${params.chapterTitle}\n` : "";
 
-      const ledgerBlock = params.ledger
-        ? `\n## Current Resource Ledger\n${params.ledger}\n`
-        : "";
+      const ledgerBlock = params.ledger ? `\n## Current Resource Ledger\n${params.ledger}\n` : "";
 
       return `Analyze chapter ${params.chapterNumber} and update all tracking files.
 ${titleLine}
@@ -477,13 +486,9 @@ ${params.hooksBlock}${params.volumeSummariesBlock}${params.subplotBlock}${params
 Please return the result strictly in the === TAG === format.`;
     }
 
-    const titleLine = params.chapterTitle
-      ? `章节标题：${params.chapterTitle}\n`
-      : "";
+    const titleLine = params.chapterTitle ? `章节标题：${params.chapterTitle}\n` : "";
 
-    const ledgerBlock = params.ledger
-      ? `\n## 当前资源账本\n${params.ledger}\n`
-      : "";
+    const ledgerBlock = params.ledger ? `\n## 当前资源账本\n${params.ledger}\n` : "";
 
     return `请分析第${params.chapterNumber}章正文，更新所有追踪文件。
 ${titleLine}
@@ -506,13 +511,20 @@ ${params.hooksBlock}${params.volumeSummariesBlock}${params.subplotBlock}${params
     language: "zh" | "en",
   ): string {
     const selectedContext = contextPackage.selectedContext
-      .map((entry) => `- ${entry.source}: ${entry.reason}${entry.excerpt ? ` | ${entry.excerpt}` : ""}`)
+      .map(
+        (entry) =>
+          `- ${entry.source}: ${entry.reason}${entry.excerpt ? ` | ${entry.excerpt}` : ""}`,
+      )
       .join("\n");
-    const overrides = ruleStack.activeOverrides.length > 0
-      ? ruleStack.activeOverrides
-        .map((override) => `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`)
-        .join("\n")
-      : "- none";
+    const overrides =
+      ruleStack.activeOverrides.length > 0
+        ? ruleStack.activeOverrides
+            .map(
+              (override) =>
+                `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`,
+            )
+            .join("\n")
+        : "- none";
 
     return language === "en"
       ? `\n## Chapter Control Inputs (compiled by Planner/Composer)
@@ -550,11 +562,18 @@ ${overrides}\n`;
   }
 
   private findOutlineNode(volumeOutline: string, chapterNumber: number): string | undefined {
-    if (!volumeOutline || volumeOutline === this.missingFilePlaceholder("zh") || volumeOutline === this.missingFilePlaceholder("en")) {
+    if (
+      !volumeOutline ||
+      volumeOutline === this.missingFilePlaceholder("zh") ||
+      volumeOutline === this.missingFilePlaceholder("en")
+    ) {
       return undefined;
     }
 
-    const lines = volumeOutline.split("\n").map((line) => line.trim()).filter(Boolean);
+    const lines = volumeOutline
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
     const chapterPatterns = [
       new RegExp(`^#+\\s*Chapter\\s*${chapterNumber}\\b`, "i"),
       new RegExp(`^#+\\s*第\\s*${chapterNumber}\\s*章`),
@@ -585,31 +604,33 @@ ${overrides}\n`;
       return this.missingFilePlaceholder(language);
     }
 
-    const header = language === "en"
-      ? [
-          "| Chapter | Title | Characters | Key Events | State Changes | Hook Activity | Mood | Chapter Type |",
-          "| --- | --- | --- | --- | --- | --- | --- | --- |",
-        ]
-      : [
-          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-          "| --- | --- | --- | --- | --- | --- | --- | --- |",
-        ];
+    const header =
+      language === "en"
+        ? [
+            "| Chapter | Title | Characters | Key Events | State Changes | Hook Activity | Mood | Chapter Type |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+          ]
+        : [
+            "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+          ];
 
-    const rows = summaries.map((summary) => [
-      summary.chapter,
-      summary.title,
-      summary.characters,
-      summary.events,
-      summary.stateChanges,
-      summary.hookActivity,
-      summary.mood,
-      summary.chapterType,
-    ].map((cell) => this.escapeTableCell(String(cell))).join(" | "));
+    const rows = summaries.map((summary) =>
+      [
+        summary.chapter,
+        summary.title,
+        summary.characters,
+        summary.events,
+        summary.stateChanges,
+        summary.hookActivity,
+        summary.mood,
+        summary.chapterType,
+      ]
+        .map((cell) => this.escapeTableCell(String(cell)))
+        .join(" | "),
+    );
 
-    return [
-      ...header,
-      ...rows.map((row) => `| ${row} |`),
-    ].join("\n");
+    return [...header, ...rows.map((row) => `| ${row} |`)].join("\n");
   }
 
   private escapeTableCell(value: string): string {
@@ -620,6 +641,7 @@ ${overrides}\n`;
     try {
       return await readFile(path, "utf-8");
     } catch {
+      // failure expected, safe to ignore
       return this.missingFilePlaceholder(language);
     }
   }

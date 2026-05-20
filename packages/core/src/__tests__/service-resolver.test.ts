@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 const KNOWN_MODELS = new Set(["gpt-4o", "kimi-k2.5", "MiniMax-M2.7"]);
 
 // Mock pi-ai's getModel — returns undefined for models not in registry (like the real implementation)
-vi.mock("@mariozechner/pi-ai", () => ({
+vi.mock("@earendil-works/pi-ai", () => ({
   getModel: vi.fn((provider: string, modelId: string) => {
     if (!KNOWN_MODELS.has(modelId)) return undefined;
     if (modelId === "MiniMax-M2.7" && provider === "anthropic") {
@@ -138,17 +138,11 @@ describe("resolveServiceModel", () => {
   });
 
   it("throws when no key found", async () => {
-    await expect(
-      resolveServiceModel("moonshot", "kimi-k2.5", root),
-    ).rejects.toThrow(/API key/i);
+    await expect(resolveServiceModel("moonshot", "kimi-k2.5", root)).rejects.toThrow(/API key/i);
   });
 
   it("resolves Ollama local models without an API key", async () => {
-    const result = await resolveServiceModel(
-      "ollama",
-      "Qwen3.6-35B-A3B-APEX-I-Mini.gguf",
-      root,
-    );
+    const result = await resolveServiceModel("ollama", "Qwen3.6-35B-A3B-APEX-I-Mini.gguf", root);
 
     expect(result.apiKey).toBe("");
     expect(result.model.id).toBe("Qwen3.6-35B-A3B-APEX-I-Mini.gguf");

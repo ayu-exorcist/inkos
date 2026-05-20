@@ -58,8 +58,13 @@ export async function bootstrapStructuredStateFromMarkdown(params: {
 
   const createdFiles: string[] = [];
   const warnings: string[] = [];
-  const existingManifest = await loadJsonIfValid(manifestPath, StateManifestSchema, warnings, "manifest.json");
-  const language = existingManifest?.language ?? await resolveRuntimeLanguage(params.bookDir);
+  const existingManifest = await loadJsonIfValid(
+    manifestPath,
+    StateManifestSchema,
+    warnings,
+    "manifest.json",
+  );
+  const language = existingManifest?.language ?? (await resolveRuntimeLanguage(params.bookDir));
   const markdownState = await loadMarkdownBootstrapState({
     bookDir: params.bookDir,
     storyDir,
@@ -105,10 +110,7 @@ export async function bootstrapStructuredStateFromMarkdown(params: {
     language,
     lastAppliedChapter: derivedProgress,
     projectionVersion: existingManifest?.projectionVersion ?? 1,
-    migrationWarnings: uniqueStrings([
-      ...(existingManifest?.migrationWarnings ?? []),
-      ...warnings,
-    ]),
+    migrationWarnings: uniqueStrings([...(existingManifest?.migrationWarnings ?? []), ...warnings]),
   });
 
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
@@ -137,8 +139,13 @@ export async function rewriteStructuredStateFromMarkdown(params: {
   await mkdir(stateDir, { recursive: true });
 
   const warnings: string[] = [];
-  const existingManifest = await loadJsonIfValid(manifestPath, StateManifestSchema, warnings, "manifest.json");
-  const language = existingManifest?.language ?? await resolveRuntimeLanguage(params.bookDir);
+  const existingManifest = await loadJsonIfValid(
+    manifestPath,
+    StateManifestSchema,
+    warnings,
+    "manifest.json",
+  );
+  const language = existingManifest?.language ?? (await resolveRuntimeLanguage(params.bookDir));
   const markdownState = await loadMarkdownBootstrapState({
     bookDir: params.bookDir,
     storyDir,
@@ -154,10 +161,7 @@ export async function rewriteStructuredStateFromMarkdown(params: {
     language,
     lastAppliedChapter: markdownState.durableStoryProgress,
     projectionVersion: existingManifest?.projectionVersion ?? 1,
-    migrationWarnings: uniqueStrings([
-      ...(existingManifest?.migrationWarnings ?? []),
-      ...warnings,
-    ]),
+    migrationWarnings: uniqueStrings([...(existingManifest?.migrationWarnings ?? []), ...warnings]),
   });
 
   await Promise.all([
@@ -195,11 +199,13 @@ async function loadOrBootstrapCurrentState(params: {
     }
   }
 
-  const currentState = params.bootstrapState ?? await loadMarkdownCurrentState({
-    storyDir: params.storyDir,
-    fallbackChapter: params.fallbackChapter,
-    warnings: params.warnings,
-  });
+  const currentState =
+    params.bootstrapState ??
+    (await loadMarkdownCurrentState({
+      storyDir: params.storyDir,
+      fallbackChapter: params.fallbackChapter,
+      warnings: params.warnings,
+    }));
   const existed = await pathExists(params.statePath);
   await writeFile(params.statePath, JSON.stringify(currentState, null, 2), "utf-8");
   if (!existed) {
@@ -217,11 +223,7 @@ async function loadOrBootstrapHooks(params: {
   readonly forceBootstrapFromMarkdown?: boolean;
 }) {
   if (!params.forceBootstrapFromMarkdown) {
-    const existing = await loadHooksStateIfValid(
-      params.statePath,
-      params.warnings,
-      "hooks.json",
-    );
+    const existing = await loadHooksStateIfValid(params.statePath, params.warnings, "hooks.json");
     if (existing) {
       if (existing.repaired) {
         await writeFile(params.statePath, JSON.stringify(existing.state, null, 2), "utf-8");
@@ -230,10 +232,12 @@ async function loadOrBootstrapHooks(params: {
     }
   }
 
-  const hooksState = params.bootstrapState ?? await loadMarkdownHooksState({
-    storyDir: params.storyDir,
-    warnings: params.warnings,
-  });
+  const hooksState =
+    params.bootstrapState ??
+    (await loadMarkdownHooksState({
+      storyDir: params.storyDir,
+      warnings: params.warnings,
+    }));
   const existed = await pathExists(params.statePath);
   await writeFile(params.statePath, JSON.stringify(hooksState, null, 2), "utf-8");
   if (!existed) {
@@ -269,7 +273,8 @@ async function loadOrBootstrapSummaries(params: {
     }
   }
 
-  const summariesState = params.bootstrapState ?? await loadMarkdownSummariesState(params.storyDir);
+  const summariesState =
+    params.bootstrapState ?? (await loadMarkdownSummariesState(params.storyDir));
   const existed = await pathExists(params.statePath);
   await writeFile(params.statePath, JSON.stringify(summariesState, null, 2), "utf-8");
   if (!existed) {
@@ -279,8 +284,9 @@ async function loadOrBootstrapSummaries(params: {
 }
 
 function parsePendingHooksStateMarkdown(markdown: string, warnings: string[]) {
-  const tableRows = parseMarkdownTableRows(markdown)
-    .filter((row) => (row[0] ?? "").toLowerCase() !== "hook_id");
+  const tableRows = parseMarkdownTableRows(markdown).filter(
+    (row) => (row[0] ?? "").toLowerCase() !== "hook_id",
+  );
 
   if (tableRows.length > 0) {
     return HooksStateSchema.parse({
@@ -294,7 +300,11 @@ function parsePendingHooksStateMarkdown(markdown: string, warnings: string[]) {
             startChapter: parseStrictIntegerWithWarning(row[1], warnings, `${hookId}:startChapter`),
             type: normalizeHookType(row[2], warnings, hookId),
             status: normalizeHookStatus(row[3], warnings, hookId),
-            lastAdvancedChapter: parseStrictIntegerWithWarning(row[4], warnings, `${hookId}:lastAdvancedChapter`),
+            lastAdvancedChapter: parseStrictIntegerWithWarning(
+              row[4],
+              warnings,
+              `${hookId}:lastAdvancedChapter`,
+            ),
             expectedPayoff: row[5] ?? "",
             payoffTiming: legacyShape ? undefined : normalizeHookPayoffTiming(row[6]),
             notes: legacyShape ? (row[6] ?? "") : (row[7] ?? ""),
@@ -351,14 +361,16 @@ function parseCurrentStateStateMarkdown(
           const value = (row[1] ?? "").trim();
           if (!label || !value) return [];
 
-          return [{
-            subject: inferFactSubject(label),
-            predicate: label,
-            object: value,
-            validFromChapter: stateChapter,
-            validUntilChapter: null,
-            sourceChapter: stateChapter,
-          }];
+          return [
+            {
+              subject: inferFactSubject(label),
+              predicate: label,
+              object: value,
+              validFromChapter: stateChapter,
+              validUntilChapter: null,
+              sourceChapter: stateChapter,
+            },
+          ];
         }),
     });
   }
@@ -389,6 +401,7 @@ async function resolveRuntimeLanguage(bookDir: string): Promise<"zh" | "en"> {
     const parsed = JSON.parse(raw) as { language?: unknown };
     return parsed.language === "zh" ? "zh" : "en";
   } catch {
+    // failure expected, safe to ignore
     return "en";
   }
 }
@@ -441,7 +454,10 @@ async function loadHooksStateIfValid(
   }
 }
 
-function repairHooksStateInput(value: unknown, warnings: string[]): { readonly value: unknown; readonly changed: boolean } {
+function repairHooksStateInput(
+  value: unknown,
+  warnings: string[],
+): { readonly value: unknown; readonly changed: boolean } {
   if (!isRecord(value) || !Array.isArray(value.hooks)) {
     return { value, changed: false };
   }
@@ -449,9 +465,10 @@ function repairHooksStateInput(value: unknown, warnings: string[]): { readonly v
   let changed = false;
   const hooks = value.hooks.map((hook, index) => {
     if (!isRecord(hook)) return hook;
-    const hookId = typeof hook.hookId === "string" && hook.hookId.trim()
-      ? hook.hookId.trim()
-      : `hooks[${index}]`;
+    const hookId =
+      typeof hook.hookId === "string" && hook.hookId.trim()
+        ? hook.hookId.trim()
+        : `hooks[${index}]`;
     if (typeof hook.type === "string" && hook.type.trim().length > 0) {
       if (hook.type === hook.type.trim()) {
         return hook;
@@ -518,7 +535,9 @@ async function loadMarkdownHooksState(params: {
   readonly storyDir: string;
   readonly warnings: string[];
 }) {
-  const markdown = await readFile(join(params.storyDir, "pending_hooks.md"), "utf-8").catch(() => "");
+  const markdown = await readFile(join(params.storyDir, "pending_hooks.md"), "utf-8").catch(
+    () => "",
+  );
   return parsePendingHooksStateMarkdown(markdown, params.warnings);
 }
 
@@ -527,7 +546,9 @@ async function loadMarkdownCurrentState(params: {
   readonly fallbackChapter: number;
   readonly warnings: string[];
 }): Promise<CurrentStateState> {
-  const markdown = await readFile(join(params.storyDir, "current_state.md"), "utf-8").catch(() => "");
+  const markdown = await readFile(join(params.storyDir, "current_state.md"), "utf-8").catch(
+    () => "",
+  );
   return parseCurrentStateStateMarkdown(markdown, params.fallbackChapter, params.warnings);
 }
 
@@ -545,14 +566,19 @@ async function loadDurableArtifactChapterNumbers(bookDir: string): Promise<numbe
         const parsed = JSON.parse(raw) as Array<{ number?: unknown }>;
         return parsed
           .map((entry) => entry?.number)
-          .filter((entry): entry is number => typeof entry === "number" && Number.isInteger(entry) && entry > 0);
+          .filter(
+            (entry): entry is number =>
+              typeof entry === "number" && Number.isInteger(entry) && entry > 0,
+          );
       })
       .catch(() => [] as number[]),
     readdir(chaptersDir)
-      .then((entries) => entries.flatMap((entry) => {
-        const match = entry.match(/^(\d+)_/);
-        return match ? [parseInt(match[1]!, 10)] : [];
-      }))
+      .then((entries) =>
+        entries.flatMap((entry) => {
+          const match = entry.match(/^(\d+)_/);
+          return match ? [parseInt(match[1]!, 10)] : [];
+        }),
+      )
       .catch(() => [] as number[]),
   ]);
   return [...indexChapters, ...fileChapters];
@@ -563,6 +589,7 @@ async function pathExists(path: string): Promise<boolean> {
     await stat(path);
     return true;
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }
@@ -586,7 +613,11 @@ export function resolveContiguousChapterPrefix(chapterNumbers: ReadonlyArray<num
   return contiguousChapter;
 }
 
-function normalizeHookStatus(value: string | undefined, warnings: string[], hookId: string): HookStatus {
+function normalizeHookStatus(
+  value: string | undefined,
+  warnings: string[],
+  hookId: string,
+): HookStatus {
   const normalized = (value ?? "").trim().toLowerCase();
   if (!normalized) return "open";
   if (/(resolved|closed|done|已回收|回收|完成)/i.test(normalized)) return "resolved";
@@ -604,7 +635,11 @@ function normalizeHookType(value: string | undefined, warnings: string[], hookId
   return "unspecified";
 }
 
-function parseStrictIntegerWithWarning(value: string | undefined, warnings: string[], fieldLabel: string): number {
+function parseStrictIntegerWithWarning(
+  value: string | undefined,
+  warnings: string[],
+  fieldLabel: string,
+): number {
   if (!value) return 0;
   const parsed = parseStrictIntegerCell(value);
   if (parsed !== null) {
@@ -644,7 +679,6 @@ function normalizeExplicitChapter(value: number | undefined): number {
   }
   return value;
 }
-
 
 function appendWarning(warnings: string[], warning: string): void {
   if (!warnings.includes(warning)) {

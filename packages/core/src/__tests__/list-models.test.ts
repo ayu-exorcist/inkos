@@ -53,10 +53,7 @@ describe("listModelsForService (B8)", () => {
 
     const models = await listModelsForService("ollama");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:11434/v1/models",
-      expect.any(Object),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("http://localhost:11434/v1/models", expect.any(Object));
     expect(models.some((m) => m.id === "qwen3.6:35b-a3b")).toBe(true);
   });
 
@@ -76,7 +73,8 @@ describe("listModelsForService (B8)", () => {
 
   it("bailian 不用 OpenAI 兼容 /models 污染 Anthropic 通道模型列表", async () => {
     const fetchMock = vi.fn().mockImplementation(async (input: string | URL | Request) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       if (url === "https://dashscope.aliyuncs.com/compatible-mode/v1/models") {
         return {
           ok: true,
@@ -92,7 +90,9 @@ describe("listModelsForService (B8)", () => {
 
     const models = await listModelsForService("bailian", "sk-test");
 
-    expect(resolveServiceModelsBaseUrl("bailian")).toBe("https://dashscope.aliyuncs.com/apps/anthropic");
+    expect(resolveServiceModelsBaseUrl("bailian")).toBe(
+      "https://dashscope.aliyuncs.com/apps/anthropic",
+    );
     expect(fetchMock).not.toHaveBeenCalledWith(
       "https://dashscope.aliyuncs.com/compatible-mode/v1/models",
       expect.any(Object),

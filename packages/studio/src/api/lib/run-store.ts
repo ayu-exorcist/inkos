@@ -18,11 +18,7 @@ export class RunStore {
   private readonly runs = new Map<string, StudioRun>();
   private readonly subscribers = new Map<string, Set<RunSubscriber>>();
 
-  create(input: {
-    bookId: string;
-    chapterNumber?: number;
-    action: RunAction;
-  }): StudioRun {
+  create(input: { bookId: string; chapterNumber?: number; action: RunAction }): StudioRun {
     const now = new Date().toISOString();
     const run: StudioRun = {
       id: randomUUID(),
@@ -45,9 +41,7 @@ export class RunStore {
   }
 
   list(): ReadonlyArray<StudioRun> {
-    return [...this.runs.values()].sort((a, b) =>
-      b.createdAt.localeCompare(a.createdAt),
-    );
+    return [...this.runs.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   get(runId: string): StudioRun | null {
@@ -56,10 +50,7 @@ export class RunStore {
 
   findActiveRun(bookId: string): StudioRun | null {
     for (const run of this.runs.values()) {
-      if (
-        run.bookId === bookId &&
-        (run.status === "queued" || run.status === "running")
-      ) {
+      if (run.bookId === bookId && (run.status === "queued" || run.status === "running")) {
         return run;
       }
     }
@@ -67,14 +58,10 @@ export class RunStore {
   }
 
   markRunning(runId: string, stage: string): StudioRun {
-    return this.update(
-      runId,
-      { status: "running", stage, startedAt: new Date().toISOString() },
-      [
-        { type: "status", runId, status: "running" },
-        { type: "stage", runId, stage },
-      ],
-    );
+    return this.update(runId, { status: "running", stage, startedAt: new Date().toISOString() }, [
+      { type: "status", runId, status: "running" },
+      { type: "stage", runId, stage },
+    ]);
   }
 
   updateStage(runId: string, stage: string): StudioRun {
@@ -117,8 +104,7 @@ export class RunStore {
   }
 
   subscribe(runId: string, subscriber: RunSubscriber): () => void {
-    const current =
-      this.subscribers.get(runId) ?? new Set<RunSubscriber>();
+    const current = this.subscribers.get(runId) ?? new Set<RunSubscriber>();
     current.add(subscriber);
     this.subscribers.set(runId, current);
 

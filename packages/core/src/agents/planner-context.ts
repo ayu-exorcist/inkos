@@ -9,6 +9,7 @@ async function readOrEmpty(path: string): Promise<string> {
   try {
     return await readFile(path, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return "";
   }
 }
@@ -60,7 +61,9 @@ export async function readBookRules(storyDir: string): Promise<string> {
     const proto = rules.protagonist;
     const personality = proto.personalityLock.join("、");
     const constraints = proto.behavioralConstraints.join("、");
-    lines.push(`- 主角 ${proto.name}${personality ? ` / 人设锁：${personality}` : ""}${constraints ? ` / 行为约束：${constraints}` : ""}`);
+    lines.push(
+      `- 主角 ${proto.name}${personality ? ` / 人设锁：${personality}` : ""}${constraints ? ` / 行为约束：${constraints}` : ""}`,
+    );
   }
 
   if (rules.prohibitions.length > 0) {
@@ -72,7 +75,9 @@ export async function readBookRules(storyDir: string): Promise<string> {
 
   if (rules.genreLock) {
     const forbidden = rules.genreLock.forbidden.join("、");
-    lines.push(`- 题材锁：${rules.genreLock.primary}${forbidden ? ` / 禁止混入：${forbidden}` : ""}`);
+    lines.push(
+      `- 题材锁：${rules.genreLock.primary}${forbidden ? ` / 禁止混入：${forbidden}` : ""}`,
+    );
   }
 
   if (rules.fanficMode) {
@@ -109,7 +114,8 @@ export function formatRecentSummaries(
     return "（暂无前章摘要）";
   }
 
-  const header = "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |";
+  const header =
+    "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |";
   const divider = "| --- | --- | --- | --- | --- | --- | --- | --- |";
   const body = recent.map((row) => `| ${row.join(" | ")} |`).join("\n");
   return [header, divider, body].join("\n");
@@ -155,7 +161,8 @@ function extractActiveSubplotLines(raw: string): string[] {
   return rows
     .filter((row) => !/^(id|subplot_id|subplot|status|状态)$/i.test(row[0] ?? ""))
     .filter((row) => {
-      const status = (row.find((cell) => /进行|推进|高压|激活|activ|progress|partial/i.test(cell)) ?? "");
+      const status =
+        row.find((cell) => /进行|推进|高压|激活|activ|progress|partial/i.test(cell)) ?? "";
       const dormant = row.find((cell) => /暂稳待续|暂挂|dormant|paused/i.test(cell));
       return Boolean(status) && !dormant;
     })
@@ -163,7 +170,11 @@ function extractActiveSubplotLines(raw: string): string[] {
     .slice(0, 6);
 }
 
-function extractRecentEmotionalArcLines(raw: string, chapterNumber: number, limit: number): string[] {
+function extractRecentEmotionalArcLines(
+  raw: string,
+  chapterNumber: number,
+  limit: number,
+): string[] {
   const rows = parseMarkdownTableRows(raw);
   if (rows.length === 0) {
     return raw
@@ -214,11 +225,21 @@ const OPPONENT_PATTERNS = /敌对|对手|阻力|opponent|antagonist|foe/i;
 const COLLABORATOR_PATTERNS = /协力|盟友|临时助力|ally|collaborator|mentor/i;
 
 export function extractOpponentRows(characterMatrixRaw: string, limit: number): string {
-  return extractRowsByRelation(characterMatrixRaw, OPPONENT_PATTERNS, limit, "（暂无明确对手登场）");
+  return extractRowsByRelation(
+    characterMatrixRaw,
+    OPPONENT_PATTERNS,
+    limit,
+    "（暂无明确对手登场）",
+  );
 }
 
 export function extractCollaboratorRows(characterMatrixRaw: string, limit: number): string {
-  return extractRowsByRelation(characterMatrixRaw, COLLABORATOR_PATTERNS, limit, "（暂无明确协作者登场）");
+  return extractRowsByRelation(
+    characterMatrixRaw,
+    COLLABORATOR_PATTERNS,
+    limit,
+    "（暂无明确协作者登场）",
+  );
 }
 
 function extractRowsByRelation(
@@ -290,8 +311,9 @@ export function formatRecyclableHooks(
       : `- ${hook.hookId} "${payoff}" — 状态=${hook.status}，已沉默 ${silence} 章${core}`;
   });
 
-  const header = language === "en"
-    ? "The planner MUST place each of these under advance / resolve / defer in the hook ledger (deferring requires an explicit reason):"
-    : "规划时必须把以下每个 hook 放入 advance / resolve / defer（若 defer，必须写出理由）：";
+  const header =
+    language === "en"
+      ? "The planner MUST place each of these under advance / resolve / defer in the hook ledger (deferring requires an explicit reason):"
+      : "规划时必须把以下每个 hook 放入 advance / resolve / defer（若 defer，必须写出理由）：";
   return [header, ...lines].join("\n");
 }

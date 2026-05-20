@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
-import { GROUP_DESCRIPTIONS, GROUP_LABELS, GROUP_ORDER, GROUP_SHORT_LABELS } from "../constants/service-groups";
+import {
+  GROUP_DESCRIPTIONS,
+  GROUP_LABELS,
+  GROUP_ORDER,
+  GROUP_SHORT_LABELS,
+} from "../constants/service-groups";
 import { fetchJson } from "../hooks/use-api";
 import { useServiceStore } from "../store/service";
 import type { EndpointGroup, ServiceInfo } from "../store/service";
@@ -37,7 +42,9 @@ function ServiceCard({ svc, onClick }: { svc: ServiceInfo; onClick: () => void }
       <button onClick={onClick} className="flex flex-1 flex-col gap-2 text-left">
         <div className="flex items-center justify-between gap-3">
           <span className="truncate text-sm font-medium">{svc.label}</span>
-          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${svc.connected ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
+          <span
+            className={`h-1.5 w-1.5 rounded-full shrink-0 ${svc.connected ? "bg-emerald-500" : "bg-muted-foreground/30"}`}
+          />
         </div>
         <span className="text-xs text-muted-foreground/60">
           {svc.connected ? "已连接" : "未配置"}
@@ -71,7 +78,9 @@ function CoverConfigCard() {
   const [model, setModel] = useState("gpt-image-2");
   const [apiKey, setApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("loading");
+  const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">(
+    "loading",
+  );
   const [message, setMessage] = useState("");
 
   const selected = providers.find((provider) => provider.service === service);
@@ -83,7 +92,8 @@ function CoverConfigCard() {
         if (cancelled) return;
         setProviders(payload.providers);
         const nextService = payload.service ?? payload.providers[0]?.service ?? "kkaiapi";
-        const provider = payload.providers.find((item) => item.service === nextService) ?? payload.providers[0];
+        const provider =
+          payload.providers.find((item) => item.service === nextService) ?? payload.providers[0];
         setService(nextService);
         setModel(payload.model ?? provider?.defaultModel ?? "gpt-image-2");
         setStatus("idle");
@@ -93,7 +103,9 @@ function CoverConfigCard() {
         setStatus("error");
         setMessage(error instanceof Error ? error.message : "读取封面配置失败");
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -107,7 +119,9 @@ function CoverConfigCard() {
       .catch(() => {
         if (!cancelled) setApiKey("");
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [service]);
 
   const handleServiceChange = (nextService: string) => {
@@ -169,7 +183,9 @@ function CoverConfigCard() {
             className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
           >
             {providers.map((provider) => (
-              <option key={provider.service} value={provider.service}>{provider.label}</option>
+              <option key={provider.service} value={provider.service}>
+                {provider.label}
+              </option>
             ))}
           </select>
         </label>
@@ -181,7 +197,9 @@ function CoverConfigCard() {
             className="w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
           >
             {(selected?.models ?? [model]).map((item) => (
-              <option key={item} value={item}>{item}</option>
+              <option key={item} value={item}>
+                {item}
+              </option>
             ))}
           </select>
         </label>
@@ -222,7 +240,9 @@ function CoverConfigCard() {
           </span>
         )}
         {message && (
-          <span className={`text-xs ${status === "error" ? "text-destructive" : "text-emerald-500"}`}>
+          <span
+            className={`text-xs ${status === "error" ? "text-destructive" : "text-emerald-500"}`}
+          >
             {message}
           </span>
         )}
@@ -236,7 +256,9 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
   const loading = useServiceStore((s) => s.servicesLoading);
   const fetchServices = useServiceStore((s) => s.fetchServices);
 
-  useEffect(() => { void fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+    void fetchServices();
+  }, [fetchServices]);
 
   const [query, setQuery] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<Set<EndpointGroup>>(new Set());
@@ -259,17 +281,15 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
     return counts;
   }, [bankServices]);
 
-  const connectedCount = useMemo(
-    () => services.filter((s) => s.connected).length,
-    [services],
-  );
+  const connectedCount = useMemo(() => services.filter((s) => s.connected).length, [services]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return bankServices.filter((svc) => {
       if (onlyConnected && !svc.connected) return false;
       if (selectedGroups.size > 0 && (!svc.group || !selectedGroups.has(svc.group))) return false;
-      if (q && !svc.label.toLowerCase().includes(q) && !svc.service.toLowerCase().includes(q)) return false;
+      if (q && !svc.label.toLowerCase().includes(q) && !svc.service.toLowerCase().includes(q))
+        return false;
       return true;
     });
   }, [bankServices, onlyConnected, query, selectedGroups]);
@@ -279,7 +299,8 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
     if (selectedGroups.size > 0) return [];
     return customServices.filter((svc) => {
       if (onlyConnected && !svc.connected) return false;
-      if (q && !svc.label.toLowerCase().includes(q) && !svc.service.toLowerCase().includes(q)) return false;
+      if (q && !svc.label.toLowerCase().includes(q) && !svc.service.toLowerCase().includes(q))
+        return false;
       return true;
     });
   }, [customServices, onlyConnected, query, selectedGroups]);
@@ -303,7 +324,8 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
   };
 
   const canCreateCustom = selectedGroups.size === 0 && query.trim() === "" && !onlyConnected;
-  const showCustomSection = !loading && selectedGroups.size === 0 && (filteredCustom.length > 0 || canCreateCustom);
+  const showCustomSection =
+    !loading && selectedGroups.size === 0 && (filteredCustom.length > 0 || canCreateCustom);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -323,7 +345,10 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
       <CoverConfigCard />
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+        <Search
+          size={14}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40"
+        />
         <input
           type="text"
           value={query}
@@ -395,37 +420,38 @@ export function ServiceListPage({ nav }: { nav: Nav }) {
 
       {loading && (
         <div className="grid grid-cols-2 gap-3">
-          {Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 6 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       )}
 
-      {!loading && GROUP_ORDER.map((group) => {
-        const list = byGroup[group];
-        if (!list || list.length === 0) return null;
-        return (
-          <section key={group} className="space-y-3">
-            <div className="space-y-1">
-              <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
-                {GROUP_LABELS[group]}
-              </h2>
-              {GROUP_DESCRIPTIONS[group] && (
-                <p className="text-xs text-muted-foreground/60">
-                  {GROUP_DESCRIPTIONS[group]}
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {list.map((svc) => (
-                <ServiceCard
-                  key={svc.service}
-                  svc={svc}
-                  onClick={() => nav.toServiceDetail(svc.service)}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      {!loading &&
+        GROUP_ORDER.map((group) => {
+          const list = byGroup[group];
+          if (!list || list.length === 0) return null;
+          return (
+            <section key={group} className="space-y-3">
+              <div className="space-y-1">
+                <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                  {GROUP_LABELS[group]}
+                </h2>
+                {GROUP_DESCRIPTIONS[group] && (
+                  <p className="text-xs text-muted-foreground/60">{GROUP_DESCRIPTIONS[group]}</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {list.map((svc) => (
+                  <ServiceCard
+                    key={svc.service}
+                    svc={svc}
+                    onClick={() => nav.toServiceDetail(svc.service)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
       {showCustomSection && (
         <section className="space-y-3">

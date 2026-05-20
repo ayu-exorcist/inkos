@@ -89,12 +89,14 @@ export async function detectAndRewrite(
       bookDir,
       currentContent,
       chapterNumber,
-      [{
-        severity: "warning",
-        category: "AIGC检测",
-        description: `AI检测分数 ${finalScore.toFixed(2)} 超过阈值 ${config.threshold}`,
-        suggestion: "降低AI生成痕迹：增加段落长度差异、减少套话、用口语化表达替代书面语",
-      }],
+      [
+        {
+          severity: "warning",
+          category: "AIGC检测",
+          description: `AI检测分数 ${finalScore.toFixed(2)} 超过阈值 ${config.threshold}`,
+          suggestion: "降低AI生成痕迹：增加段落长度差异、减少套话、用口语化表达替代书面语",
+        },
+      ],
       "anti-detect",
       genre,
     );
@@ -129,10 +131,7 @@ export async function detectAndRewrite(
 }
 
 /** Append an entry to detection_history.json. */
-async function recordHistory(
-  bookDir: string,
-  entry: DetectionHistoryEntry,
-): Promise<void> {
+async function recordHistory(bookDir: string, entry: DetectionHistoryEntry): Promise<void> {
   const historyPath = join(bookDir, "story", "detection_history.json");
   let history: DetectionHistoryEntry[] = [];
 
@@ -158,6 +157,7 @@ export async function loadDetectionHistory(
     const raw = await readFile(historyPath, "utf-8");
     return JSON.parse(raw);
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 }

@@ -43,7 +43,9 @@ export function ConfirmDialog({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm fade-in"
-      onClick={(e) => { if (e.target === overlayRef.current) onCancel(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onCancel();
+      }}
     >
       <div className="bg-card border border-border rounded-2xl shadow-2xl shadow-primary/10 w-full max-w-md mx-4 overflow-hidden chat-msg-assistant">
         {/* Header */}

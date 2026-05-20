@@ -22,9 +22,7 @@ export async function detectAIContent(
 ): Promise<DetectionResult> {
   const apiKey = process.env[config.apiKeyEnv];
   if (!apiKey) {
-    throw new Error(
-      `Detection API key not found. Set ${config.apiKeyEnv} in your environment.`,
-    );
+    throw new Error(`Detection API key not found. Set ${config.apiKeyEnv} in your environment.`);
   }
 
   const detectedAt = new Date().toISOString();
@@ -59,9 +57,9 @@ async function detectGPTZero(
     throw new Error(`GPTZero API failed: ${response.status} ${body}`);
   }
 
-  const data = await response.json() as Record<string, unknown>;
+  const data = (await response.json()) as Record<string, unknown>;
   const documents = data.documents as Array<Record<string, unknown>> | undefined;
-  const score = documents?.[0]?.completely_generated_prob as number ?? 0;
+  const score = (documents?.[0]?.completely_generated_prob as number) ?? 0;
 
   return { score, provider: "gptzero", detectedAt, raw: data };
 }
@@ -86,8 +84,8 @@ async function detectOriginality(
     throw new Error(`Originality API failed: ${response.status} ${body}`);
   }
 
-  const data = await response.json() as Record<string, unknown>;
-  const score = (data.score as Record<string, unknown>)?.ai as number ?? 0;
+  const data = (await response.json()) as Record<string, unknown>;
+  const score = ((data.score as Record<string, unknown>)?.ai as number) ?? 0;
 
   return { score, provider: "originality", detectedAt, raw: data };
 }
@@ -112,7 +110,7 @@ async function detectCustom(
     throw new Error(`Detection API failed: ${response.status} ${body}`);
   }
 
-  const data = await response.json() as Record<string, unknown>;
+  const data = (await response.json()) as Record<string, unknown>;
   // Custom endpoint must return { score: number } at minimum
   const score = typeof data.score === "number" ? data.score : 0;
 

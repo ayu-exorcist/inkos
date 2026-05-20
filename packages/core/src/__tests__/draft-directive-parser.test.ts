@@ -103,9 +103,7 @@ describe("parseDraftDirectives", () => {
     expect(result.fields["targetChapters"]).toBe("300");
     expect(result.fields["chapterLength"]).toBe("3000");
     // group itself should not appear in textContent
-    expect(result.textContent).toBe(
-      ["请确认篇幅设置：", "", "", "确认无误！"].join("\n"),
-    );
+    expect(result.textContent).toBe(["请确认篇幅设置：", "", "", "确认无误！"].join("\n"));
   });
 
   // ---------------------------------------------------------------------------
@@ -148,23 +146,16 @@ describe("parseDraftDirectives", () => {
   // ---------------------------------------------------------------------------
 
   it("extracts first option from :::pick as default value", () => {
-    const raw = [
-      ':::pick{key="genre" label="题材"}',
-      "- 玄幻",
-      "- 仙侠",
-      "- 都市",
-      ":::",
-    ].join("\n");
+    const raw = [':::pick{key="genre" label="题材"}', "- 玄幻", "- 仙侠", "- 都市", ":::"].join(
+      "\n",
+    );
 
     const result = parseDraftDirectives(raw);
     expect(result.fields["genre"]).toBe("玄幻");
   });
 
   it("handles :::pick with no options gracefully", () => {
-    const raw = [
-      ':::pick{key="genre" label="题材"}',
-      ":::",
-    ].join("\n");
+    const raw = [':::pick{key="genre" label="题材"}', ":::"].join("\n");
 
     const result = parseDraftDirectives(raw);
     expect(result.fields["genre"]).toBe("");
@@ -192,11 +183,7 @@ describe("parseDraftDirectives", () => {
   });
 
   it("generates summary with single field", () => {
-    const raw = [
-      ':::field{key="title" label="书名"}',
-      "星河彼岸",
-      ":::",
-    ].join("\n");
+    const raw = [':::field{key="title" label="书名"}', "星河彼岸", ":::"].join("\n");
 
     const result = parseDraftDirectives(raw);
     expect(result.summary).toBe("确立了书名");
@@ -271,9 +258,7 @@ describe("parseDraftDirectives", () => {
     ].join("\n");
 
     const result = parseDraftDirectives(raw);
-    expect(result.fields["outline"]).toBe(
-      "第一卷：起源\n第二卷：征途\n第三卷：终局",
-    );
+    expect(result.fields["outline"]).toBe("第一卷：起源\n第二卷：征途\n第三卷：终局");
   });
 
   // ---------------------------------------------------------------------------
@@ -299,22 +284,14 @@ describe("parseDraftDirectives", () => {
   // ---------------------------------------------------------------------------
 
   it("handles single-quoted attributes", () => {
-    const raw = [
-      ":::field{key='title' label='书名'}",
-      "星河彼岸",
-      ":::",
-    ].join("\n");
+    const raw = [":::field{key='title' label='书名'}", "星河彼岸", ":::"].join("\n");
 
     const result = parseDraftDirectives(raw);
     expect(result.fields["title"]).toBe("星河彼岸");
   });
 
   it("handles attributes with extra spaces", () => {
-    const raw = [
-      ':::field{ key="title"  label="书名" }',
-      "星河彼岸",
-      ":::",
-    ].join("\n");
+    const raw = [':::field{ key="title"  label="书名" }', "星河彼岸", ":::"].join("\n");
 
     const result = parseDraftDirectives(raw);
     expect(result.fields["title"]).toBe("星河彼岸");
@@ -377,9 +354,7 @@ describe("createDirectiveStreamFilter", () => {
     const filter = createDirectiveStreamFilter();
 
     expect(filter("```\n")).toBe("```\n");
-    expect(filter(':::field{key="x" label="y"}\n')).toBe(
-      ':::field{key="x" label="y"}\n',
-    );
+    expect(filter(':::field{key="x" label="y"}\n')).toBe(':::field{key="x" label="y"}\n');
     expect(filter(":::\n")).toBe(":::\n");
     expect(filter("```\n")).toBe("```\n");
   });

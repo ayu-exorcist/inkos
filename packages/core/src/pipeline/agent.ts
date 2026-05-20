@@ -8,7 +8,8 @@ import { deriveBookIdFromTitle } from "../utils/book-id.js";
 const TOOLS: ReadonlyArray<ToolDefinition> = [
   {
     name: "write_draft",
-    description: "写【下一章】草稿。只能续写最新章之后的下一章，不能指定章节号，不能补历史空章。生成正文、更新状态卡/账本/伏笔池、保存章节文件。",
+    description:
+      "写【下一章】草稿。只能续写最新章之后的下一章，不能指定章节号，不能补历史空章。生成正文、更新状态卡/账本/伏笔池、保存章节文件。",
     parameters: {
       type: "object",
       properties: {
@@ -20,7 +21,8 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "plan_chapter",
-    description: "为下一章生成 chapter intent（章节目标、必须保留、冲突说明）。适合在正式写作前检查当前控制输入是否正确。",
+    description:
+      "为下一章生成 chapter intent（章节目标、必须保留、冲突说明）。适合在正式写作前检查当前控制输入是否正确。",
     parameters: {
       type: "object",
       properties: {
@@ -32,7 +34,8 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "compose_chapter",
-    description: "为下一章生成 context/rule-stack/trace 运行时产物。适合在写作前确认系统实际会带哪些上下文和优先级。",
+    description:
+      "为下一章生成 context/rule-stack/trace 运行时产物。适合在写作前确认系统实际会带哪些上下文和优先级。",
     parameters: {
       type: "object",
       properties: {
@@ -56,13 +59,18 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "revise_chapter",
-    description: "修订指定章节的文字质量。根据审计问题做局部修正，不改变剧情走向。默认 spot-fix（定点修复最小改动）；也支持 polish(润色)、rewrite(改写)、rework(重写)、anti-detect。注意：不能用来补缺失章节、不能改章节号、不能替代 write_draft。",
+    description:
+      "修订指定章节的文字质量。根据审计问题做局部修正，不改变剧情走向。默认 spot-fix（定点修复最小改动）；也支持 polish(润色)、rewrite(改写)、rework(重写)、anti-detect。注意：不能用来补缺失章节、不能改章节号、不能替代 write_draft。",
     parameters: {
       type: "object",
       properties: {
         bookId: { type: "string", description: "书籍ID" },
         chapterNumber: { type: "number", description: "章节号（不填则修订最新章）" },
-        mode: { type: "string", enum: ["polish", "rewrite", "rework", "spot-fix", "anti-detect"], description: `修订模式（默认${DEFAULT_REVISE_MODE}）` },
+        mode: {
+          type: "string",
+          enum: ["polish", "rewrite", "rework", "spot-fix", "anti-detect"],
+          description: `修订模式（默认${DEFAULT_REVISE_MODE}）`,
+        },
       },
       required: ["bookId"],
     },
@@ -82,8 +90,16 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
       type: "object",
       properties: {
         title: { type: "string", description: "书名" },
-        genre: { type: "string", enum: ["xuanhuan", "xianxia", "urban", "horror", "other"], description: "题材" },
-        platform: { type: "string", enum: ["tomato", "feilu", "qidian", "other"], description: "目标平台" },
+        genre: {
+          type: "string",
+          enum: ["xuanhuan", "xianxia", "urban", "horror", "other"],
+          description: "题材",
+        },
+        platform: {
+          type: "string",
+          enum: ["tomato", "feilu", "qidian", "other"],
+          description: "目标平台",
+        },
         brief: { type: "string", description: "创作简述/需求（自然语言）" },
       },
       required: ["title", "genre", "platform"],
@@ -169,7 +185,8 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "import_style",
-    description: "从参考文本生成文风指南（统计 + LLM定性分析）。生成 style_profile.json 和 style_guide.md。",
+    description:
+      "从参考文本生成文风指南（统计 + LLM定性分析）。生成 style_profile.json 和 style_guide.md。",
     parameters: {
       type: "object",
       properties: {
@@ -193,7 +210,8 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "import_chapters",
-    description: "【整书重导】导入已有章节。从完整文本中自动分割所有章节，逐章分析并重建全部真相文件。这是整书级操作，不是补某一章的工具。导入后可用 write_draft 续写。",
+    description:
+      "【整书重导】导入已有章节。从完整文本中自动分割所有章节，逐章分析并重建全部真相文件。这是整书级操作，不是补某一章的工具。导入后可用 write_draft 续写。",
     parameters: {
       type: "object",
       properties: {
@@ -206,12 +224,17 @@ const TOOLS: ReadonlyArray<ToolDefinition> = [
   },
   {
     name: "write_truth_file",
-    description: "【整文件覆盖】直接替换书的真相文件内容。用于扩展大纲、修改世界观、调整规则。注意：这是整文件覆盖写入，不是追加；不要用来改 current_state.md 的章节进度指针或 hack 章节号；不要用来补空章节。book_rules.md / story_bible.md 是 Phase 5 之后的兼容指针，不再作为写入目标——请改写 outline/story_frame.md 的 YAML frontmatter。",
+    description:
+      "【整文件覆盖】直接替换书的真相文件内容。用于扩展大纲、修改世界观、调整规则。注意：这是整文件覆盖写入，不是追加；不要用来改 current_state.md 的章节进度指针或 hack 章节号；不要用来补空章节。book_rules.md / story_bible.md 是 Phase 5 之后的兼容指针，不再作为写入目标——请改写 outline/story_frame.md 的 YAML frontmatter。",
     parameters: {
       type: "object",
       properties: {
         bookId: { type: "string", description: "书籍ID" },
-        fileName: { type: "string", description: "文件名（如 outline/story_frame.md、outline/volume_map.md、outline/节奏原则.md（可选，Phase 5 后节奏原则合并到 volume_map 尾段，仅 legacy / 人工写入时出现）、roles/主要角色/<name>.md、roles/次要角色/<name>.md、current_state.md、pending_hooks.md）" },
+        fileName: {
+          type: "string",
+          description:
+            "文件名（如 outline/story_frame.md、outline/volume_map.md、outline/节奏原则.md（可选，Phase 5 后节奏原则合并到 volume_map 尾段，仅 legacy / 人工写入时出现）、roles/主要角色/<name>.md、roles/次要角色/<name>.md、current_state.md、pending_hooks.md）",
+        },
         content: { type: "string", description: "新的完整文件内容" },
       },
       required: ["bookId", "fileName", "content"],
@@ -376,10 +399,7 @@ export async function executeAgentTool(
       if (writeGuardError) {
         return JSON.stringify({ error: writeGuardError });
       }
-      const result = await pipeline.writeDraft(
-        bookId,
-        args.guidance as string | undefined,
-      );
+      const result = await pipeline.writeDraft(bookId, args.guidance as string | undefined);
       return JSON.stringify(result);
     }
 
@@ -399,10 +419,14 @@ export async function executeAgentTool(
         const index = await state.loadChapterIndex(bookId);
         const chapter = index.find((ch) => ch.number === chapterNum);
         if (!chapter) {
-          return JSON.stringify({ error: `第${chapterNum}章不存在。revise_chapter 只能修订已有章节，不能用来补写缺失章节。请用 get_book_status 确认。` });
+          return JSON.stringify({
+            error: `第${chapterNum}章不存在。revise_chapter 只能修订已有章节，不能用来补写缺失章节。请用 get_book_status 确认。`,
+          });
         }
         if (chapter.wordCount === 0) {
-          return JSON.stringify({ error: `第${chapterNum}章内容为空（0字）。revise_chapter 不能修订空章节。` });
+          return JSON.stringify({
+            error: `第${chapterNum}章内容为空（0字）。revise_chapter 不能修订空章节。`,
+          });
         }
       }
       const result = await pipeline.reviseDraft(
@@ -481,6 +505,7 @@ export async function executeAgentTool(
           try {
             return await pipeline.getBookStatus(id);
           } catch {
+            // failure expected, safe to ignore
             return { bookId: id, error: "failed to load" };
           }
         }),
@@ -490,7 +515,11 @@ export async function executeAgentTool(
 
     case "write_full_pipeline": {
       const bookId = args.bookId as string;
-      const writeGuardError = await getSequentialWriteGuardError(state, bookId, "write_full_pipeline");
+      const writeGuardError = await getSequentialWriteGuardError(
+        state,
+        bookId,
+        "write_full_pipeline",
+      );
       if (writeGuardError) {
         return JSON.stringify({ error: writeGuardError });
       }
@@ -537,16 +566,18 @@ export async function executeAgentTool(
 
     case "import_chapters": {
       const { splitChapters } = await import("../utils/chapter-splitter.js");
-      const chapters = splitChapters(
-        args.text as string,
-        args.splitPattern as string | undefined,
-      );
+      const chapters = splitChapters(args.text as string, args.splitPattern as string | undefined);
       if (chapters.length === 0) {
-        return JSON.stringify({ error: "No chapters found. Check text format or provide a splitPattern." });
+        return JSON.stringify({
+          error: "No chapters found. Check text format or provide a splitPattern.",
+        });
       }
       // Guard: import_chapters is a whole-book reimport, not a single-chapter patch
       if (chapters.length === 1) {
-        return JSON.stringify({ error: "import_chapters 是整书重导工具，需要至少 2 个章节。如果只想补一章，请用 write_draft 续写或 revise_chapter 修订。" });
+        return JSON.stringify({
+          error:
+            "import_chapters 是整书重导工具，需要至少 2 个章节。如果只想补一章，请用 write_draft 续写或 revise_chapter 修订。",
+        });
       }
       const result = await pipeline.importChapters({
         bookId: args.bookId as string,
@@ -568,10 +599,16 @@ export async function executeAgentTool(
       // blocked below.
       const LEGACY_SHIM_FILES = new Set(["story_bible.md", "book_rules.md"]);
       const ALLOWED_FLAT_FILES = [
-        "story_bible.md", "book_rules.md",
-        "current_state.md", "particle_ledger.md", "pending_hooks.md",
-        "chapter_summaries.md", "subplot_board.md", "emotional_arcs.md",
-        "character_matrix.md", "style_guide.md",
+        "story_bible.md",
+        "book_rules.md",
+        "current_state.md",
+        "particle_ledger.md",
+        "pending_hooks.md",
+        "chapter_summaries.md",
+        "subplot_board.md",
+        "emotional_arcs.md",
+        "character_matrix.md",
+        "style_guide.md",
       ];
       // outline/节奏原则.md (zh) / outline/rhythm_principles.md (en) are
       // optional after Phase 5 consolidation — rhythm principles normally live
@@ -579,8 +616,10 @@ export async function executeAgentTool(
       // dedicated file when the block is empty. They remain whitelisted so
       // legacy books and manual overrides keep working.
       const ALLOWED_OUTLINE_FILES = [
-        "outline/story_frame.md", "outline/volume_map.md",
-        "outline/节奏原则.md", "outline/rhythm_principles.md",
+        "outline/story_frame.md",
+        "outline/volume_map.md",
+        "outline/节奏原则.md",
+        "outline/rhythm_principles.md",
       ];
       // Phase hotfix 3: accept both locale dirs so English-layout books can
       // be edited via write_truth_file. The reader (utils/outline-paths.ts)
@@ -588,9 +627,9 @@ export async function executeAgentTool(
       const ROLE_PATH_PATTERN = /^roles\/(主要角色|次要角色|major|minor)\/[^/]+\.md$/;
 
       const isAllowed =
-        ALLOWED_FLAT_FILES.includes(fileName)
-        || ALLOWED_OUTLINE_FILES.includes(fileName)
-        || ROLE_PATH_PATTERN.test(fileName);
+        ALLOWED_FLAT_FILES.includes(fileName) ||
+        ALLOWED_OUTLINE_FILES.includes(fileName) ||
+        ROLE_PATH_PATTERN.test(fileName);
 
       if (!isAllowed) {
         const allowedExamples = [
@@ -602,8 +641,7 @@ export async function executeAgentTool(
           "roles/minor/<name>.md",
         ];
         return JSON.stringify({
-          error:
-            `不允许修改文件 "${fileName}"。允许的文件：${allowedExamples.join(", ")}`,
+          error: `不允许修改文件 "${fileName}"。允许的文件：${allowedExamples.join(", ")}`,
         });
       }
 
@@ -611,7 +649,9 @@ export async function executeAgentTool(
       // block writes so the agent edits outline/story_frame.md instead.
       if (LEGACY_SHIM_FILES.has(fileName)) {
         const { isNewLayoutBook } = await import("../utils/outline-paths.js");
-        const bookDirForCheck = new (await import("../state/manager.js")).StateManager(config.projectRoot).bookDir(bookId);
+        const bookDirForCheck = new (await import("../state/manager.js")).StateManager(
+          config.projectRoot,
+        ).bookDir(bookId);
         if (await isNewLayoutBook(bookDirForCheck)) {
           return JSON.stringify({
             error: `"${fileName}" 是兼容指针（新布局书籍），请改写 outline/story_frame.md。`,
@@ -627,12 +667,17 @@ export async function executeAgentTool(
 
       // Guard: block chapter progress manipulation via current_state.md
       if (fileName === "current_state.md" && containsProgressManipulation(content)) {
-        return JSON.stringify({ error: "不允许通过 write_truth_file 修改 current_state.md 中的章节进度。章节进度由系统自动管理。" });
+        return JSON.stringify({
+          error:
+            "不允许通过 write_truth_file 修改 current_state.md 中的章节进度。章节进度由系统自动管理。",
+        });
       }
 
       const { writeFile, mkdir } = await import("node:fs/promises");
       const { join, dirname } = await import("node:path");
-      const bookDir = new (await import("../state/manager.js")).StateManager(config.projectRoot).bookDir(bookId);
+      const bookDir = new (await import("../state/manager.js")).StateManager(
+        config.projectRoot,
+      ).bookDir(bookId);
       const storyDir = join(bookDir, "story");
       const targetPath = join(storyDir, fileName);
       await mkdir(dirname(targetPath), { recursive: true });

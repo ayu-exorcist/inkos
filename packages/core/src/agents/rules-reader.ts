@@ -2,7 +2,11 @@ import { readFile, readdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseGenreProfile, type ParsedGenreProfile } from "../models/genre-profile.js";
-import { parseBookRules, tryParseBookRulesFrontmatter, type ParsedBookRules } from "../models/book-rules.js";
+import {
+  parseBookRules,
+  tryParseBookRulesFrontmatter,
+  type ParsedBookRules,
+} from "../models/book-rules.js";
 import { BookConfigSchema } from "../models/book.js";
 
 const BUILTIN_GENRES_DIR = join(dirname(fileURLToPath(import.meta.url)), "../../genres");
@@ -11,6 +15,7 @@ async function tryReadFile(path: string): Promise<string | null> {
   try {
     return await readFile(path, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }
@@ -47,7 +52,13 @@ export async function readGenreProfile(
  */
 export async function listAvailableGenres(
   projectRoot: string,
-): Promise<ReadonlyArray<{ readonly id: string; readonly name: string; readonly source: "project" | "builtin" }>> {
+): Promise<
+  ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly source: "project" | "builtin";
+  }>
+> {
   const results = new Map<string, { id: string; name: string; source: "project" | "builtin" }>();
 
   // Built-in genres first
@@ -61,7 +72,9 @@ export async function listAvailableGenres(
       const parsed = parseGenreProfile(raw);
       results.set(id, { id, name: parsed.profile.name, source: "builtin" });
     }
-  } catch { /* no builtin dir */ }
+  } catch {
+    /* no builtin dir */
+  }
 
   // Project-level genres override
   const projectDir = join(projectRoot, "genres");
@@ -75,7 +88,9 @@ export async function listAvailableGenres(
       const parsed = parseGenreProfile(raw);
       results.set(id, { id, name: parsed.profile.name, source: "project" });
     }
-  } catch { /* no project genres dir */ }
+  } catch {
+    /* no project genres dir */
+  }
 
   return [...results.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
@@ -150,6 +165,7 @@ export async function readBookLanguage(bookDir: string): Promise<"zh" | "en" | u
     const parsed = BookConfigSchema.pick({ language: true }).safeParse(JSON.parse(raw));
     return parsed.success ? parsed.data.language : undefined;
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }

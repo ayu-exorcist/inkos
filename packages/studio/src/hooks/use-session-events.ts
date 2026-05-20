@@ -47,7 +47,9 @@ export function useSessionEvents(
           sessions: updateSession(state.sessions, sessionId, () => ({ bookId })),
           sessionIdsByBook: {
             ...state.sessionIdsByBook,
-            [previousKey]: (state.sessionIdsByBook[previousKey] ?? []).filter((id) => id !== sessionId),
+            [previousKey]: (state.sessionIdsByBook[previousKey] ?? []).filter(
+              (id) => id !== sessionId,
+            ),
             [nextKey]: mergeSessionIds(state.sessionIdsByBook[nextKey], [sessionId]),
           },
         };

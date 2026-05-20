@@ -42,7 +42,14 @@ interface Nav {
   toServices: () => void;
 }
 
-function BookMenu({ bookId, bookTitle, nav, t, onDelete, onOpenChange }: {
+function BookMenu({
+  bookId,
+  bookTitle,
+  nav,
+  t,
+  onDelete,
+  onOpenChange,
+}: {
   readonly bookId: string;
   readonly bookTitle: string;
   readonly nav: Nav;
@@ -88,7 +95,10 @@ function BookMenu({ bookId, bookTitle, nav, t, onDelete, onOpenChange }: {
       {open && (
         <div className="absolute right-0 top-full mt-1 w-44 bg-card border border-border rounded-xl shadow-lg shadow-primary/5 py-1 z-50 fade-in">
           <button
-            onClick={() => { setOpen(false); nav.toBookSettings(bookId); }}
+            onClick={() => {
+              setOpen(false);
+              nav.toBookSettings(bookId);
+            }}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-secondary/50 transition-colors cursor-pointer"
           >
             <Settings size={14} className="text-muted-foreground" />
@@ -105,7 +115,10 @@ function BookMenu({ bookId, bookTitle, nav, t, onDelete, onOpenChange }: {
           </a>
           <div className="border-t border-border/50 my-1" />
           <button
-            onClick={() => { setOpen(false); setConfirmDelete(true); }}
+            onClick={() => {
+              setOpen(false);
+              setConfirmDelete(true);
+            }}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
           >
             <Trash2 size={14} />
@@ -127,14 +140,26 @@ function BookMenu({ bookId, bookTitle, nav, t, onDelete, onOpenChange }: {
   );
 }
 
-export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: ReadonlyArray<SSEMessage> }; theme: Theme; t: TFunction }) {
+export function Dashboard({
+  nav,
+  sse,
+  theme,
+  t,
+}: {
+  nav: Nav;
+  sse: { messages: ReadonlyArray<SSEMessage> };
+  theme: Theme;
+  t: TFunction;
+}) {
   const c = useColors(theme);
   const [menuOpenBookId, setMenuOpenBookId] = useState<string | null>(null);
   const { data, loading, error, refetch } = useApi<{ books: ReadonlyArray<BookSummary> }>("/books");
   const writingBooks = useMemo(() => deriveActiveBookIds(sse.messages), [sse.messages]);
   const serviceStoreServices = useServiceStore((s) => s.services);
   const fetchServices = useServiceStore((s) => s.fetchServices);
-  useEffect(() => { void fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+    void fetchServices();
+  }, [fetchServices]);
   const hasServices = serviceStoreServices.some((s) => s.connected);
 
   const logEvents = sse.messages.filter((m) => m.event === "log").slice(-8);
@@ -148,20 +173,24 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
     }
   }, [refetch, sse.messages]);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center py-32 space-y-4">
-      <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-      <span className="text-sm text-muted-foreground animate-pulse">Gathering manuscripts...</span>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <span className="text-sm text-muted-foreground animate-pulse">
+          Gathering manuscripts...
+        </span>
+      </div>
+    );
 
-  if (error) return (
-    <div className="flex flex-col items-center justify-center py-20 bg-destructive/5 border border-destructive/20 rounded-2xl">
-      <AlertCircle className="text-destructive mb-4" size={32} />
-      <h2 className="text-lg font-semibold text-destructive">Failed to load library</h2>
-      <p className="text-sm text-muted-foreground mt-1">{error}</p>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-destructive/5 border border-destructive/20 rounded-2xl">
+        <AlertCircle className="text-destructive mb-4" size={32} />
+        <h2 className="text-lg font-semibold text-destructive">Failed to load library</h2>
+        <p className="text-sm text-muted-foreground mt-1">{error}</p>
+      </div>
+    );
 
   if (!data?.books.length) {
     return (
@@ -243,25 +272,38 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock size={14} />
-                      <span>{book.chaptersWritten} {t("dash.chapters")}</span>
+                      <span>
+                        {book.chaptersWritten} {t("dash.chapters")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${
-                        book.status === "active" ? "bg-emerald-500" :
-                        book.status === "paused" ? "bg-amber-500" :
-                        "bg-muted-foreground"
-                      }`} />
-                      <span>{
-                        book.status === "active" ? t("book.statusActive") :
-                        book.status === "paused" ? t("book.statusPaused") :
-                        book.status === "outlining" ? t("book.statusOutlining") :
-                        book.status === "completed" ? t("book.statusCompleted") :
-                        book.status === "dropped" ? t("book.statusDropped") :
-                        book.status
-                      }</span>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          book.status === "active"
+                            ? "bg-emerald-500"
+                            : book.status === "paused"
+                              ? "bg-amber-500"
+                              : "bg-muted-foreground"
+                        }`}
+                      />
+                      <span>
+                        {book.status === "active"
+                          ? t("book.statusActive")
+                          : book.status === "paused"
+                            ? t("book.statusPaused")
+                            : book.status === "outlining"
+                              ? t("book.statusOutlining")
+                              : book.status === "completed"
+                                ? t("book.statusCompleted")
+                                : book.status === "dropped"
+                                  ? t("book.statusDropped")
+                                  : book.status}
+                      </span>
                     </div>
                     {book.language === "en" && (
-                      <span className="px-1.5 py-0.5 rounded border border-primary/20 text-primary text-[10px] font-bold">EN</span>
+                      <span className="px-1.5 py-0.5 rounded border border-primary/20 text-primary text-[10px] font-bold">
+                        EN
+                      </span>
                     )}
                     {book.fanficMode && (
                       <span className="flex items-center gap-1 text-purple-500">
@@ -275,8 +317,11 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
                 <div className="flex items-center gap-3 shrink-0 ml-6">
                   <button
                     onClick={async () => {
-                      try { await postApi(`/books/${book.id}/write-next`); }
-                      catch (e) { alert(e instanceof Error ? e.message : "Write failed"); }
+                      try {
+                        await postApi(`/books/${book.id}/write-next`);
+                      } catch (e) {
+                        alert(e instanceof Error ? e.message : "Write failed");
+                      }
                     }}
                     disabled={isWriting}
                     className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
@@ -318,7 +363,7 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
               {/* Enhanced progress indicator */}
               {isWriting && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary overflow-hidden">
-                   <div className="h-full bg-primary w-1/3 animate-[progress_2s_ease-in-out_infinite]" />
+                  <div className="h-full bg-primary w-1/3 animate-[progress_2s_ease-in-out_infinite]" />
                 </div>
               )}
             </div>
@@ -335,20 +380,35 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
                 <Flame size={18} className="animate-pulse" />
               </div>
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-widest text-primary"> Manuscript Foundry</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Real-time LLM generation tracking</p>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-primary">
+                  {" "}
+                  Manuscript Foundry
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Real-time LLM generation tracking
+                </p>
               </div>
             </div>
             {progressEvent && (
               <div className="flex items-center gap-4 text-xs font-bold text-primary px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                 <div className="flex items-center gap-2">
                   <Clock size={12} />
-                  <span>{Math.round(((progressEvent.data as { elapsedMs?: number })?.elapsedMs ?? 0) / 1000)}s</span>
+                  <span>
+                    {Math.round(
+                      ((progressEvent.data as { elapsedMs?: number })?.elapsedMs ?? 0) / 1000,
+                    )}
+                    s
+                  </span>
                 </div>
                 <div className="w-px h-3 bg-primary/20" />
                 <div className="flex items-center gap-2">
                   <Zap size={12} />
-                  <span>{((progressEvent.data as { totalChars?: number })?.totalChars ?? 0).toLocaleString()} Chars</span>
+                  <span>
+                    {(
+                      (progressEvent.data as { totalChars?: number })?.totalChars ?? 0
+                    ).toLocaleString()}{" "}
+                    Chars
+                  </span>
                 </div>
               </div>
             )}
@@ -358,7 +418,10 @@ export function Dashboard({ nav, sse, theme, t }: { nav: Nav; sse: { messages: R
             {logEvents.map((msg, i) => {
               const d = msg.data as { tag?: string; message?: string };
               return (
-                <div key={i} className="flex gap-3 leading-relaxed animate-in fade-in slide-in-from-left-2 duration-300">
+                <div
+                  key={i}
+                  className="flex gap-3 leading-relaxed animate-in fade-in slide-in-from-left-2 duration-300"
+                >
                   <span className="text-primary/60 font-bold shrink-0">[{d.tag}]</span>
                   <span className="text-muted-foreground">{d.message}</span>
                 </div>

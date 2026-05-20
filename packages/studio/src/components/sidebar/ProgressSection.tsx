@@ -69,9 +69,8 @@ export function ProgressSection({ sse }: ProgressSectionProps) {
     }
   }, [sse.messages]);
 
-  const steps = operation === "init" ? INIT_BOOK_STEPS
-    : operation === "write" ? WRITE_CHAPTER_STEPS
-    : null;
+  const steps =
+    operation === "init" ? INIT_BOOK_STEPS : operation === "write" ? WRITE_CHAPTER_STEPS : null;
 
   if (!steps) return null;
 
@@ -79,18 +78,22 @@ export function ProgressSection({ sse }: ProgressSectionProps) {
     <SidebarCard title="执行">
       <ul className="space-y-2">
         {steps.map((step, i) => {
-          const status: StepStatus = completedSteps.has(step) ? "done"
-            : activeStep === step ? "active"
-            : "pending";
+          const status: StepStatus = completedSteps.has(step)
+            ? "done"
+            : activeStep === step
+              ? "active"
+              : "pending";
           return (
             <li key={step} className="flex items-center gap-2.5">
               <StepIndicator index={i + 1} status={status} />
-              <span className={cn(
-                "text-xs",
-                status === "done" && "text-muted-foreground",
-                status === "active" && "text-foreground font-medium",
-                status === "pending" && "text-muted-foreground/50",
-              )}>
+              <span
+                className={cn(
+                  "text-xs",
+                  status === "done" && "text-muted-foreground",
+                  status === "active" && "text-foreground font-medium",
+                  status === "pending" && "text-muted-foreground/50",
+                )}
+              >
                 {step}
               </span>
             </li>

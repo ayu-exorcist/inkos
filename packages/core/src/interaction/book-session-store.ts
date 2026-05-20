@@ -50,26 +50,25 @@ export async function loadBookSession(
   if (!legacySession) return null;
 
   await migrateLegacyBookSessionToTranscript(projectRoot, legacySession);
-  return await deriveBookSessionFromTranscript(projectRoot, sessionId) ?? legacySession;
+  return (await deriveBookSessionFromTranscript(projectRoot, sessionId)) ?? legacySession;
 }
 
-async function appendSessionCreatedEvent(
-  projectRoot: string,
-  session: BookSession,
-): Promise<void> {
+async function appendSessionCreatedEvent(projectRoot: string, session: BookSession): Promise<void> {
   await appendTranscriptEvents(projectRoot, session.sessionId, ({ events, nextSeq }) => {
     if (events.some((event) => event.type === "session_created")) return [];
-    return [{
-      type: "session_created",
-      version: 1,
-      sessionId: session.sessionId,
-      seq: nextSeq,
-      timestamp: session.createdAt,
-      bookId: session.bookId,
-      title: session.title,
-      createdAt: session.createdAt,
-      updatedAt: session.updatedAt,
-    }];
+    return [
+      {
+        type: "session_created",
+        version: 1,
+        sessionId: session.sessionId,
+        seq: nextSeq,
+        timestamp: session.createdAt,
+        bookId: session.bookId,
+        title: session.title,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+      },
+    ];
   });
 }
 
@@ -82,22 +81,21 @@ async function appendSessionMetadataUpdatedEvent(
     readonly updatedAt: number;
   },
 ): Promise<void> {
-  await appendTranscriptEvents(projectRoot, sessionId, ({ nextSeq }) => [{
-    type: "session_metadata_updated",
-    version: 1,
-    sessionId,
-    seq: nextSeq,
-    timestamp: metadata.updatedAt,
-    updatedAt: metadata.updatedAt,
-    ...("bookId" in metadata ? { bookId: metadata.bookId } : {}),
-    ...("title" in metadata ? { title: metadata.title } : {}),
-  }]);
+  await appendTranscriptEvents(projectRoot, sessionId, ({ nextSeq }) => [
+    {
+      type: "session_metadata_updated",
+      version: 1,
+      sessionId,
+      seq: nextSeq,
+      timestamp: metadata.updatedAt,
+      updatedAt: metadata.updatedAt,
+      ...("bookId" in metadata ? { bookId: metadata.bookId } : {}),
+      ...("title" in metadata ? { title: metadata.title } : {}),
+    },
+  ]);
 }
 
-export async function persistBookSession(
-  projectRoot: string,
-  session: BookSession,
-): Promise<void> {
+export async function persistBookSession(projectRoot: string, session: BookSession): Promise<void> {
   const events = await readTranscriptEvents(projectRoot, session.sessionId);
   if (events.length === 0) {
     if (session.messages.length === 0) {
@@ -133,6 +131,7 @@ export async function listBookSessions(
   try {
     files = await readdir(dir);
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 
@@ -160,6 +159,7 @@ export async function listBookSessions(
           updatedAt: session.updatedAt,
         };
       } catch {
+        // failure expected, safe to ignore
         return null;
       }
     }),
@@ -182,10 +182,7 @@ export async function renameBookSession(
   return loadBookSession(projectRoot, sessionId);
 }
 
-export async function deleteBookSession(
-  projectRoot: string,
-  sessionId: string,
-): Promise<void> {
+export async function deleteBookSession(projectRoot: string, sessionId: string): Promise<void> {
   await Promise.all([
     unlink(transcriptPath(projectRoot, sessionId)).catch(() => undefined),
     unlink(legacyBookSessionPath(projectRoot, sessionId)).catch(() => undefined),

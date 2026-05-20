@@ -41,7 +41,13 @@ describe("buildPartsFromEvents", () => {
       { type: "thinking:delta", text: "Reasoning here" },
       { type: "thinking:end" },
       { type: "draft:delta", text: "I will call writer now" },
-      { type: "tool:start", id: "t1", tool: "sub_agent", agent: "writer", stages: ["准备章节输入", "撰写章节草稿"] },
+      {
+        type: "tool:start",
+        id: "t1",
+        tool: "sub_agent",
+        agent: "writer",
+        stages: ["准备章节输入", "撰写章节草稿"],
+      },
       { type: "log:stage", stageName: "准备章节输入" },
       { type: "log:stage", stageName: "撰写章节草稿" },
       { type: "tool:end", id: "t1" },
@@ -70,7 +76,13 @@ describe("buildPartsFromEvents", () => {
       { type: "tool:end", id: "t1" },
       { type: "tool:start", id: "t2", tool: "grep" },
       { type: "tool:end", id: "t2" },
-      { type: "tool:start", id: "t3", tool: "sub_agent", agent: "writer", stages: ["准备章节输入"] },
+      {
+        type: "tool:start",
+        id: "t3",
+        tool: "sub_agent",
+        agent: "writer",
+        stages: ["准备章节输入"],
+      },
       { type: "tool:end", id: "t3" },
       { type: "draft:delta", text: "Done." },
     ]);
@@ -84,7 +96,13 @@ describe("buildPartsFromEvents", () => {
 
   it("tracks pipeline stages and progress on running tool", () => {
     const parts = buildPartsFromEvents([
-      { type: "tool:start", id: "t1", tool: "sub_agent", agent: "writer", stages: ["步骤1", "步骤2"] },
+      {
+        type: "tool:start",
+        id: "t1",
+        tool: "sub_agent",
+        agent: "writer",
+        stages: ["步骤1", "步骤2"],
+      },
       { type: "log:stage", stageName: "步骤1" },
       { type: "llm:progress", status: "thinking", elapsedMs: 5000, totalChars: 0, chineseChars: 0 },
     ]);
@@ -114,11 +132,11 @@ describe("buildPartsFromEvents", () => {
     ]);
 
     // Two thinking parts, tool in between, then text
-    const thinkingParts = parts.filter(p => p.type === "thinking");
+    const thinkingParts = parts.filter((p) => p.type === "thinking");
     expect(thinkingParts).toHaveLength(2);
     expect(thinkingParts[0].type === "thinking" && thinkingParts[0].content).toBe("First thought");
     expect(thinkingParts[1].type === "thinking" && thinkingParts[1].content).toBe("Second thought");
-    expect(parts.map(p => p.type)).toEqual(["thinking", "tool", "thinking", "text"]);
+    expect(parts.map((p) => p.type)).toEqual(["thinking", "tool", "thinking", "text"]);
   });
 
   it("marks tool error correctly", () => {
@@ -158,7 +176,8 @@ describe("buildPartsFromEvents", () => {
         type: "tool:end",
         id: "t1",
         isError: true,
-        result: "Latest chapter 1 is state-degraded. Repair state or rewrite that chapter before continuing.",
+        result:
+          "Latest chapter 1 is state-degraded. Repair state or rewrite that chapter before continuing.",
       },
     ]);
 

@@ -2,8 +2,18 @@ import type { BookConfig, FanficMode } from "../models/book.js";
 import type { GenreProfile } from "../models/genre-profile.js";
 import type { BookRules } from "../models/book-rules.js";
 import type { LengthSpec } from "../models/length-governance.js";
-import { buildFanficCanonSection, buildCharacterVoiceProfiles, buildFanficModeInstructions } from "./fanfic-prompt-sections.js";
-import { buildEnglishCoreRules, buildEnglishAntiAIRules, buildEnglishCharacterMethod, buildEnglishPreWriteChecklist, buildEnglishGenreIntro } from "./en-prompt-sections.js";
+import {
+  buildFanficCanonSection,
+  buildCharacterVoiceProfiles,
+  buildFanficModeInstructions,
+} from "./fanfic-prompt-sections.js";
+import {
+  buildEnglishCoreRules,
+  buildEnglishAntiAIRules,
+  buildEnglishCharacterMethod,
+  buildEnglishPreWriteChecklist,
+  buildEnglishGenreIntro,
+} from "./en-prompt-sections.js";
 import { buildLengthSpec } from "../utils/length-metrics.js";
 
 export interface FanficContext {
@@ -33,11 +43,13 @@ export function buildWriterSystemPrompt(
 ): string {
   const isEnglish = (languageOverride ?? genreProfile.language) === "en";
   const governed = inputProfile === "governed";
-  const resolvedLengthSpec = lengthSpec ?? buildLengthSpec(book.chapterWordCount, isEnglish ? "en" : "zh");
+  const resolvedLengthSpec =
+    lengthSpec ?? buildLengthSpec(book.chapterWordCount, isEnglish ? "en" : "zh");
 
-  const outputSection = mode === "creative"
-    ? buildCreativeOutputFormat(book, genreProfile, resolvedLengthSpec)
-    : buildOutputFormat(book, genreProfile, resolvedLengthSpec);
+  const outputSection =
+    mode === "creative"
+      ? buildCreativeOutputFormat(book, genreProfile, resolvedLengthSpec)
+      : buildOutputFormat(book, genreProfile, resolvedLengthSpec);
 
   const sections = isEnglish
     ? [
@@ -55,9 +67,13 @@ export function buildWriterSystemPrompt(
         buildBookRulesBody(bookRulesBody),
         buildStyleGuide(styleGuide),
         buildStyleFingerprint(styleFingerprint),
-        fanficContext ? buildFanficCanonSection(fanficContext.fanficCanon, fanficContext.fanficMode) : "",
+        fanficContext
+          ? buildFanficCanonSection(fanficContext.fanficCanon, fanficContext.fanficMode)
+          : "",
         fanficContext ? buildCharacterVoiceProfiles(fanficContext.fanficCanon) : "",
-        fanficContext ? buildFanficModeInstructions(fanficContext.fanficMode, fanficContext.allowedDeviations) : "",
+        fanficContext
+          ? buildFanficModeInstructions(fanficContext.fanficMode, fanficContext.allowedDeviations)
+          : "",
         // Pre-write checklist moved to style_guide.md (v10)
         outputSection,
       ]
@@ -78,9 +94,13 @@ export function buildWriterSystemPrompt(
         buildBookRulesBody(bookRulesBody),
         buildStyleGuide(styleGuide),
         buildStyleFingerprint(styleFingerprint),
-        fanficContext ? buildFanficCanonSection(fanficContext.fanficCanon, fanficContext.fanficMode) : "",
+        fanficContext
+          ? buildFanficCanonSection(fanficContext.fanficCanon, fanficContext.fanficMode)
+          : "",
         fanficContext ? buildCharacterVoiceProfiles(fanficContext.fanficCanon) : "",
-        fanficContext ? buildFanficModeInstructions(fanficContext.fanficMode, fanficContext.allowedDeviations) : "",
+        fanficContext
+          ? buildFanficModeInstructions(fanficContext.fanficMode, fanficContext.allowedDeviations)
+          : "",
         // Pre-write checklist moved to style_guide.md (v10)
         outputSection,
       ];
@@ -658,25 +678,19 @@ function buildFullCastTracking(): string {
 // ---------------------------------------------------------------------------
 
 function buildGenreRules(gp: GenreProfile, genreBody: string): string {
-  const fatigueLine = gp.fatigueWords.length > 0
-    ? `- 高疲劳词（${gp.fatigueWords.join("、")}）单章最多出现1次`
-    : "";
+  const fatigueLine =
+    gp.fatigueWords.length > 0 ? `- 高疲劳词（${gp.fatigueWords.join("、")}）单章最多出现1次` : "";
 
-  const chapterTypesLine = gp.chapterTypes.length > 0
-    ? `动笔前先判断本章类型：\n${gp.chapterTypes.map(t => `- ${t}`).join("\n")}`
-    : "";
+  const chapterTypesLine =
+    gp.chapterTypes.length > 0
+      ? `动笔前先判断本章类型：\n${gp.chapterTypes.map((t) => `- ${t}`).join("\n")}`
+      : "";
 
-  const pacingLine = gp.pacingRule
-    ? `- 节奏规则：${gp.pacingRule}`
-    : "";
+  const pacingLine = gp.pacingRule ? `- 节奏规则：${gp.pacingRule}` : "";
 
-  return [
-    `## 题材规范（${gp.name}）`,
-    fatigueLine,
-    pacingLine,
-    chapterTypesLine,
-    genreBody,
-  ].filter(Boolean).join("\n\n");
+  return [`## 题材规范（${gp.name}）`, fatigueLine, pacingLine, chapterTypesLine, genreBody]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -782,7 +796,11 @@ function buildPreWriteChecklist(book: BookConfig, gp: GenreProfile): string {
 // Creative-only output format (no settlement blocks)
 // ---------------------------------------------------------------------------
 
-function buildCreativeOutputFormat(book: BookConfig, gp: GenreProfile, lengthSpec: LengthSpec): string {
+function buildCreativeOutputFormat(
+  book: BookConfig,
+  gp: GenreProfile,
+  lengthSpec: LengthSpec,
+): string {
   const resourceRow = gp.numericalSystem
     ? "| 当前资源总量 | X | 与账本一致 |\n| 本章预计增量 | +X（来源） | 无增量写+0 |"
     : "";

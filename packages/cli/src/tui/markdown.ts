@@ -3,19 +3,21 @@ import { markedTerminal } from "marked-terminal";
 import { isAppleTerminal } from "./theme.js";
 
 const marked = new Marked();
-marked.use(markedTerminal({
-  // Terminal width minus paddingX(2*2) + prefix(2) + margin(2) = 8, plus extra 2 for safety
-  width: Math.min(process.stdout.columns ?? 80, 100) - 10,
-  reflowText: true,
-  showSectionPrefix: false,
-  tab: 2,
-  // Preserve inline formatting through reflow: keep ** markers as plain text
-  // so reflowText won't split ANSI codes across lines. Post-process converts them.
-  listitem: (text: string) => text,
-  strong: (text: string) => `**${text}**`,
-  // cli-table3 defaults table headers to red; disable to inherit parent color
-  tableOptions: { style: { head: [] } },
-}) as never);
+marked.use(
+  markedTerminal({
+    // Terminal width minus paddingX(2*2) + prefix(2) + margin(2) = 8, plus extra 2 for safety
+    width: Math.min(process.stdout.columns ?? 80, 100) - 10,
+    reflowText: true,
+    showSectionPrefix: false,
+    tab: 2,
+    // Preserve inline formatting through reflow: keep ** markers as plain text
+    // so reflowText won't split ANSI codes across lines. Post-process converts them.
+    listitem: (text: string) => text,
+    strong: (text: string) => `**${text}**`,
+    // cli-table3 defaults table headers to red; disable to inherit parent color
+    tableOptions: { style: { head: [] } },
+  }) as never,
+);
 
 const BOLD_ON = "\x1b[1m";
 const BOLD_OFF = "\x1b[22m";
@@ -59,6 +61,7 @@ export function renderMarkdown(text: string): string {
     const trimmed = rendered.replace(/\n+$/, "");
     return isAppleTerminal ? postProcessPlain(trimmed) : postProcess(trimmed);
   } catch {
+    // failure expected, safe to ignore
     return text;
   }
 }

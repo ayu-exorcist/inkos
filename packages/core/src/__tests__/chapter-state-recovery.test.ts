@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuditIssue } from "../agents/continuity.js";
-import type {
-  ValidationResult,
-  ValidationWarning,
-} from "../agents/state-validator.js";
+import type { ValidationResult, ValidationWarning } from "../agents/state-validator.js";
 import type { WriteChapterOutput } from "../agents/writer.js";
 import type { BookConfig } from "../models/book.js";
 import type { ChapterMeta } from "../models/chapter.js";
@@ -29,27 +26,21 @@ function createBook(): BookConfig {
   };
 }
 
-function createValidationWarning(
-  overrides: Partial<ValidationWarning> = {},
-): ValidationWarning {
+function createValidationWarning(overrides: Partial<ValidationWarning> = {}): ValidationWarning {
   return {
     category: overrides.category ?? "current-state",
     description: overrides.description ?? "铜牌位置与正文矛盾",
   };
 }
 
-function createValidationResult(
-  overrides: Partial<ValidationResult> = {},
-): ValidationResult {
+function createValidationResult(overrides: Partial<ValidationResult> = {}): ValidationResult {
   return {
     passed: overrides.passed ?? false,
     warnings: overrides.warnings ?? [createValidationWarning()],
   };
 }
 
-function createWriteChapterOutput(
-  overrides: Partial<WriteChapterOutput> = {},
-): WriteChapterOutput {
+function createWriteChapterOutput(overrides: Partial<WriteChapterOutput> = {}): WriteChapterOutput {
   return {
     chapterNumber: 3,
     title: "第三章",
@@ -70,9 +61,7 @@ function createWriteChapterOutput(
   };
 }
 
-function createChapterMeta(
-  overrides: Partial<ChapterMeta> = {},
-): ChapterMeta {
+function createChapterMeta(overrides: Partial<ChapterMeta> = {}): ChapterMeta {
   return {
     number: 3,
     title: "第三章",
@@ -99,10 +88,12 @@ describe("chapter-state-recovery", () => {
       }),
     };
     const validator = {
-      validate: vi.fn(async () => createValidationResult({
-        passed: true,
-        warnings: [],
-      })),
+      validate: vi.fn(async () =>
+        createValidationResult({
+          passed: true,
+          warnings: [],
+        }),
+      ),
     };
     const logWarn = vi.fn();
     const warn = vi.fn();
@@ -126,12 +117,16 @@ describe("chapter-state-recovery", () => {
     expect(result.kind).toBe("recovered");
     expect(capturedFeedback).toContain("上一次状态结算未通过校验");
     expect(capturedFeedback).toContain("铜牌位置与正文矛盾");
-    expect(writer.settleChapterState).toHaveBeenCalledWith(expect.objectContaining({
-      allowReapply: true,
-    }));
-    expect(logWarn).toHaveBeenCalledWith(expect.objectContaining({
-      zh: expect.stringContaining("仅重试结算层"),
-    }));
+    expect(writer.settleChapterState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allowReapply: true,
+      }),
+    );
+    expect(logWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        zh: expect.stringContaining("仅重试结算层"),
+      }),
+    );
     expect(warn).not.toHaveBeenCalled();
   });
 
@@ -144,10 +139,12 @@ describe("chapter-state-recovery", () => {
         settleChapterState: vi.fn(async () => createWriteChapterOutput()),
       } as never,
       validator: {
-        validate: vi.fn(async () => createValidationResult({
-          passed: false,
-          warnings: [validatorWarning],
-        })),
+        validate: vi.fn(async () =>
+          createValidationResult({
+            passed: false,
+            warnings: [validatorWarning],
+          }),
+        ),
       } as never,
       book: createBook(),
       bookDir: "/tmp/test-book",
@@ -204,12 +201,14 @@ describe("chapter-state-recovery", () => {
   });
 
   it("round-trips degraded review metadata and resolves fallback base status", () => {
-    const issues: AuditIssue[] = [{
-      severity: "warning",
-      category: "state-validation",
-      description: "状态结算重试后仍未通过校验。",
-      suggestion: "请先基于已保存正文修复本章 state，再继续后续章节。",
-    }];
+    const issues: AuditIssue[] = [
+      {
+        severity: "warning",
+        category: "state-validation",
+        description: "状态结算重试后仍未通过校验。",
+        suggestion: "请先基于已保存正文修复本章 state，再继续后续章节。",
+      },
+    ];
     const note = buildStateDegradedReviewNote("audit-failed", issues);
 
     expect(parseStateDegradedReviewNote(note)).toEqual({
@@ -218,18 +217,30 @@ describe("chapter-state-recovery", () => {
       injectedIssues: ["[warning] 状态结算重试后仍未通过校验。"],
     });
 
-    expect(resolveStateDegradedBaseStatus(createChapterMeta({
-      reviewNote: note,
-    }))).toBe("audit-failed");
+    expect(
+      resolveStateDegradedBaseStatus(
+        createChapterMeta({
+          reviewNote: note,
+        }),
+      ),
+    ).toBe("audit-failed");
 
-    expect(resolveStateDegradedBaseStatus(createChapterMeta({
-      reviewNote: "{bad json",
-      auditIssues: ["[critical] still broken"],
-    }))).toBe("audit-failed");
+    expect(
+      resolveStateDegradedBaseStatus(
+        createChapterMeta({
+          reviewNote: "{bad json",
+          auditIssues: ["[critical] still broken"],
+        }),
+      ),
+    ).toBe("audit-failed");
 
-    expect(resolveStateDegradedBaseStatus(createChapterMeta({
-      reviewNote: "{bad json",
-      auditIssues: ["[warning] needs review"],
-    }))).toBe("ready-for-review");
+    expect(
+      resolveStateDegradedBaseStatus(
+        createChapterMeta({
+          reviewNote: "{bad json",
+          auditIssues: ["[warning] needs review"],
+        }),
+      ),
+    ).toBe("ready-for-review");
   });
 });

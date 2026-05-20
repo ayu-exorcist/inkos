@@ -66,6 +66,8 @@ describe("project bootstrap", () => {
     await writeFile(join(tempDir, "inkos.json"), "{}\n", "utf-8");
     const { ensureProjectDirectoryInitialized } = await import("../project-bootstrap.js");
 
-    await expect(ensureProjectDirectoryInitialized(tempDir, { language: "zh" })).resolves.toBe(false);
+    await expect(ensureProjectDirectoryInitialized(tempDir, { language: "zh" })).resolves.toBe(
+      false,
+    );
   });
 });

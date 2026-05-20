@@ -84,9 +84,7 @@ export abstract class BaseAgent {
 
       // Inject search results before the last user message
       const augmentedMessages: LLMMessage[] = messages.map((m) =>
-        m === lastUserMsg
-          ? { ...m, content: `${searchContext}\n\n---\n\n${m.content}` }
-          : m,
+        m === lastUserMsg ? { ...m, content: `${searchContext}\n\n---\n\n${m.content}` } : m,
       );
 
       return this.chat(augmentedMessages, options);

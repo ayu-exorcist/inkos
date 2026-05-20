@@ -1,11 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import yaml from "js-yaml";
-import type {
-  ChapterTrace,
-  ContextPackage,
-  RuleStack,
-} from "../models/input-governance.js";
+import type { ChapterTrace, ContextPackage, RuleStack } from "../models/input-governance.js";
 
 export interface RuntimeArtifactWriteResult {
   readonly contextPath: string;

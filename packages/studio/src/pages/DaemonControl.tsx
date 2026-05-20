@@ -10,7 +10,17 @@ interface Nav {
   toDashboard: () => void;
 }
 
-export function DaemonControl({ nav, theme, t, sse }: { nav: Nav; theme: Theme; t: TFunction; sse: { messages: ReadonlyArray<SSEMessage> } }) {
+export function DaemonControl({
+  nav,
+  theme,
+  t,
+  sse,
+}: {
+  nav: Nav;
+  theme: Theme;
+  t: TFunction;
+  sse: { messages: ReadonlyArray<SSEMessage> };
+}) {
   const c = useColors(theme);
   const { data, refetch } = useApi<{ running: boolean }>("/daemon");
   const [loading, setLoading] = useState(false);
@@ -54,7 +64,9 @@ export function DaemonControl({ nav, theme, t, sse }: { nav: Nav; theme: Theme; 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span className="text-foreground">{t("nav.daemon")}</span>
       </div>
@@ -62,7 +74,9 @@ export function DaemonControl({ nav, theme, t, sse }: { nav: Nav; theme: Theme; 
       <div className="flex items-baseline justify-between">
         <h1 className="font-serif text-3xl">{t("daemon.title")}</h1>
         <div className="flex items-center gap-3">
-          <span className={`text-sm uppercase tracking-wide font-medium ${isRunning ? "text-emerald-500" : "text-muted-foreground"}`}>
+          <span
+            className={`text-sm uppercase tracking-wide font-medium ${isRunning ? "text-emerald-500" : "text-muted-foreground"}`}
+          >
             {isRunning ? t("daemon.running") : t("daemon.stopped")}
           </span>
           {isRunning ? (
@@ -88,7 +102,9 @@ export function DaemonControl({ nav, theme, t, sse }: { nav: Nav; theme: Theme; 
       {/* Daemon event log */}
       <div className={`border ${c.cardStatic} rounded-lg`}>
         <div className="px-5 py-3.5 border-b border-border">
-          <span className="text-sm uppercase tracking-wide text-muted-foreground font-medium">{t("daemon.eventLog")}</span>
+          <span className="text-sm uppercase tracking-wide text-muted-foreground font-medium">
+            {t("daemon.eventLog")}
+          </span>
         </div>
         <div className="p-4 max-h-[500px] overflow-y-auto">
           {daemonEvents.length > 0 ? (

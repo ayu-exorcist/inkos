@@ -1,9 +1,4 @@
-export type EndpointGroup =
-  | "overseas"
-  | "china"
-  | "aggregator"
-  | "local"
-  | "codingPlan";
+export type EndpointGroup = "overseas" | "china" | "aggregator" | "local" | "codingPlan";
 
 export interface ServiceInfo {
   readonly service: string;

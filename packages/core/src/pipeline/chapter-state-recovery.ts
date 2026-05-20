@@ -1,8 +1,5 @@
 import type { AuditIssue } from "../agents/continuity.js";
-import type {
-  ValidationResult,
-  ValidationWarning,
-} from "../agents/state-validator.js";
+import type { ValidationResult, ValidationWarning } from "../agents/state-validator.js";
 import type { StateValidatorAgent } from "../agents/state-validator.js";
 import type { WriteChapterOutput } from "../agents/writer.js";
 import type { WriterAgent } from "../agents/writer.js";
@@ -35,14 +32,14 @@ export interface SettlementRetryParams {
 
 export type SettlementRetryResult =
   | {
-    readonly kind: "recovered";
-    readonly output: WriteChapterOutput;
-    readonly validation: ValidationResult;
-  }
+      readonly kind: "recovered";
+      readonly output: WriteChapterOutput;
+      readonly validation: ValidationResult;
+    }
   | {
-    readonly kind: "degraded";
-    readonly issues: ReadonlyArray<AuditIssue>;
-  };
+      readonly kind: "degraded";
+      readonly issues: ReadonlyArray<AuditIssue>;
+    };
 
 export async function retrySettlementAfterValidationFailure(
   params: SettlementRetryParams,
@@ -80,7 +77,9 @@ export async function retrySettlementAfterValidationFailure(
       params.language,
     );
   } catch (error) {
-    throw new Error(`State validation retry failed for chapter ${params.chapterNumber}: ${String(error)}`);
+    throw new Error(
+      `State validation retry failed for chapter ${params.chapterNumber}: ${String(error)}`,
+    );
   }
 
   if (retryValidation.warnings.length > 0) {
@@ -139,22 +138,27 @@ export function buildStateDegradedIssues(
       severity: "warning" as const,
       category: "state-validation",
       description: warning.description,
-      suggestion: language === "en"
-        ? "Repair chapter state from the persisted body before continuing."
-        : "请先基于已保存正文修复本章 state，再继续后续章节。",
+      suggestion:
+        language === "en"
+          ? "Repair chapter state from the persisted body before continuing."
+          : "请先基于已保存正文修复本章 state，再继续后续章节。",
     }));
   }
 
-  return [{
-    severity: "warning",
-    category: "state-validation",
-    description: language === "en"
-      ? "State validation still failed after settlement retry."
-      : "状态结算重试后仍未通过校验。",
-    suggestion: language === "en"
-      ? "Repair chapter state from the persisted body before continuing."
-      : "请先基于已保存正文修复本章 state，再继续后续章节。",
-  }];
+  return [
+    {
+      severity: "warning",
+      category: "state-validation",
+      description:
+        language === "en"
+          ? "State validation still failed after settlement retry."
+          : "状态结算重试后仍未通过校验。",
+      suggestion:
+        language === "en"
+          ? "Repair chapter state from the persisted body before continuing."
+          : "请先基于已保存正文修复本章 state，再继续后续章节。",
+    },
+  ];
 }
 
 export function buildStateDegradedPersistenceOutput(params: {
@@ -191,9 +195,7 @@ export function buildStateDegradedReviewNote(
   } satisfies StateDegradedReviewNote);
 }
 
-export function parseStateDegradedReviewNote(
-  reviewNote?: string,
-): StateDegradedReviewNote | null {
+export function parseStateDegradedReviewNote(reviewNote?: string): StateDegradedReviewNote | null {
   if (!reviewNote) {
     return null;
   }
@@ -205,9 +207,9 @@ export function parseStateDegradedReviewNote(
       injectedIssues?: unknown;
     };
     if (
-      parsed.kind !== "state-degraded"
-      || (parsed.baseStatus !== "ready-for-review" && parsed.baseStatus !== "audit-failed")
-      || !Array.isArray(parsed.injectedIssues)
+      parsed.kind !== "state-degraded" ||
+      (parsed.baseStatus !== "ready-for-review" && parsed.baseStatus !== "audit-failed") ||
+      !Array.isArray(parsed.injectedIssues)
     ) {
       return null;
     }
@@ -215,9 +217,12 @@ export function parseStateDegradedReviewNote(
     return {
       kind: "state-degraded",
       baseStatus: parsed.baseStatus,
-      injectedIssues: parsed.injectedIssues.filter((issue): issue is string => typeof issue === "string"),
+      injectedIssues: parsed.injectedIssues.filter(
+        (issue): issue is string => typeof issue === "string",
+      ),
     };
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }

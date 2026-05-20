@@ -22,7 +22,10 @@ import {
   parsePendingHooksMarkdown,
   renderHookSnapshot,
 } from "../utils/story-markdown.js";
-import { computeHookDiagnostics, renderHookDiagnosticMarker } from "../utils/hook-stale-detection.js";
+import {
+  computeHookDiagnostics,
+  renderHookDiagnosticMarker,
+} from "../utils/hook-stale-detection.js";
 import { ArchitectAgent } from "../agents/architect.js";
 import { ConsolidatorAgent } from "../agents/consolidator.js";
 import type { BookConfig } from "../models/book.js";
@@ -70,8 +73,12 @@ describe("Phase 7 hotfix 1 — half_life roundtrip", () => {
 
     const rendered = renderHookSnapshot(hooks, "zh");
     expect(rendered).toContain("| 半衰期 |");
-    expect(rendered).toContain("| H-explicit | 5 | 主线 | open | 0 | 终章揭晓 | 终局 | 无 |  | 否 | 45 |  | 带半衰期的钩子 |");
-    expect(rendered).toContain("| H-implicit | 7 | 谜团 | open | 0 | 15章 | 近期 | 无 |  | 否 |  |  | 不带半衰期 |");
+    expect(rendered).toContain(
+      "| H-explicit | 5 | 主线 | open | 0 | 终章揭晓 | 终局 | 无 |  | 否 | 45 |  | 带半衰期的钩子 |",
+    );
+    expect(rendered).toContain(
+      "| H-implicit | 7 | 谜团 | open | 0 | 15章 | 近期 | 无 |  | 否 |  |  | 不带半衰期 |",
+    );
 
     const parsed = parsePendingHooksMarkdown(rendered);
     const hExplicit = parsed.find((h) => h.hookId === "H-explicit")!;
@@ -166,7 +173,7 @@ function buildPhase7Response(language: "zh" = "zh"): string {
     "从独行到托付。",
     "=== SECTION: book_rules ===",
     "---",
-    "version: \"1.0\"",
+    'version: "1.0"',
     "---",
     "## 叙事视角",
     "第三人称。",
@@ -230,8 +237,10 @@ describe("Phase 7 hotfix 2 — architect pre-promotes structural seeds", () => {
 
   it("tags core_hook / depends_on / cross_volume seeds as promoted=是, others as promoted=否", async () => {
     const agent = buildArchitectAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: buildPhase7Response(), usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: buildPhase7Response(), usage: ZERO_USAGE });
 
     const result = await agent.generateFoundation(baseBook());
 
@@ -378,18 +387,22 @@ describe("Phase 7 hotfix 2 — reviewer gates critical severity on promoted", ()
     try {
       await writeFile(
         join(bookDirLocal, "book.json"),
-        JSON.stringify({
-          id: "hf-zh",
-          title: "hotfix-zh",
-          genre: "urban",
-          platform: "other",
-          chapterWordCount: 2000,
-          targetChapters: 60,
-          status: "active",
-          language: "zh",
-          createdAt: "2026-04-15T00:00:00.000Z",
-          updatedAt: "2026-04-15T00:00:00.000Z",
-        }, null, 2),
+        JSON.stringify(
+          {
+            id: "hf-zh",
+            title: "hotfix-zh",
+            genre: "urban",
+            platform: "other",
+            chapterWordCount: 2000,
+            targetChapters: 60,
+            status: "active",
+            language: "zh",
+            createdAt: "2026-04-15T00:00:00.000Z",
+            updatedAt: "2026-04-15T00:00:00.000Z",
+          },
+          null,
+          2,
+        ),
         "utf-8",
       );
       await Promise.all([
@@ -426,8 +439,10 @@ describe("Phase 7 hotfix 2 — reviewer gates critical severity on promoted", ()
         content: JSON.stringify({ passed: true, issues: [], summary: "ok" }),
         usage: ZERO_USAGE,
       });
-      vi.spyOn(ContinuityAuditor.prototype as never, "chatWithSearch" as never).mockImplementation(stub as never);
-      vi.spyOn(ContinuityAuditor.prototype as never, "chat" as never).mockImplementation(stub as never);
+      vi.spyOn(ContinuityAuditor.prototype as any, "chatWithSearch").mockImplementation(
+        stub as any,
+      );
+      vi.spyOn(ContinuityAuditor.prototype as any, "chat").mockImplementation(stub as any);
 
       await auditor.auditChapter(bookDirLocal, "章节正文。", 1, "urban");
 
@@ -456,18 +471,22 @@ describe("Phase 7 hotfix 2 — reviewer gates critical severity on promoted", ()
     try {
       await writeFile(
         join(bookDirLocal, "book.json"),
-        JSON.stringify({
-          id: "hf-en",
-          title: "hotfix-en",
-          genre: "other",
-          platform: "royalroad",
-          chapterWordCount: 800,
-          targetChapters: 60,
-          status: "active",
-          language: "en",
-          createdAt: "2026-04-15T00:00:00.000Z",
-          updatedAt: "2026-04-15T00:00:00.000Z",
-        }, null, 2),
+        JSON.stringify(
+          {
+            id: "hf-en",
+            title: "hotfix-en",
+            genre: "other",
+            platform: "royalroad",
+            chapterWordCount: 800,
+            targetChapters: 60,
+            status: "active",
+            language: "en",
+            createdAt: "2026-04-15T00:00:00.000Z",
+            updatedAt: "2026-04-15T00:00:00.000Z",
+          },
+          null,
+          2,
+        ),
         "utf-8",
       );
       await Promise.all([
@@ -504,8 +523,10 @@ describe("Phase 7 hotfix 2 — reviewer gates critical severity on promoted", ()
         content: JSON.stringify({ passed: true, issues: [], summary: "ok" }),
         usage: ZERO_USAGE,
       });
-      vi.spyOn(ContinuityAuditor.prototype as never, "chatWithSearch" as never).mockImplementation(stub as never);
-      vi.spyOn(ContinuityAuditor.prototype as never, "chat" as never).mockImplementation(stub as never);
+      vi.spyOn(ContinuityAuditor.prototype as any, "chatWithSearch").mockImplementation(
+        stub as any,
+      );
+      vi.spyOn(ContinuityAuditor.prototype as any, "chat").mockImplementation(stub as any);
 
       await auditor.auditChapter(bookDirLocal, "Chapter body.", 1, "other");
 
@@ -606,7 +627,9 @@ describe("Phase 7 hotfix 3 — blocked distance embeds 已阻 N 章 token", () =
       notes: "",
       dependsOn: ["U"],
     };
-    const diag = computeHookDiagnostics({ hooks: [upstream, downstream], currentChapter: 10 }).get("D")!;
+    const diag = computeHookDiagnostics({ hooks: [upstream, downstream], currentChapter: 10 }).get(
+      "D",
+    )!;
     expect(diag.blocked).toBe(false);
     expect(diag.blockedDistance).toBe(0);
     expect(renderHookDiagnosticMarker(diag, "zh")).toBe("");

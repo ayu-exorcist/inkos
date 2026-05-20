@@ -44,7 +44,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-24T00:00:00.000Z",
     };
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -55,7 +56,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "# Book Rules",
@@ -110,7 +111,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-24T00:00:00.000Z",
     };
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -121,7 +123,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "# Book Rules",
@@ -179,7 +181,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-04-03T00:00:00.000Z",
     };
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -190,7 +193,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "=== SECTION: current_state ===",
@@ -202,11 +205,7 @@ describe("ArchitectAgent", () => {
         usage: ZERO_USAGE,
       });
 
-    await agent.generateFoundation(
-      book,
-      undefined,
-      "请把核心冲突收紧，并明确新空间不是旧案重演。",
-    );
+    await agent.generateFoundation(book, undefined, "请把核心冲突收紧，并明确新空间不是旧案重演。");
 
     const messages = chat.mock.calls[0]?.[0] as Array<{ role: string; content: string }>;
     expect(messages[0]?.content).toContain("上一轮审核反馈");
@@ -244,7 +243,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-04-03T00:00:00.000Z",
     };
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -255,7 +255,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "=== SECTION: current_state ===",
@@ -310,33 +310,35 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-24T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: story_bible ===",
-          "# 故事圣经",
-          "",
-          "=== SECTION: volume_outline ===",
-          "# 卷纲",
-          "",
-          "=== SECTION: book_rules ===",
-          "---",
-          "version: \"1.0\"",
-          "---",
-          "",
-          "=== SECTION: current_state ===",
-          "# 当前状态",
-          "",
-          "=== SECTION: pending_hooks ===",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| H01 | 1 | 主线 | 未开启 | 无 | 10章 | 主线核心钩子 |",
-          "",
-          "如果你愿意，我下一步可以继续为这本《雾港回灯》输出：",
-          "1. 前10章逐章细纲",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: story_bible ===",
+        "# 故事圣经",
+        "",
+        "=== SECTION: volume_outline ===",
+        "# 卷纲",
+        "",
+        "=== SECTION: book_rules ===",
+        "---",
+        'version: "1.0"',
+        "---",
+        "",
+        "=== SECTION: current_state ===",
+        "# 当前状态",
+        "",
+        "=== SECTION: pending_hooks ===",
+        "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| H01 | 1 | 主线 | 未开启 | 无 | 10章 | 主线核心钩子 |",
+        "",
+        "如果你愿意，我下一步可以继续为这本《雾港回灯》输出：",
+        "1. 前10章逐章细纲",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     const result = await agent.generateFoundation(book);
 
@@ -344,7 +346,9 @@ describe("ArchitectAgent", () => {
     // pays_off_in_arc, core_hook, half_life (empty when not specified), and
     // promoted (computed at architect time). This hook has no promotion rule
     // firing (core=否, no depends_on, in-volume payoff) so 升级=否.
-    expect(result.pendingHooks).toContain("| H01 | 1 | 主线 | 未开启 | 0 | 10章 | 中程 | 无 |  | 否 |  | 否 | 主线核心钩子 |");
+    expect(result.pendingHooks).toContain(
+      "| H01 | 1 | 主线 | 未开启 | 0 | 10章 | 中程 | 无 |  | 否 |  | 否 | 主线核心钩子 |",
+    );
     expect(result.pendingHooks).not.toContain("如果你愿意");
     expect(result.pendingHooks).not.toContain("前10章逐章细纲");
   });
@@ -379,34 +383,38 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-25T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: story_bible ===",
-          "# 故事圣经",
-          "",
-          "=== SECTION: volume_outline ===",
-          "# 卷纲",
-          "",
-          "=== SECTION: book_rules ===",
-          "---",
-          "version: \"1.0\"",
-          "---",
-          "",
-          "=== SECTION: current_state ===",
-          "# 当前状态",
-          "",
-          "=== SECTION: pending_hooks ===",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| H13 | 22 | 舆情操盘 | 待推进 | 一家自媒体公司在多个旧案节点同步接单 | 51-60章 | 庄蔓出场后逐步揭露 |",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: story_bible ===",
+        "# 故事圣经",
+        "",
+        "=== SECTION: volume_outline ===",
+        "# 卷纲",
+        "",
+        "=== SECTION: book_rules ===",
+        "---",
+        'version: "1.0"',
+        "---",
+        "",
+        "=== SECTION: current_state ===",
+        "# 当前状态",
+        "",
+        "=== SECTION: pending_hooks ===",
+        "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| H13 | 22 | 舆情操盘 | 待推进 | 一家自媒体公司在多个旧案节点同步接单 | 51-60章 | 庄蔓出场后逐步揭露 |",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     const result = await agent.generateFoundation(book);
 
-    expect(result.pendingHooks).toContain("| H13 | 22 | 舆情操盘 | 待推进 | 0 | 51-60章 | 中程 | 无 |  | 否 |  | 否 | 庄蔓出场后逐步揭露（初始线索：一家自媒体公司在多个旧案节点同步接单） |");
+    expect(result.pendingHooks).toContain(
+      "| H13 | 22 | 舆情操盘 | 待推进 | 0 | 51-60章 | 中程 | 无 |  | 否 |  | 否 | 庄蔓出场后逐步揭露（初始线索：一家自媒体公司在多个旧案节点同步接单） |",
+    );
   });
 
   it("accepts section labels with spacing and punctuation drift from non-strict models", async () => {
@@ -439,38 +447,42 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-04-01T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== Section：Story Bible ===",
-          "# 故事圣经",
-          "",
-          "=== section: Volume Outline ===",
-          "# 卷纲",
-          "",
-          "=== SECTION: book-rules ===",
-          "---",
-          "version: \"1.0\"",
-          "---",
-          "",
-          "=== SECTION : current state ===",
-          "# 当前状态",
-          "",
-          "=== SECTION: pending hooks ===",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
-          "| --- | --- | --- | --- | --- | --- | --- |",
-          "| H01 | 1 | mystery | open | 0 | 10章 | 初始钩子 |",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== Section：Story Bible ===",
+        "# 故事圣经",
+        "",
+        "=== section: Volume Outline ===",
+        "# 卷纲",
+        "",
+        "=== SECTION: book-rules ===",
+        "---",
+        'version: "1.0"',
+        "---",
+        "",
+        "=== SECTION : current state ===",
+        "# 当前状态",
+        "",
+        "=== SECTION: pending hooks ===",
+        "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 备注 |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| H01 | 1 | mystery | open | 0 | 10章 | 初始钩子 |",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     const result = await agent.generateFoundation(book);
 
     expect(result.storyBible).toBe("# 故事圣经");
     expect(result.volumeOutline).toBe("# 卷纲");
-    expect(result.bookRules).toContain("version: \"1.0\"");
+    expect(result.bookRules).toContain('version: "1.0"');
     expect(result.currentState).toBe("# 当前状态");
-    expect(result.pendingHooks).toContain("| H01 | 1 | mystery | open | 0 | 10章 | 中程 | 无 |  | 否 |  | 否 | 初始钩子 |");
+    expect(result.pendingHooks).toContain(
+      "| H01 | 1 | mystery | open | 0 | 10章 | 中程 | 无 |  | 否 |  | 否 | 初始钩子 |",
+    );
   });
 
   it("throws when a required foundation section is missing", async () => {
@@ -503,23 +515,25 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-29T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: story_bible ===",
-          "# 故事圣经",
-          "",
-          "=== SECTION: volume_outline ===",
-          "# 卷纲",
-          "",
-          "=== SECTION: current_state ===",
-          "# 当前状态",
-          "",
-          "=== SECTION: pending_hooks ===",
-          "# 伏笔池",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: story_bible ===",
+        "# 故事圣经",
+        "",
+        "=== SECTION: volume_outline ===",
+        "# 卷纲",
+        "",
+        "=== SECTION: current_state ===",
+        "# 当前状态",
+        "",
+        "=== SECTION: pending_hooks ===",
+        "# 伏笔池",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     await expect(agent.generateFoundation(book)).rejects.toThrow(/book_rules/i);
   });
@@ -554,7 +568,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-29T00:00:00.000Z",
     };
 
-    const chatSpy = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chatSpy = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -565,7 +580,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "=== SECTION: current_state ===",
@@ -581,7 +596,9 @@ describe("ArchitectAgent", () => {
 
     await agent.generateFoundation(book);
 
-    const options = chatSpy.mock.calls[0]?.[1] as { temperature?: number; maxTokens?: number } | undefined;
+    const options = chatSpy.mock.calls[0]?.[1] as
+      | { temperature?: number; maxTokens?: number }
+      | undefined;
     expect(options).toEqual(expect.objectContaining({ temperature: 0.8 }));
     expect(options).not.toHaveProperty("maxTokens");
   });
@@ -616,7 +633,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-29T00:00:00.000Z",
     };
 
-    const chatSpy = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chatSpy = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -627,7 +645,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "=== SECTION: current_state ===",
@@ -643,7 +661,9 @@ describe("ArchitectAgent", () => {
 
     await agent.generateFoundationFromImport(book, "第一章正文");
 
-    const options = chatSpy.mock.calls[0]?.[1] as { temperature?: number; maxTokens?: number } | undefined;
+    const options = chatSpy.mock.calls[0]?.[1] as
+      | { temperature?: number; maxTokens?: number }
+      | undefined;
     expect(options).toEqual(expect.objectContaining({ temperature: 0.5 }));
     expect(options).not.toHaveProperty("maxTokens");
   });
@@ -678,7 +698,8 @@ describe("ArchitectAgent", () => {
       updatedAt: "2026-03-29T00:00:00.000Z",
     };
 
-    const chatSpy = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chatSpy = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== SECTION: story_bible ===",
@@ -689,7 +710,7 @@ describe("ArchitectAgent", () => {
           "",
           "=== SECTION: book_rules ===",
           "---",
-          "version: \"1.0\"",
+          'version: "1.0"',
           "---",
           "",
           "=== SECTION: current_state ===",
@@ -705,7 +726,9 @@ describe("ArchitectAgent", () => {
 
     await agent.generateFanficFoundation(book, "正典文本", "canon");
 
-    const options = chatSpy.mock.calls[0]?.[1] as { temperature?: number; maxTokens?: number } | undefined;
+    const options = chatSpy.mock.calls[0]?.[1] as
+      | { temperature?: number; maxTokens?: number }
+      | undefined;
     expect(options).toEqual(expect.objectContaining({ temperature: 0.7 }));
     expect(options).not.toHaveProperty("maxTokens");
   });
@@ -744,48 +767,50 @@ describe("ArchitectAgent", () => {
     const agent = buildPhase5Agent();
     const book = phase5Book();
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: story_frame ===",
-          "## 主题与基调",
-          "段落 1 主题段落。",
-          "",
-          "## 核心冲突",
-          "段落 2 冲突段落。",
-          "",
-          "=== SECTION: volume_map ===",
-          "## 段 1",
-          "卷一段落。",
-          "",
-          "=== SECTION: roles ===",
-          "---ROLE---",
-          "tier: major",
-          "name: 林辞",
-          "---CONTENT---",
-          "## 核心标签",
-          "冷静、执着",
-          "",
-          "---ROLE---",
-          "tier: minor",
-          "name: 配角A",
-          "---CONTENT---",
-          "次要角色描写",
-          "",
-          "=== SECTION: book_rules ===",
-          "---",
-          "version: \"1.0\"",
-          "protagonist:",
-          "  name: 林辞",
-          "---",
-          "",
-          "=== SECTION: pending_hooks ===",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 备注 |",
-          "|---|---|---|---|---|---|---|---|",
-          "| H001 | 1 | 主线 | open | 0 | 3 | 近期 | 初始线索 |",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: story_frame ===",
+        "## 主题与基调",
+        "段落 1 主题段落。",
+        "",
+        "## 核心冲突",
+        "段落 2 冲突段落。",
+        "",
+        "=== SECTION: volume_map ===",
+        "## 段 1",
+        "卷一段落。",
+        "",
+        "=== SECTION: roles ===",
+        "---ROLE---",
+        "tier: major",
+        "name: 林辞",
+        "---CONTENT---",
+        "## 核心标签",
+        "冷静、执着",
+        "",
+        "---ROLE---",
+        "tier: minor",
+        "name: 配角A",
+        "---CONTENT---",
+        "次要角色描写",
+        "",
+        "=== SECTION: book_rules ===",
+        "---",
+        'version: "1.0"',
+        "protagonist:",
+        "  name: 林辞",
+        "---",
+        "",
+        "=== SECTION: pending_hooks ===",
+        "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 备注 |",
+        "|---|---|---|---|---|---|---|---|",
+        "| H001 | 1 | 主线 | open | 0 | 3 | 近期 | 初始线索 |",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     const output = await agent.generateFoundation(book);
 
@@ -805,24 +830,37 @@ describe("ArchitectAgent", () => {
     const agent = buildPhase5Agent();
     const tmpDir = await mkdtemp(join(tmpdir(), "inkos-arch-test-"));
     try {
-      await agent.writeFoundationFiles(tmpDir, {
-        storyBible: "legacy shim body",
-        volumeOutline: "legacy outline",
-        bookRules: "---\nversion: \"1.0\"\n---\n",
-        currentState: "",
-        pendingHooks: "| hook_id |",
-        storyFrame: "## 主题\n\n段落内容",
-        volumeMap: "## 卷一\n\n卷一段落",
-        roles: [
-          { tier: "major", name: "林辞", content: "主角描写" },
-          { tier: "minor", name: "配角A", content: "配角描写" },
-        ],
-      }, false, "zh");
+      await agent.writeFoundationFiles(
+        tmpDir,
+        {
+          storyBible: "legacy shim body",
+          volumeOutline: "legacy outline",
+          bookRules: '---\nversion: "1.0"\n---\n',
+          currentState: "",
+          pendingHooks: "| hook_id |",
+          storyFrame: "## 主题\n\n段落内容",
+          volumeMap: "## 卷一\n\n卷一段落",
+          roles: [
+            { tier: "major", name: "林辞", content: "主角描写" },
+            { tier: "minor", name: "配角A", content: "配角描写" },
+          ],
+        },
+        false,
+        "zh",
+      );
 
-      await expect(access(join(tmpDir, "story", "outline", "story_frame.md"))).resolves.not.toThrow();
-      await expect(access(join(tmpDir, "story", "outline", "volume_map.md"))).resolves.not.toThrow();
-      await expect(access(join(tmpDir, "story", "roles", "主要角色", "林辞.md"))).resolves.not.toThrow();
-      await expect(access(join(tmpDir, "story", "roles", "次要角色", "配角A.md"))).resolves.not.toThrow();
+      await expect(
+        access(join(tmpDir, "story", "outline", "story_frame.md")),
+      ).resolves.not.toThrow();
+      await expect(
+        access(join(tmpDir, "story", "outline", "volume_map.md")),
+      ).resolves.not.toThrow();
+      await expect(
+        access(join(tmpDir, "story", "roles", "主要角色", "林辞.md")),
+      ).resolves.not.toThrow();
+      await expect(
+        access(join(tmpDir, "story", "roles", "次要角色", "配角A.md")),
+      ).resolves.not.toThrow();
       // Shim 文件也要在（向后兼容读取点用）
       await expect(access(join(tmpDir, "story", "story_bible.md"))).resolves.not.toThrow();
       await expect(access(join(tmpDir, "story", "character_matrix.md"))).resolves.not.toThrow();
@@ -840,13 +878,18 @@ describe("ArchitectAgent", () => {
     const agent = buildPhase5Agent();
     const tmpDir = await mkdtemp(join(tmpdir(), "inkos-arch-legacy-test-"));
     try {
-      await agent.writeFoundationFiles(tmpDir, {
-        storyBible: "# Legacy Story Bible\n",
-        volumeOutline: "# Legacy Volume Outline\n",
-        bookRules: "# Legacy Book Rules\n",
-        currentState: "# Current State\n",
-        pendingHooks: "| hook_id |\n",
-      }, false, "zh");
+      await agent.writeFoundationFiles(
+        tmpDir,
+        {
+          storyBible: "# Legacy Story Bible\n",
+          volumeOutline: "# Legacy Volume Outline\n",
+          bookRules: "# Legacy Book Rules\n",
+          currentState: "# Current State\n",
+          pendingHooks: "| hook_id |\n",
+        },
+        false,
+        "zh",
+      );
 
       const storyBible = await readFile(join(tmpDir, "story", "story_bible.md"), "utf-8");
       expect(storyBible).toContain("Legacy Story Bible");

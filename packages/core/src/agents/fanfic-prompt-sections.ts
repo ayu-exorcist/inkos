@@ -23,10 +23,7 @@ const MODE_PREAMBLES: Record<FanficMode, string> = {
 - 关系发展应有节奏感：推进、试探、阻碍、突破`,
 };
 
-export function buildFanficCanonSection(
-  fanficCanon: string,
-  mode: FanficMode,
-): string {
+export function buildFanficCanonSection(fanficCanon: string, mode: FanficMode): string {
   return `
 ## 同人正典参照
 
@@ -98,9 +95,10 @@ export function buildFanficModeInstructions(
   mode: FanficMode,
   allowedDeviations: ReadonlyArray<string>,
 ): string {
-  const deviationsBlock = allowedDeviations.length > 0
-    ? `\n允许的偏离（不视为违规）：\n${allowedDeviations.map((d) => `- ${d}`).join("\n")}\n`
-    : "";
+  const deviationsBlock =
+    allowedDeviations.length > 0
+      ? `\n允许的偏离（不视为违规）：\n${allowedDeviations.map((d) => `- ${d}`).join("\n")}\n`
+      : "";
 
   return `
 ## 同人写作自检（在 PRE_WRITE_CHECK 中额外检查）

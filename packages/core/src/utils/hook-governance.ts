@@ -43,11 +43,12 @@ export function collectStaleHookDebt(params: {
 
       return lifecycle.stale || lifecycle.overdue;
     })
-    .sort((left, right) => (
-      left.lastAdvancedChapter - right.lastAdvancedChapter
-      || left.startChapter - right.startChapter
-      || left.hookId.localeCompare(right.hookId)
-    ));
+    .sort(
+      (left, right) =>
+        left.lastAdvancedChapter - right.lastAdvancedChapter ||
+        left.startChapter - right.startChapter ||
+        left.hookId.localeCompare(right.hookId),
+    );
 }
 
 export function evaluateHookAdmission(params: {
@@ -74,22 +75,21 @@ export function evaluateHookAdmission(params: {
     };
   }
 
-  const candidateNormalized = normalizeText([
-    params.candidate.type,
-    params.candidate.expectedPayoff ?? "",
-    params.candidate.payoffTiming ?? "",
-    params.candidate.notes ?? "",
-  ].join(" "));
+  const candidateNormalized = normalizeText(
+    [
+      params.candidate.type,
+      params.candidate.expectedPayoff ?? "",
+      params.candidate.payoffTiming ?? "",
+      params.candidate.notes ?? "",
+    ].join(" "),
+  );
   const candidateTerms = extractTerms(candidateNormalized);
   const candidateChineseBigrams = extractChineseBigrams(candidateNormalized);
 
   for (const hook of params.activeHooks) {
-    const activeNormalized = normalizeText([
-      hook.type,
-      hook.expectedPayoff,
-      hook.payoffTiming ?? "",
-      hook.notes,
-    ].join(" "));
+    const activeNormalized = normalizeText(
+      [hook.type, hook.expectedPayoff, hook.payoffTiming ?? "", hook.notes].join(" "),
+    );
 
     if (candidateNormalized === activeNormalized) {
       return {
@@ -138,7 +138,11 @@ export function classifyHookDisposition(params: {
     return "resolve";
   }
 
-  if (delta.hookOps.upsert.some((hook) => hook.hookId === hookId && hook.lastAdvancedChapter === delta.chapter)) {
+  if (
+    delta.hookOps.upsert.some(
+      (hook) => hook.hookId === hookId && hook.lastAdvancedChapter === delta.chapter,
+    )
+  ) {
     return "advance";
   }
 

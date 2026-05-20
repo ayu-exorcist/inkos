@@ -34,7 +34,9 @@ describe("interaction natural-language router", () => {
   });
 
   it("maps revise chapter requests with freeform instructions", () => {
-    expect(routeNaturalLanguageIntent("revise chapter 5 ending only", { activeBookId: "harbor" })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("revise chapter 5 ending only", { activeBookId: "harbor" }),
+    ).toEqual({
       intent: "revise_chapter",
       bookId: "harbor",
       chapterNumber: 5,
@@ -51,7 +53,12 @@ describe("interaction natural-language router", () => {
   });
 
   it("maps explanation requests to explain_failure", () => {
-    expect(routeNaturalLanguageIntent("为什么主角名字没按设定走", { activeBookId: "harbor", hasFailed: true })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("为什么主角名字没按设定走", {
+        activeBookId: "harbor",
+        hasFailed: true,
+      }),
+    ).toEqual({
       intent: "explain_failure",
       bookId: "harbor",
       instruction: "为什么主角名字没按设定走",
@@ -94,16 +101,20 @@ describe("interaction natural-language router", () => {
       intent: "develop_book",
       instruction: "我想写个港风商战悬疑",
     });
-    expect(routeNaturalLanguageIntent("先不要开书，我想想名字", {
-      hasCreationDraft: true,
-    })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("先不要开书，我想想名字", {
+        hasCreationDraft: true,
+      }),
+    ).toEqual({
       intent: "develop_book",
       instruction: "先不要开书，我想想名字",
     });
-    expect(routeNaturalLanguageIntent("名字再狠一点", {
-      activeBookId: "harbor",
-      hasCreationDraft: true,
-    })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("名字再狠一点", {
+        activeBookId: "harbor",
+        hasCreationDraft: true,
+      }),
+    ).toEqual({
       intent: "develop_book",
       instruction: "名字再狠一点",
     });
@@ -158,12 +169,20 @@ describe("interaction natural-language router", () => {
       bookId: "harbor",
       chapterNumber: 3,
     });
-    expect(routeNaturalLanguageIntent("/focus bring it back to the old case", { activeBookId: "harbor" })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("/focus bring it back to the old case", {
+        activeBookId: "harbor",
+      }),
+    ).toEqual({
       intent: "update_focus",
       bookId: "harbor",
       instruction: "bring it back to the old case",
     });
-    expect(routeNaturalLanguageIntent("/truth current_focus.md Bring it back", { activeBookId: "harbor" })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("/truth current_focus.md Bring it back", {
+        activeBookId: "harbor",
+      }),
+    ).toEqual({
       intent: "edit_truth",
       bookId: "harbor",
       fileName: "current_focus.md",
@@ -175,7 +194,9 @@ describe("interaction natural-language router", () => {
       oldValue: "陆尘",
       newValue: "林砚",
     });
-    expect(routeNaturalLanguageIntent("/replace 3 旧名字 => 新名字", { activeBookId: "harbor" })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("/replace 3 旧名字 => 新名字", { activeBookId: "harbor" }),
+    ).toEqual({
       intent: "patch_chapter_text",
       bookId: "harbor",
       chapterNumber: 3,
@@ -205,7 +226,9 @@ describe("interaction natural-language router", () => {
       oldValue: "陆尘",
       newValue: "林砚",
     });
-    expect(routeNaturalLanguageIntent("rename Lu Chen to Lin Yan", { activeBookId: "harbor" })).toEqual({
+    expect(
+      routeNaturalLanguageIntent("rename Lu Chen to Lin Yan", { activeBookId: "harbor" }),
+    ).toEqual({
       intent: "rename_entity",
       bookId: "harbor",
       oldValue: "Lu Chen",

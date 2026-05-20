@@ -31,18 +31,22 @@ describe("ReviserAgent", () => {
 
     await writeFile(
       join(bookDir, "book.json"),
-      JSON.stringify({
-        id: "english-book",
-        title: "English Book",
-        genre: "xuanhuan",
-        platform: "royalroad",
-        chapterWordCount: 800,
-        targetChapters: 60,
-        status: "active",
-        language: "en",
-        createdAt: "2026-03-23T00:00:00.000Z",
-        updatedAt: "2026-03-23T00:00:00.000Z",
-      }, null, 2),
+      JSON.stringify(
+        {
+          id: "english-book",
+          title: "English Book",
+          genre: "xuanhuan",
+          platform: "royalroad",
+          chapterWordCount: 800,
+          targetChapters: 60,
+          status: "active",
+          language: "en",
+          createdAt: "2026-03-23T00:00:00.000Z",
+          updatedAt: "2026-03-23T00:00:00.000Z",
+        },
+        null,
+        2,
+      ),
       "utf-8",
     );
 
@@ -62,7 +66,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- repaired",
@@ -80,11 +84,16 @@ describe("ReviserAgent", () => {
     });
 
     try {
-      await agent.reviseChapter(bookDir, "Original chapter content.", 1, [CRITICAL_ISSUE], "rewrite", "xuanhuan");
+      await agent.reviseChapter(
+        bookDir,
+        "Original chapter content.",
+        1,
+        [CRITICAL_ISSUE],
+        "rewrite",
+        "xuanhuan",
+      );
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const systemPrompt = messages?.[0]?.content ?? "";
 
       expect(systemPrompt).toContain("MUST be in English");
@@ -114,7 +123,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- repaired",
@@ -139,9 +148,7 @@ describe("ReviserAgent", () => {
     try {
       await agent.reviseChapter(bookDir, "原始正文。", 1, [CRITICAL_ISSUE], "rewrite", "xuanhuan");
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const systemPrompt = messages?.[0]?.content ?? "";
 
       expect(systemPrompt).toContain("优先保留原文的绝大部分句段");
@@ -172,7 +179,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- repaired",
@@ -207,9 +214,7 @@ describe("ReviserAgent", () => {
         },
       );
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const systemPrompt = messages?.[0]?.content ?? "";
       const userPrompt = messages?.[1]?.content ?? "";
 
@@ -244,7 +249,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- 收紧了开头动作句。",
@@ -285,14 +290,16 @@ describe("ReviserAgent", () => {
         "xuanhuan",
       );
 
-      expect(result.revisedContent).toBe([
-        "门轴轻轻响了一下。",
-        "林越先停在门槛外，侧耳听了一息。",
-        "",
-        "巷子尽头的风还在吹。",
-        "他把手按在潮冷的门框上，没有出声。",
-        "更远处传来极轻的脚步回响，又很快断掉。",
-      ].join("\n"));
+      expect(result.revisedContent).toBe(
+        [
+          "门轴轻轻响了一下。",
+          "林越先停在门槛外，侧耳听了一息。",
+          "",
+          "巷子尽头的风还在吹。",
+          "他把手按在潮冷的门框上，没有出声。",
+          "更远处传来极轻的脚步回响，又很快断掉。",
+        ].join("\n"),
+      );
       expect(result.fixedIssues).toEqual(["- 收紧了开头动作句。"]);
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -312,7 +319,8 @@ describe("ReviserAgent", () => {
         defaults: {
           temperature: 0.7,
           maxTokens: 4096,
-          thinkingBudget: 0, maxTokensCap: null,
+          thinkingBudget: 0,
+          maxTokensCap: null,
           extra: {},
         },
       },
@@ -320,7 +328,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- removed the AI tell",
@@ -350,12 +358,14 @@ describe("ReviserAgent", () => {
         bookDir,
         "他仿佛听见门外有响动。\n\n他没有回头。",
         1,
-        [{
-          severity: "warning",
-          category: "套话密度",
-          description: "仿佛用得太直接",
-          suggestion: "改成更具体的感官描写",
-        }],
+        [
+          {
+            severity: "warning",
+            category: "套话密度",
+            description: "仿佛用得太直接",
+            suggestion: "改成更具体的感官描写",
+          },
+        ],
         "auto",
         "xuanhuan",
       );
@@ -380,7 +390,8 @@ describe("ReviserAgent", () => {
         defaults: {
           temperature: 0.7,
           maxTokens: 4096,
-          thinkingBudget: 0, maxTokensCap: null,
+          thinkingBudget: 0,
+          maxTokensCap: null,
           extra: {},
         },
       },
@@ -388,7 +399,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- restructured chapter pacing",
@@ -418,12 +429,14 @@ describe("ReviserAgent", () => {
         bookDir,
         "第一段。\n\n第二段。\n\n第三段。",
         1,
-        [{
-          severity: "critical",
-          category: "Outline Drift Check",
-          description: "整章结构已经偏离",
-          suggestion: "重建当前章节奏与组织",
-        }],
+        [
+          {
+            severity: "critical",
+            category: "Outline Drift Check",
+            description: "整章结构已经偏离",
+            suggestion: "重建当前章节奏与组织",
+          },
+        ],
         "auto",
         "xuanhuan",
       );
@@ -447,7 +460,8 @@ describe("ReviserAgent", () => {
         defaults: {
           temperature: 0.7,
           maxTokens: 4096,
-          thinkingBudget: 0, maxTokensCap: null,
+          thinkingBudget: 0,
+          maxTokensCap: null,
           extra: {},
         },
       },
@@ -455,7 +469,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- fixed",
@@ -478,55 +492,49 @@ describe("ReviserAgent", () => {
     });
 
     try {
-      await agent.reviseChapter(
-        bookDir,
-        "原始正文。",
-        1,
-        [CRITICAL_ISSUE],
-        "auto",
-        "xuanhuan",
-        {
-          chapterIntent: [
-            "# Chapter Intent",
-            "",
-            "## Goal",
-            "Bring the focus back to the mentor oath conflict.",
-            "",
-            "## Must Avoid",
-            "- 前几章回顾式总结",
-            "- 本章要做的是把 H001/H002 推下去",
-            "",
-            "## Hook Agenda",
-            "### Resolve",
-            "- H001",
-            "",
-            "### Advance",
-            "- H002",
-          ].join("\n"),
-          contextPackage: {
-            chapter: 1,
-            selectedContext: [
-              {
-                source: "runtime/hook_debt#H001",
-                reason: "Narrative debt brief with original seed text for this hook agenda target.",
-                excerpt: "H001 | original seed (ch1): the oath debt first surfaced",
-              },
-            ],
-          },
-          ruleStack: {
-            layers: [{ id: "L4", name: "current_task", precedence: 70, scope: "local" }],
-            sections: {
-              hard: ["current_state"],
-              soft: ["current_focus"],
-              diagnostic: ["continuity_audit"],
+      await agent.reviseChapter(bookDir, "原始正文。", 1, [CRITICAL_ISSUE], "auto", "xuanhuan", {
+        chapterIntent: [
+          "# Chapter Intent",
+          "",
+          "## Goal",
+          "Bring the focus back to the mentor oath conflict.",
+          "",
+          "## Must Avoid",
+          "- 前几章回顾式总结",
+          "- 本章要做的是把 H001/H002 推下去",
+          "",
+          "## Hook Agenda",
+          "### Resolve",
+          "- H001",
+          "",
+          "### Advance",
+          "- H002",
+        ].join("\n"),
+        contextPackage: {
+          chapter: 1,
+          selectedContext: [
+            {
+              source: "runtime/hook_debt#H001",
+              reason: "Narrative debt brief with original seed text for this hook agenda target.",
+              excerpt: "H001 | original seed (ch1): the oath debt first surfaced",
             },
-            overrideEdges: [],
-            activeOverrides: [],
-          },
+          ],
         },
-      );
+        ruleStack: {
+          layers: [{ id: "L4", name: "current_task", precedence: 70, scope: "local" }],
+          sections: {
+            hard: ["current_state"],
+            soft: ["current_focus"],
+            diagnostic: ["continuity_audit"],
+          },
+          overrideEdges: [],
+          activeOverrides: [],
+        },
+      });
 
-      const userPrompt = (chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined)?.[1]?.content ?? "";
+      const userPrompt =
+        (chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined)?.[1]
+          ?.content ?? "";
       expect(userPrompt).not.toContain("runtime/hook_debt#H001");
       expect(userPrompt).not.toContain("## Hook Agenda");
       expect(userPrompt).not.toContain("H001");
@@ -546,7 +554,11 @@ describe("ReviserAgent", () => {
     await mkdir(storyDir, { recursive: true });
 
     await Promise.all([
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
       writeFile(
         join(storyDir, "pending_hooks.md"),
         [
@@ -571,7 +583,11 @@ describe("ReviserAgent", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 100\nTrack the merchant guild trail.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 100\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
       writeFile(
         join(storyDir, "story_bible.md"),
         [
@@ -597,7 +613,11 @@ describe("ReviserAgent", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(storyDir, "style_guide.md"), "# Style Guide\n\n- Keep the prose restrained.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "style_guide.md"),
+        "# Style Guide\n\n- Keep the prose restrained.\n",
+        "utf-8",
+      ),
     ]);
 
     const agent = new ReviserAgent({
@@ -616,7 +636,7 @@ describe("ReviserAgent", () => {
       projectRoot: root,
     });
 
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- repaired",
@@ -647,7 +667,8 @@ describe("ReviserAgent", () => {
         "spot-fix",
         "xuanhuan",
         {
-          chapterIntent: "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
+          chapterIntent:
+            "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
           contextPackage: {
             chapter: 100,
             selectedContext: [
@@ -687,9 +708,7 @@ describe("ReviserAgent", () => {
         },
       );
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const userPrompt = messages?.[1]?.content ?? "";
 
       expect(userPrompt).not.toContain("story/chapter_summaries.md#99");
@@ -700,8 +719,12 @@ describe("ReviserAgent", () => {
       expect(userPrompt).toContain("Track the mentor oath fallout.");
       expect(userPrompt).not.toContain("| 1 | Guild Trail |");
       expect(userPrompt).not.toContain("guild-route | 1 | mystery");
-      expect(userPrompt).not.toContain("Guildmaster Ren secretly forged the harbor roster in chapter 140.");
-      expect(userPrompt).not.toContain("| Guildmaster Ren | guild | swagger | loud | opportunistic | rival | stall Mara | seize seal |");
+      expect(userPrompt).not.toContain(
+        "Guildmaster Ren secretly forged the harbor roster in chapter 140.",
+      );
+      expect(userPrompt).not.toContain(
+        "| Guildmaster Ren | guild | swagger | loud | opportunistic | rival | stall Mara | seize seal |",
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -720,7 +743,8 @@ describe("ReviserAgent", () => {
         defaults: {
           temperature: 0.7,
           maxTokens: 4096,
-          thinkingBudget: 0, maxTokensCap: null,
+          thinkingBudget: 0,
+          maxTokensCap: null,
           extra: {},
         },
       },
@@ -730,7 +754,7 @@ describe("ReviserAgent", () => {
 
     // Model returns PATCHES when reviewer asked for REVISED_CONTENT — parser
     // must reject the patches and leave the chapter unchanged.
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- tried to patch but problem is structural",
@@ -769,9 +793,7 @@ describe("ReviserAgent", () => {
         "xuanhuan",
       );
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const systemPrompt = messages?.[0]?.content ?? "";
 
       // System prompt directs model to REVISED_CONTENT for structural issues.
@@ -798,7 +820,8 @@ describe("ReviserAgent", () => {
         defaults: {
           temperature: 0.7,
           maxTokens: 4096,
-          thinkingBudget: 0, maxTokensCap: null,
+          thinkingBudget: 0,
+          maxTokensCap: null,
           extra: {},
         },
       },
@@ -808,7 +831,7 @@ describe("ReviserAgent", () => {
 
     // Model returns REVISED_CONTENT when reviewer asked for PATCHES — parser
     // must reject the rewrite (patch-only mode) and leave the chapter unchanged.
-    const chatSpy = vi.spyOn(ReviserAgent.prototype as never, "chat" as never).mockResolvedValue({
+    const chatSpy = vi.spyOn(ReviserAgent.prototype as any, "chat").mockResolvedValue({
       content: [
         "=== FIXED_ISSUES ===",
         "- rewrote whole chapter",
@@ -842,9 +865,7 @@ describe("ReviserAgent", () => {
         "xuanhuan",
       );
 
-      const messages = chatSpy.mock.calls[0]?.[0] as
-        | ReadonlyArray<{ content: string }>
-        | undefined;
+      const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ content: string }> | undefined;
       const systemPrompt = messages?.[0]?.content ?? "";
 
       expect(systemPrompt).toContain("分流指令");

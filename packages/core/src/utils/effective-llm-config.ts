@@ -3,9 +3,19 @@ import { join } from "node:path";
 import { ProjectConfigSchema, type LLMConfig, type ProjectConfig } from "../models/project.js";
 import { loadSecrets } from "../llm/secrets.js";
 import { getEndpoint } from "../llm/providers/index.js";
-import { guessServiceFromBaseUrl, resolveServicePreset, resolveServiceProviderFamily } from "../llm/service-presets.js";
+import {
+  guessServiceFromBaseUrl,
+  resolveServicePreset,
+  resolveServiceProviderFamily,
+} from "../llm/service-presets.js";
 import { isApiKeyOptionalForEndpoint } from "./llm-endpoint-auth.js";
-import { cliOverlayEnv, legacyEnv, studioIgnoredEnv, type LLMEnvLayers, type LLMEnvMap } from "./llm-env.js";
+import {
+  cliOverlayEnv,
+  legacyEnv,
+  studioIgnoredEnv,
+  type LLMEnvLayers,
+  type LLMEnvMap,
+} from "./llm-env.js";
 
 export type LLMConsumer = "studio" | "cli" | "daemon" | "deploy";
 export type LLMConfigMode = "studio-project" | "cli-project" | "legacy-env";
@@ -99,7 +109,11 @@ export async function resolveEffectiveLLMConfig(
   const provider = typeof llm.provider === "string" ? llm.provider : undefined;
   const baseUrl = typeof llm.baseUrl === "string" ? llm.baseUrl : undefined;
   const apiKey = typeof llm.apiKey === "string" ? llm.apiKey : "";
-  if (!apiKey && input.requireApiKey !== false && !isApiKeyOptionalForEndpoint({ provider, baseUrl })) {
+  if (
+    !apiKey &&
+    input.requireApiKey !== false &&
+    !isApiKeyOptionalForEndpoint({ provider, baseUrl })
+  ) {
     throw new Error(
       configMode === "studio-project"
         ? "Studio LLM API key not set. Open Studio services and save an API key for the selected service."
@@ -123,6 +137,7 @@ async function readProjectConfig(root: string): Promise<Record<string, unknown>>
   try {
     await access(configPath);
   } catch {
+    // failure expected, safe to ignore
     throw new Error(
       `inkos.json not found in ${root}.\nMake sure you are inside an InkOS project directory (cd into the project created by 'inkos init').`,
     );
@@ -132,6 +147,7 @@ async function readProjectConfig(root: string): Promise<Record<string, unknown>>
   try {
     return JSON.parse(raw) as Record<string, unknown>;
   } catch {
+    // failure expected, safe to ignore
     throw new Error(`inkos.json in ${root} is not valid JSON. Check the file for syntax errors.`);
   }
 }
@@ -167,17 +183,19 @@ async function applyProjectServiceConfig(
   },
 ): Promise<void> {
   llm.configSource = "studio";
-  const selectedEntry = selectServiceEntry(services, options.requestedService ?? llm.service)
-    ?? synthesizeServiceEntry(options.requestedService ?? llm.service);
+  const selectedEntry =
+    selectServiceEntry(services, options.requestedService ?? llm.service) ??
+    synthesizeServiceEntry(options.requestedService ?? llm.service);
 
   if (selectedEntry) {
     applyServiceEntry(llm, selectedEntry);
     diagnostics.serviceSource = options.requestedService ? diagnostics.serviceSource : "project";
   }
 
-  const modelSource = options.requestedModel ? options.requestedModelSource ?? "env" : "project";
-  const model = options.requestedModel
-    ?? resolveServiceModel(
+  const modelSource = options.requestedModel ? (options.requestedModelSource ?? "env") : "project";
+  const model =
+    options.requestedModel ??
+    resolveServiceModel(
       selectedEntry,
       options.ignoreTopLevelModel ? undefined : stringValue(llm.model),
       stringValue(llm.defaultModel),
@@ -199,7 +217,7 @@ async function applyProjectServiceConfig(
 
   const serviceKey = selectedEntry ? serviceEntryKey(selectedEntry) : stringValue(llm.service);
   const secretApiKey = serviceKey ? await getStudioServiceApiKey(projectRoot, serviceKey) : "";
-  const cliApiKey = options.cli?.apiKeyEnv ? options.env?.[options.cli.apiKeyEnv] ?? "" : "";
+  const cliApiKey = options.cli?.apiKeyEnv ? (options.env?.[options.cli.apiKeyEnv] ?? "") : "";
   const apiKey = cliApiKey || options.envApiKey || secretApiKey || "";
   llm.apiKey = apiKey;
   diagnostics.apiKeySource = cliApiKey
@@ -209,7 +227,6 @@ async function applyProjectServiceConfig(
       : secretApiKey
         ? "studio-secret"
         : "project";
-
 }
 
 async function applyCliProjectConfig(
@@ -221,14 +238,20 @@ async function applyCliProjectConfig(
 ): Promise<void> {
   const env = cliOverlayEnv(input.envLayers);
   const envBaseUrl = stringValue(env.INKOS_LLM_BASE_URL);
-  const envService = stringValue(env.INKOS_LLM_SERVICE) ?? (envBaseUrl ? guessServiceFromBaseUrl(envBaseUrl) : undefined);
+  const envService =
+    stringValue(env.INKOS_LLM_SERVICE) ??
+    (envBaseUrl ? guessServiceFromBaseUrl(envBaseUrl) : undefined);
   const envModel = stringValue(env.INKOS_LLM_MODEL);
   const requestedService = input.cli?.service ?? envService;
   if (input.cli?.service) diagnostics.serviceSource = "cli";
   else if (envService) diagnostics.serviceSource = "env";
 
   const requestedModel = input.cli?.model ?? (input.cli?.service ? undefined : envModel);
-  const requestedModelSource: LLMValueSource = input.cli?.model ? "cli" : !input.cli?.service && envModel ? "env" : "project";
+  const requestedModelSource: LLMValueSource = input.cli?.model
+    ? "cli"
+    : !input.cli?.service && envModel
+      ? "env"
+      : "project";
   const allowEnvEndpointOverlay = !input.cli?.service;
 
   await applyProjectServiceConfig(config, llm, services, input.projectRoot, diagnostics, {
@@ -315,7 +338,10 @@ function applyServiceEntry(llm: Record<string, unknown>, entry: ServiceConfigEnt
   if (entry.temperature !== undefined) llm.temperature = entry.temperature;
   if (entry.apiFormat !== undefined) llm.apiFormat = entry.apiFormat;
   else if (transportDefaults?.apiFormat !== undefined) llm.apiFormat = transportDefaults.apiFormat;
-  else llm.apiFormat = resolveServicePreset(entry.service)?.api.startsWith("openai-responses") ? "responses" : "chat";
+  else
+    llm.apiFormat = resolveServicePreset(entry.service)?.api.startsWith("openai-responses")
+      ? "responses"
+      : "chat";
   if (entry.stream !== undefined) llm.stream = entry.stream;
   else if (transportDefaults?.stream !== undefined) llm.stream = transportDefaults.stream;
 }
@@ -326,7 +352,8 @@ function applyCommonEnv(
   env: LLMEnvMap,
 ): void {
   if (env.INKOS_LLM_TEMPERATURE) llm.temperature = Number.parseFloat(env.INKOS_LLM_TEMPERATURE);
-  if (env.INKOS_LLM_THINKING_BUDGET) llm.thinkingBudget = Number.parseInt(env.INKOS_LLM_THINKING_BUDGET, 10);
+  if (env.INKOS_LLM_THINKING_BUDGET)
+    llm.thinkingBudget = Number.parseInt(env.INKOS_LLM_THINKING_BUDGET, 10);
   if (env.INKOS_LLM_PROXY_URL) llm.proxyUrl = env.INKOS_LLM_PROXY_URL;
   if (env.INKOS_LLM_API_FORMAT) llm.apiFormat = env.INKOS_LLM_API_FORMAT;
   if (env.INKOS_LLM_STREAM) llm.stream = parseBoolean(env.INKOS_LLM_STREAM);
@@ -339,7 +366,7 @@ function applyCommonEnv(
     }
   }
   if (Object.keys(extraFromEnv).length > 0) {
-    llm.extra = { ...(objectValue(llm.extra)), ...extraFromEnv };
+    llm.extra = { ...objectValue(llm.extra), ...extraFromEnv };
   }
 }
 
@@ -351,14 +378,21 @@ async function getStudioServiceApiKey(projectRoot: string, serviceKey: string): 
 function normalizeServiceEntries(raw: unknown): ServiceConfigEntry[] {
   if (Array.isArray(raw)) {
     return raw
-      .filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object")
+      .filter(
+        (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === "object",
+      )
       .map((entry) => ({
-        service: typeof entry.service === "string" && entry.service.length > 0 ? entry.service : "custom",
+        service:
+          typeof entry.service === "string" && entry.service.length > 0 ? entry.service : "custom",
         ...(typeof entry.name === "string" && entry.name.length > 0 ? { name: entry.name } : {}),
-        ...(typeof entry.baseUrl === "string" && entry.baseUrl.length > 0 ? { baseUrl: entry.baseUrl } : {}),
+        ...(typeof entry.baseUrl === "string" && entry.baseUrl.length > 0
+          ? { baseUrl: entry.baseUrl }
+          : {}),
         ...(typeof entry.temperature === "number" ? { temperature: entry.temperature } : {}),
         ...(typeof entry.maxTokens === "number" ? { maxTokens: entry.maxTokens } : {}),
-        ...(entry.apiFormat === "chat" || entry.apiFormat === "responses" ? { apiFormat: entry.apiFormat } : {}),
+        ...(entry.apiFormat === "chat" || entry.apiFormat === "responses"
+          ? { apiFormat: entry.apiFormat }
+          : {}),
         ...(typeof entry.stream === "boolean" ? { stream: entry.stream } : {}),
       }));
   }
@@ -366,21 +400,30 @@ function normalizeServiceEntries(raw: unknown): ServiceConfigEntry[] {
   if (raw && typeof raw === "object") {
     return Object.entries(raw as Record<string, unknown>)
       .filter(([, value]) => value && typeof value === "object")
-      .map(([serviceId, value]) => normalizeServiceEntryFromPatch(serviceId, value as Record<string, unknown>));
+      .map(([serviceId, value]) =>
+        normalizeServiceEntryFromPatch(serviceId, value as Record<string, unknown>),
+      );
   }
 
   return [];
 }
 
-function normalizeServiceEntryFromPatch(serviceId: string, value: Record<string, unknown>): ServiceConfigEntry {
+function normalizeServiceEntryFromPatch(
+  serviceId: string,
+  value: Record<string, unknown>,
+): ServiceConfigEntry {
   if (serviceId.startsWith("custom:")) {
     return {
       service: "custom",
       name: decodeURIComponent(serviceId.slice("custom:".length)),
-      ...(typeof value.baseUrl === "string" && value.baseUrl.length > 0 ? { baseUrl: value.baseUrl } : {}),
+      ...(typeof value.baseUrl === "string" && value.baseUrl.length > 0
+        ? { baseUrl: value.baseUrl }
+        : {}),
       ...(typeof value.temperature === "number" ? { temperature: value.temperature } : {}),
       ...(typeof value.maxTokens === "number" ? { maxTokens: value.maxTokens } : {}),
-      ...(value.apiFormat === "chat" || value.apiFormat === "responses" ? { apiFormat: value.apiFormat } : {}),
+      ...(value.apiFormat === "chat" || value.apiFormat === "responses"
+        ? { apiFormat: value.apiFormat }
+        : {}),
       ...(typeof value.stream === "boolean" ? { stream: value.stream } : {}),
     };
   }
@@ -389,10 +432,14 @@ function normalizeServiceEntryFromPatch(serviceId: string, value: Record<string,
     return {
       service: "custom",
       ...(typeof value.name === "string" && value.name.length > 0 ? { name: value.name } : {}),
-      ...(typeof value.baseUrl === "string" && value.baseUrl.length > 0 ? { baseUrl: value.baseUrl } : {}),
+      ...(typeof value.baseUrl === "string" && value.baseUrl.length > 0
+        ? { baseUrl: value.baseUrl }
+        : {}),
       ...(typeof value.temperature === "number" ? { temperature: value.temperature } : {}),
       ...(typeof value.maxTokens === "number" ? { maxTokens: value.maxTokens } : {}),
-      ...(value.apiFormat === "chat" || value.apiFormat === "responses" ? { apiFormat: value.apiFormat } : {}),
+      ...(value.apiFormat === "chat" || value.apiFormat === "responses"
+        ? { apiFormat: value.apiFormat }
+        : {}),
       ...(typeof value.stream === "boolean" ? { stream: value.stream } : {}),
     };
   }
@@ -401,7 +448,9 @@ function normalizeServiceEntryFromPatch(serviceId: string, value: Record<string,
     service: serviceId,
     ...(typeof value.temperature === "number" ? { temperature: value.temperature } : {}),
     ...(typeof value.maxTokens === "number" ? { maxTokens: value.maxTokens } : {}),
-    ...(value.apiFormat === "chat" || value.apiFormat === "responses" ? { apiFormat: value.apiFormat } : {}),
+    ...(value.apiFormat === "chat" || value.apiFormat === "responses"
+      ? { apiFormat: value.apiFormat }
+      : {}),
     ...(typeof value.stream === "boolean" ? { stream: value.stream } : {}),
   };
 }
@@ -411,8 +460,12 @@ function selectServiceEntry(
   configuredService: unknown,
 ): ServiceConfigEntry | undefined {
   if (typeof configuredService === "string" && configuredService.length > 0) {
-    return services.find((entry) => entry.service === configuredService || serviceEntryKey(entry) === configuredService)
-      ?? synthesizeServiceEntry(configuredService);
+    return (
+      services.find(
+        (entry) =>
+          entry.service === configuredService || serviceEntryKey(entry) === configuredService,
+      ) ?? synthesizeServiceEntry(configuredService)
+    );
   }
   return services[0];
 }
@@ -437,15 +490,18 @@ function resolveServiceModel(
   if (entry.service === "custom") return defaultModel || currentModel || "noop-model";
 
   const endpoint = getEndpoint(entry.service);
-  const candidate = [defaultModel, currentModel]
-    .find((model): model is string => Boolean(model && modelBelongsToService(entry.service, model)));
+  const candidate = [defaultModel, currentModel].find((model): model is string =>
+    Boolean(model && modelBelongsToService(entry.service, model)),
+  );
   if (candidate) return candidate;
 
-  return endpoint?.checkModel
-    ?? endpoint?.models.find((model) => model.enabled !== false)?.id
-    ?? defaultModel
-    ?? currentModel
-    ?? "noop-model";
+  return (
+    endpoint?.checkModel ??
+    endpoint?.models.find((model) => model.enabled !== false)?.id ??
+    defaultModel ??
+    currentModel ??
+    "noop-model"
+  );
 }
 
 function assertModelBelongsToService(entry: ServiceConfigEntry | undefined, model: string): void {
@@ -480,7 +536,9 @@ function deriveProviderFromService(service: string): "anthropic" | "openai" | "c
 function warnIfStudioIgnoresEnv(layers: LLMEnvLayers, diagnostics: MutableDiagnostics): void {
   const ignored = studioIgnoredEnv(layers);
   if (Object.keys(ignored).some((key) => key.startsWith("INKOS_LLM_"))) {
-    diagnostics.warnings.push("Studio 运行时不会使用 env 中的 INKOS_LLM_* 配置；请在服务配置页保存 Studio 配置。");
+    diagnostics.warnings.push(
+      "Studio 运行时不会使用 env 中的 INKOS_LLM_* 配置；请在服务配置页保存 Studio 配置。",
+    );
   }
 }
 
@@ -490,14 +548,21 @@ function warnIfStaleTopLevel(
   diagnostics: MutableDiagnostics,
 ): void {
   if (services.length === 0) return;
-  if (["provider", "baseUrl", "model", "apiKey"].some((key) => typeof llm[key] === "string" && (llm[key] as string).length > 0)) {
-    diagnostics.warnings.push("检测到旧顶层 LLM 配置；Studio 模式以选中的 service/defaultModel/secrets 为准。");
+  if (
+    ["provider", "baseUrl", "model", "apiKey"].some(
+      (key) => typeof llm[key] === "string" && (llm[key] as string).length > 0,
+    )
+  ) {
+    diagnostics.warnings.push(
+      "检测到旧顶层 LLM 配置；Studio 模式以选中的 service/defaultModel/secrets 为准。",
+    );
   }
 }
 
 function fillNoopLLMDefaults(llm: Record<string, unknown>): void {
   if (typeof llm.provider !== "string" || llm.provider.length === 0) llm.provider = "openai";
-  if (typeof llm.baseUrl !== "string" || llm.baseUrl.length === 0) llm.baseUrl = "https://example.invalid/v1";
+  if (typeof llm.baseUrl !== "string" || llm.baseUrl.length === 0)
+    llm.baseUrl = "https://example.invalid/v1";
   if (typeof llm.model !== "string" || llm.model.length === 0) llm.model = "noop-model";
   if (typeof llm.apiKey !== "string") llm.apiKey = "";
 }
@@ -510,6 +575,7 @@ function parseEnvValue(value: string): unknown {
     try {
       return JSON.parse(value) as unknown;
     } catch {
+      // failure expected, safe to ignore
       return value;
     }
   }
@@ -525,5 +591,7 @@ function stringValue(value: unknown): string | undefined {
 }
 
 function objectValue(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }

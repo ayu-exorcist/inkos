@@ -43,7 +43,10 @@ export function App() {
   const sse = useSSE();
   const { theme, setTheme } = useTheme();
   const { t, lang: currentLang } = useI18n();
-  const { data: project, refetch: refetchProject } = useApi<{ language: string; languageExplicit: boolean }>("/project");
+  const { data: project, refetch: refetchProject } = useApi<{
+    language: string;
+    languageExplicit: boolean;
+  }>("/project");
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -86,12 +89,11 @@ export function App() {
   };
 
   const activeBookId = deriveActiveBookId(route);
-  const activePage =
-    activeBookId
-      ? `book:${activeBookId}`
-      : route.page === "service-detail"
-        ? "services"
-        : route.page;
+  const activePage = activeBookId
+    ? `book:${activeBookId}`
+    : route.page === "service-detail"
+      ? "services"
+      : route.page;
 
   if (!ready) {
     return (
@@ -123,15 +125,15 @@ export function App() {
         {/* Header Strip */}
         <header className="h-14 shrink-0 flex items-center justify-between px-8 border-b border-border/40">
           <div className="flex items-center gap-2">
-             <button
-               onClick={nav.toDashboard}
-               className="inline-flex items-center gap-2 rounded-lg border border-border/50 bg-card/70 px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary/50 transition-colors"
-             >
-               <House size={14} />
-               <span>首页</span>
-               <span className="text-muted-foreground/70">/</span>
-               <span className="font-serif">InkOS Studio</span>
-             </button>
+            <button
+              onClick={nav.toDashboard}
+              className="inline-flex items-center gap-2 rounded-lg border border-border/50 bg-card/70 px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <House size={14} />
+              <span>首页</span>
+              <span className="text-muted-foreground/70">/</span>
+              <span className="font-serif">InkOS Studio</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -174,24 +176,12 @@ export function App() {
           )}
           {isBookCreateChatRoute(route) && (
             <div className="absolute inset-0 flex min-w-0">
-              <ChatPage
-                mode="book-create"
-                nav={nav}
-                theme={theme}
-                t={t}
-                sse={sse}
-              />
+              <ChatPage mode="book-create" nav={nav} theme={theme} t={t} sse={sse} />
             </div>
           )}
           {route.page === "chat" && (
             <div className="absolute inset-0 flex min-w-0">
-              <ChatPage
-                mode="project-chat"
-                nav={nav}
-                theme={theme}
-                t={t}
-                sse={sse}
-              />
+              <ChatPage mode="project-chat" nav={nav} theme={theme} t={t} sse={sse} />
             </div>
           )}
           {route.page === "book" && (
@@ -215,7 +205,13 @@ export function App() {
           )}
           {route.page === "chapter" && (
             <div className="max-w-4xl mx-auto px-6 py-12 md:px-12 lg:py-16 fade-in">
-              <ChapterReader bookId={route.bookId} chapterNumber={route.chapterNumber} nav={nav} theme={theme} t={t} />
+              <ChapterReader
+                bookId={route.bookId}
+                chapterNumber={route.chapterNumber}
+                nav={nav}
+                theme={theme}
+                t={t}
+              />
             </div>
           )}
           {route.page === "analytics" && (

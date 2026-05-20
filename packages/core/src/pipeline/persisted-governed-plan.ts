@@ -2,10 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import YAML from "js-yaml";
 import type { PlanChapterOutput } from "../agents/planner.js";
-import {
-  ChapterIntentSchema,
-  type ChapterIntent,
-} from "../models/input-governance.js";
+import { ChapterIntentSchema, type ChapterIntent } from "../models/input-governance.js";
 import { parseMemo, PlannerParseError } from "../utils/chapter-memo-parser.js";
 
 /**
@@ -36,10 +33,7 @@ function intentPath(bookDir: string, chapterNumber: number): string {
   return join(runtimeDir, `chapter-${padded}.intent.md`);
 }
 
-export async function savePersistedPlan(
-  bookDir: string,
-  plan: PlanChapterOutput,
-): Promise<void> {
+export async function savePersistedPlan(bookDir: string, plan: PlanChapterOutput): Promise<void> {
   const { intent, memo, plannerInputs } = plan;
   const frontmatter = {
     chapter: memo.chapter,
@@ -69,6 +63,7 @@ export async function loadPersistedPlan(
   try {
     raw = await readFile(planPath(bookDir, chapterNumber), "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return loadLegacyIntentPlan(bookDir, chapterNumber);
   }
 
@@ -79,6 +74,7 @@ export async function loadPersistedPlan(
   try {
     fm = YAML.load(match[1]!);
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
   if (!fm || typeof fm !== "object" || Array.isArray(fm)) return null;
@@ -111,6 +107,7 @@ export async function loadPersistedPlan(
       ...(f.intent as Record<string, unknown>),
     });
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 
@@ -146,6 +143,7 @@ async function loadLegacyIntentPlan(
   try {
     intentMarkdown = await readFile(runtimePath, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 
@@ -153,9 +151,8 @@ async function loadLegacyIntentPlan(
   if (!rawGoal || !isMeaningfulLegacyValue(rawGoal)) return null;
   const goal = rawGoal;
   const outlineNodeRaw = extractSection(intentMarkdown, "Outline Node");
-  const outlineNode = outlineNodeRaw && isMeaningfulLegacyValue(outlineNodeRaw)
-    ? outlineNodeRaw
-    : undefined;
+  const outlineNode =
+    outlineNodeRaw && isMeaningfulLegacyValue(outlineNodeRaw) ? outlineNodeRaw : undefined;
 
   const intent: ChapterIntent = ChapterIntentSchema.parse({
     chapter: chapterNumber,
@@ -182,7 +179,9 @@ async function loadLegacyIntentPlan(
 }
 
 function extractSection(markdown: string, heading: string): string | undefined {
-  const match = markdown.match(new RegExp(`^## ${escapeRegExp(heading)}\\s*\\n([\\s\\S]*?)(?=\\n## |\\n### |$)`, "m"));
+  const match = markdown.match(
+    new RegExp(`^## ${escapeRegExp(heading)}\\s*\\n([\\s\\S]*?)(?=\\n## |\\n### |$)`, "m"),
+  );
   const value = match?.[1]?.trim();
   return value && value !== "- none" ? value : undefined;
 }

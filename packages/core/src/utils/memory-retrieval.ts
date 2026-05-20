@@ -20,10 +20,7 @@ import {
   renderHookSnapshot,
   renderSummarySnapshot,
 } from "./story-markdown.js";
-export {
-  isFuturePlannedHook,
-  isHookWithinChapterWindow,
-} from "./hook-lifecycle.js";
+export { isFuturePlannedHook, isHookWithinChapterWindow } from "./hook-lifecycle.js";
 export {
   parseChapterSummariesMarkdown,
   parseCurrentStateFacts,
@@ -82,20 +79,10 @@ export async function retrieveMemorySelection(params: {
     readStructuredState(join(stateDir, "hooks.json"), HooksStateSchema),
     readStructuredState(join(stateDir, "chapter_summaries.json"), ChapterSummariesStateSchema),
   ]);
-  const facts = structuredCurrentState?.facts ?? parseCurrentStateFacts(
-    currentStateMarkdown,
-    fallbackChapter,
-  );
-  const narrativeQueryTerms = extractQueryTerms(
-    params.goal,
-    params.outlineNode,
-    [],
-  );
-  const factQueryTerms = extractQueryTerms(
-    params.goal,
-    params.outlineNode,
-    params.mustKeep ?? [],
-  );
+  const facts =
+    structuredCurrentState?.facts ?? parseCurrentStateFacts(currentStateMarkdown, fallbackChapter);
+  const narrativeQueryTerms = extractQueryTerms(params.goal, params.outlineNode, []);
+  const factQueryTerms = extractQueryTerms(params.goal, params.outlineNode, params.mustKeep ?? []);
   const volumeSummaries = selectRelevantVolumeSummaries(
     parseVolumeSummariesMarkdown(volumeSummariesMarkdown),
     narrativeQueryTerms,
@@ -105,17 +92,21 @@ export async function retrieveMemorySelection(params: {
   if (memoryDb) {
     try {
       if (memoryDb.getChapterCount() === 0) {
-        const summaries = structuredSummaries?.rows ?? parseChapterSummariesMarkdown(
-          await readFile(join(storyDir, "chapter_summaries.md"), "utf-8").catch(() => ""),
-        );
+        const summaries =
+          structuredSummaries?.rows ??
+          parseChapterSummariesMarkdown(
+            await readFile(join(storyDir, "chapter_summaries.md"), "utf-8").catch(() => ""),
+          );
         if (summaries.length > 0) {
           memoryDb.replaceSummaries(summaries);
         }
       }
       if (memoryDb.getActiveHooks().length === 0) {
-        const hooks = structuredHooks?.hooks ?? parsePendingHooksMarkdown(
-          await readFile(join(storyDir, "pending_hooks.md"), "utf-8").catch(() => ""),
-        );
+        const hooks =
+          structuredHooks?.hooks ??
+          parsePendingHooksMarkdown(
+            await readFile(join(storyDir, "pending_hooks.md"), "utf-8").catch(() => ""),
+          );
         if (hooks.length > 0) {
           memoryDb.replaceHooks(hooks);
         }
@@ -191,7 +182,9 @@ export function computeRecyclableHooks(
 }
 
 function isRecycleTerminalStatus(status: string): boolean {
-  return /^(resolved|closed|done|已回收|已解决|deferred|paused|hold|延后|延期|搁置|暂缓)$/i.test(status.trim());
+  return /^(resolved|closed|done|已回收|已解决|deferred|paused|hold|延后|延期|搁置|暂缓)$/i.test(
+    status.trim(),
+  );
 }
 
 function hookSilence(hook: StoredHook, chapterNumber: number): number {
@@ -207,7 +200,11 @@ function recycleThreshold(hook: StoredHook): number {
   return 10;
 }
 
-export function extractQueryTerms(goal: string, outlineNode: string | undefined, mustKeep: ReadonlyArray<string>): string[] {
+export function extractQueryTerms(
+  goal: string,
+  outlineNode: string | undefined,
+  mustKeep: ReadonlyArray<string>,
+): string[] {
   const primaryTerms = uniqueTerms([
     ...extractTermsFromText(stripNegativeGuidance(goal)),
     ...mustKeep.flatMap((item) => extractTermsFromText(item)),
@@ -227,6 +224,7 @@ function openMemoryDB(bookDir: string): MemoryDB | null {
   try {
     return new MemoryDB(bookDir);
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }
@@ -239,37 +237,93 @@ async function readStructuredState<T>(
     const raw = await readFile(path, "utf-8");
     return schema.parse(JSON.parse(raw));
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }
 
-function buildLegacyQueryTerms(goal: string, outlineNode: string | undefined, mustKeep: ReadonlyArray<string>): string[] {
+function buildLegacyQueryTerms(
+  goal: string,
+  outlineNode: string | undefined,
+  mustKeep: ReadonlyArray<string>,
+): string[] {
   const stopWords = new Set([
-    "bring", "focus", "back", "chapter", "clear", "narrative", "before", "opening",
-    "track", "the", "with", "from", "that", "this", "into", "still", "cannot",
-    "current", "state", "advance", "conflict", "story", "keep", "must", "local",
+    "bring",
+    "focus",
+    "back",
+    "chapter",
+    "clear",
+    "narrative",
+    "before",
+    "opening",
+    "track",
+    "the",
+    "with",
+    "from",
+    "that",
+    "this",
+    "into",
+    "still",
+    "cannot",
+    "current",
+    "state",
+    "advance",
+    "conflict",
+    "story",
+    "keep",
+    "must",
+    "local",
   ]);
 
   const source = [goal, outlineNode ?? "", ...mustKeep].join(" ");
   const english = source.match(/[a-z]{4,}/gi) ?? [];
   const chinese = source.match(/[\u4e00-\u9fff]{2,4}/g) ?? [];
 
-  return [...new Set(
-    [...english, ...chinese]
-      .map((term) => term.trim())
-      .filter((term) => term.length >= 2)
-      .filter((term) => !stopWords.has(term.toLowerCase())),
-  )].slice(0, 12);
+  return [
+    ...new Set(
+      [...english, ...chinese]
+        .map((term) => term.trim())
+        .filter((term) => term.length >= 2)
+        .filter((term) => !stopWords.has(term.toLowerCase())),
+    ),
+  ].slice(0, 12);
 }
 
 function extractTermsFromText(text: string): string[] {
   if (!text.trim()) return [];
 
   const stopWords = new Set([
-    "bring", "focus", "back", "chapter", "clear", "narrative", "before", "opening",
-    "track", "the", "with", "from", "that", "this", "into", "still", "cannot",
-    "current", "state", "advance", "conflict", "story", "keep", "must", "local",
-    "does", "not", "only", "just", "then", "than",
+    "bring",
+    "focus",
+    "back",
+    "chapter",
+    "clear",
+    "narrative",
+    "before",
+    "opening",
+    "track",
+    "the",
+    "with",
+    "from",
+    "that",
+    "this",
+    "into",
+    "still",
+    "cannot",
+    "current",
+    "state",
+    "advance",
+    "conflict",
+    "story",
+    "keep",
+    "must",
+    "local",
+    "does",
+    "not",
+    "only",
+    "just",
+    "then",
+    "than",
   ]);
 
   const normalized = text.replace(/第\d+章/g, " ");
@@ -286,7 +340,10 @@ function extractTermsFromText(text: string): string[] {
 
 function extractChineseFocusTerms(segment: string): string[] {
   const stripped = segment
-    .replace(/^(本章|继续|重新|拉回|回到|推进|优先|围绕|聚焦|坚持|保持|把注意力|注意力|将注意力|请把注意力|先把注意力)+/, "")
+    .replace(
+      /^(本章|继续|重新|拉回|回到|推进|优先|围绕|聚焦|坚持|保持|把注意力|注意力|将注意力|请把注意力|先把注意力)+/,
+      "",
+    )
     .replace(/^(处理|推进|回拉|拉回到)+/, "")
     .trim();
 
@@ -337,17 +394,19 @@ function parseVolumeSummariesMarkdown(markdown: string): VolumeSummarySelection[
     .map((section) => section.trim())
     .filter(Boolean);
 
-  return sections.map((section) => {
-    const [headingLine, ...bodyLines] = section.split("\n");
-    const heading = headingLine?.trim() ?? "";
-    const content = bodyLines.join("\n").trim();
+  return sections
+    .map((section) => {
+      const [headingLine, ...bodyLines] = section.split("\n");
+      const heading = headingLine?.trim() ?? "";
+      const content = bodyLines.join("\n").trim();
 
-    return {
-      heading,
-      content,
-      anchor: slugifyAnchor(heading),
-    };
-  }).filter((section) => section.heading.length > 0 && section.content.length > 0);
+      return {
+        heading,
+        content,
+        anchor: slugifyAnchor(heading),
+      };
+    })
+    .filter((section) => section.heading.length > 0 && section.content.length > 0);
 }
 
 function isUnresolvedHook(status: string): boolean {
@@ -364,14 +423,17 @@ function selectRelevantSummaries(
     .map((summary) => ({
       summary,
       score: scoreSummary(summary, chapterNumber, queryTerms),
-      matched: matchesAny([
-        summary.title,
-        summary.characters,
-        summary.events,
-        summary.stateChanges,
-        summary.hookActivity,
-        summary.chapterType,
-      ].join(" "), queryTerms),
+      matched: matchesAny(
+        [
+          summary.title,
+          summary.characters,
+          summary.events,
+          summary.stateChanges,
+          summary.hookActivity,
+          summary.chapterType,
+        ].join(" "),
+        queryTerms,
+      ),
     }))
     .filter((entry) => entry.matched || entry.summary.chapter >= chapterNumber - 3)
     .sort((left, right) => right.score - left.score || right.summary.chapter - left.summary.chapter)
@@ -390,32 +452,49 @@ function selectRelevantHooks(
       hook,
       score: scoreHook(hook, queryTerms, chapterNumber),
       matched: matchesAny(
-        [hook.hookId, hook.type, hook.expectedPayoff, hook.payoffTiming ?? "", hook.notes].join(" "),
+        [hook.hookId, hook.type, hook.expectedPayoff, hook.payoffTiming ?? "", hook.notes].join(
+          " ",
+        ),
         queryTerms,
       ),
     }))
-    .filter((entry: { hook: StoredHook; score: number; matched: boolean }) =>
-      entry.matched || isUnresolvedHook(entry.hook.status),
+    .filter(
+      (entry: { hook: StoredHook; score: number; matched: boolean }) =>
+        entry.matched || isUnresolvedHook(entry.hook.status),
     );
 
   const primary = ranked
-    .filter((entry: { hook: StoredHook; score: number; matched: boolean }) =>
-      entry.matched || isHookWithinChapterWindow(entry.hook, chapterNumber, 5),
+    .filter(
+      (entry: { hook: StoredHook; score: number; matched: boolean }) =>
+        entry.matched || isHookWithinChapterWindow(entry.hook, chapterNumber, 5),
     )
-    .sort((left, right) => right.score - left.score || right.hook.lastAdvancedChapter - left.hook.lastAdvancedChapter)
+    .sort(
+      (left, right) =>
+        right.score - left.score || right.hook.lastAdvancedChapter - left.hook.lastAdvancedChapter,
+    )
     .slice(0, 6);
 
-  const selectedIds = new Set(primary.map((entry: { hook: StoredHook; score: number; matched: boolean }) => entry.hook.hookId));
+  const selectedIds = new Set(
+    primary.map(
+      (entry: { hook: StoredHook; score: number; matched: boolean }) => entry.hook.hookId,
+    ),
+  );
   const stale = ranked
-    .filter((entry: { hook: StoredHook; score: number; matched: boolean }) =>
-      !selectedIds.has(entry.hook.hookId)
-      && !isFuturePlannedHook(entry.hook, chapterNumber)
-      && isUnresolvedHook(entry.hook.status),
+    .filter(
+      (entry: { hook: StoredHook; score: number; matched: boolean }) =>
+        !selectedIds.has(entry.hook.hookId) &&
+        !isFuturePlannedHook(entry.hook, chapterNumber) &&
+        isUnresolvedHook(entry.hook.status),
     )
-    .sort((left, right) => left.hook.lastAdvancedChapter - right.hook.lastAdvancedChapter || right.score - left.score)
+    .sort(
+      (left, right) =>
+        left.hook.lastAdvancedChapter - right.hook.lastAdvancedChapter || right.score - left.score,
+    )
     .slice(0, 2);
 
-  return [...primary, ...stale].map((entry: { hook: StoredHook; score: number; matched: boolean }) => entry.hook);
+  return [...primary, ...stale].map(
+    (entry: { hook: StoredHook; score: number; matched: boolean }) => entry.hook,
+  );
 }
 
 function selectRelevantFacts(
@@ -483,7 +562,11 @@ function selectRelevantVolumeSummaries(
   return ranked;
 }
 
-function scoreSummary(summary: StoredSummary, chapterNumber: number, queryTerms: ReadonlyArray<string>): number {
+function scoreSummary(
+  summary: StoredSummary,
+  chapterNumber: number,
+  queryTerms: ReadonlyArray<string>,
+): number {
   const text = [
     summary.title,
     summary.characters,
@@ -494,7 +577,10 @@ function scoreSummary(summary: StoredSummary, chapterNumber: number, queryTerms:
   ].join(" ");
   const age = Math.max(0, chapterNumber - summary.chapter);
   const recencyScore = Math.max(0, 12 - age);
-  const termScore = queryTerms.reduce((score, term) => score + (includesTerm(text, term) ? Math.max(8, term.length * 2) : 0), 0);
+  const termScore = queryTerms.reduce(
+    (score, term) => score + (includesTerm(text, term) ? Math.max(8, term.length * 2) : 0),
+    0,
+  );
   return recencyScore + termScore;
 }
 
@@ -503,9 +589,18 @@ function scoreHook(
   queryTerms: ReadonlyArray<string>,
   _chapterNumber: number,
 ): number {
-  const text = [hook.hookId, hook.type, hook.expectedPayoff, hook.payoffTiming ?? "", hook.notes].join(" ");
+  const text = [
+    hook.hookId,
+    hook.type,
+    hook.expectedPayoff,
+    hook.payoffTiming ?? "",
+    hook.notes,
+  ].join(" ");
   const freshness = Math.max(0, hook.lastAdvancedChapter);
-  const termScore = queryTerms.reduce((score, term) => score + (includesTerm(text, term) ? Math.max(8, term.length * 2) : 0), 0);
+  const termScore = queryTerms.reduce(
+    (score, term) => score + (includesTerm(text, term) ? Math.max(8, term.length * 2) : 0),
+    0,
+  );
   return termScore + freshness;
 }
 
@@ -518,10 +613,11 @@ function includesTerm(text: string, term: string): boolean {
 }
 
 function slugifyAnchor(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    || "volume-summary";
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "volume-summary"
+  );
 }

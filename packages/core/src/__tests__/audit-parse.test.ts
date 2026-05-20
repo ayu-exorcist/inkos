@@ -47,7 +47,8 @@ describe("Audit JSON parsing robustness", () => {
   });
 
   it("handles code block wrapped JSON", () => {
-    const input = "Here is the result:\n```json\n{\"passed\": false, \"issues\": [{\"severity\": \"warning\", \"category\": \"test\", \"description\": \"x\", \"suggestion\": \"y\"}], \"summary\": \"issues\"}\n```";
+    const input =
+      'Here is the result:\n```json\n{"passed": false, "issues": [{"severity": "warning", "category": "test", "description": "x", "suggestion": "y"}], "summary": "issues"}\n```';
     // Strategy 3: code block extraction
     const codeBlockMatch = input.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
     expect(codeBlockMatch).not.toBeNull();

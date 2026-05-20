@@ -24,7 +24,11 @@ afterEach(async () => {
 describe("outline-paths", () => {
   it("prefers outline/story_frame.md over legacy story_bible.md", async () => {
     await mkdir(join(bookDir, "story", "outline"), { recursive: true });
-    await writeFile(join(bookDir, "story", "outline", "story_frame.md"), "NEW frame prose", "utf-8");
+    await writeFile(
+      join(bookDir, "story", "outline", "story_frame.md"),
+      "NEW frame prose",
+      "utf-8",
+    );
     await writeFile(join(bookDir, "story", "story_bible.md"), "OLD bible table", "utf-8");
 
     const content = await readStoryFrame(bookDir, "(missing)");

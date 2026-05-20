@@ -3,13 +3,36 @@ name: Romantasy
 id: romantasy
 language: en
 chapterTypes: ["Romance", "Action", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: false
 powerScaling: false
 eraResearch: false
 pacingRule: "Romance beats at every act break. Chemistry scenes every 2-3 chapters. Fantasy romance: consummation at 60-75%. Romantic fantasy: romance resolution aligned with plot resolution."
-satisfactionTypes: ["Chemistry Moment", "Vulnerability Shared", "Obstacle Overcome Together", "First Kiss", "Relationship Defined", "HEA/HFN Achieved"]
-auditDimensions: [1,2,3,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Chemistry Moment",
+    "Vulnerability Shared",
+    "Obstacle Overcome Together",
+    "First Kiss",
+    "Relationship Defined",
+    "HEA/HFN Achieved",
+  ]
+auditDimensions: [1, 2, 3, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

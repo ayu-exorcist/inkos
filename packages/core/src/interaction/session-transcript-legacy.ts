@@ -1,10 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { BookSessionSchema, type BookSession } from "./session.js";
-import {
-  appendTranscriptEvents,
-  legacyBookSessionPath,
-} from "./session-transcript.js";
+import { appendTranscriptEvents, legacyBookSessionPath } from "./session-transcript.js";
 import type { MessageEvent } from "./session-transcript-schema.js";
 
 const EMPTY_USAGE = {
@@ -24,6 +21,7 @@ export async function readLegacyBookSession(
     const raw = await readFile(legacyBookSessionPath(projectRoot, sessionId), "utf-8");
     return BookSessionSchema.parse(JSON.parse(raw));
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }
@@ -44,22 +42,23 @@ export async function migrateLegacyBookSessionToTranscript(
 
     for (const legacyMessage of session.messages) {
       const uuid = randomUUID();
-      const message = legacyMessage.role === "assistant"
-        ? {
-            role: "assistant",
-            content: [{ type: "text", text: legacyMessage.content }],
-            api: "anthropic-messages",
-            provider: "legacy",
-            model: "unknown",
-            usage: EMPTY_USAGE,
-            stopReason: "stop",
-            timestamp: legacyMessage.timestamp,
-          }
-        : {
-            role: legacyMessage.role,
-            content: legacyMessage.content,
-            timestamp: legacyMessage.timestamp,
-          };
+      const message =
+        legacyMessage.role === "assistant"
+          ? {
+              role: "assistant",
+              content: [{ type: "text", text: legacyMessage.content }],
+              api: "anthropic-messages",
+              provider: "legacy",
+              model: "unknown",
+              usage: EMPTY_USAGE,
+              stopReason: "stop",
+              timestamp: legacyMessage.timestamp,
+            }
+          : {
+              role: legacyMessage.role,
+              content: legacyMessage.content,
+              timestamp: legacyMessage.timestamp,
+            };
       transcriptEvents.push({
         type: "message",
         version: 1,

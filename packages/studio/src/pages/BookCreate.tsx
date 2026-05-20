@@ -136,7 +136,8 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     targetChaptersLabel: "目标章数",
     chapterWordCountLabel: "每章字数",
     briefLabel: "故事简介 / 核心设定",
-    briefPlaceholder: "写清世界观、主角、目标、核心冲突和第一阶段方向。例如：近未来港口城，主角是水货账房，想洗白却被旧账拖回港口旧案。",
+    briefPlaceholder:
+      "写清世界观、主角、目标、核心冲突和第一阶段方向。例如：近未来港口城，主角是水货账房，想洗白却被旧账拖回港口旧案。",
     createBook: "创建书籍",
     creatingBook: "创建中…",
     creationStatus: "正在创建书籍，完成后会自动进入工作台。",
@@ -157,13 +158,16 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     missingHint: "这些字段未必都要一次填满，但缺得太多时不要急着建书。",
     syncedHint: "这份草案和 TUI / Studio Chat 共享。",
     helperTitle: "建议这样推进",
-    helperBody: "先定世界观和主角，再定核心冲突、简介和卷一方向。想看当前草案时，可以在 TUI 里用 /draft。",
+    helperBody:
+      "先定世界观和主角，再定核心冲突、简介和卷一方向。想看当前草案时，可以在 TUI 里用 /draft。",
   },
   en: {
     idleTitle: "Start from a rough idea",
-    idleBody: "Fill in the title, genre, and story core first. InkOS will generate the foundation and open the new workspace.",
+    idleBody:
+      "Fill in the title, genre, and story core first. InkOS will generate the foundation and open the new workspace.",
     formHeading: "Book basics",
-    formHint: "These fields go straight into creation. A concrete brief gives the foundation generator better material.",
+    formHint:
+      "These fields go straight into creation. A concrete brief gives the foundation generator better material.",
     titleLabel: "Title",
     titlePlaceholder: "Example: Ledger of the Night Port",
     genreLabel: "Genre",
@@ -172,7 +176,8 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     targetChaptersLabel: "Target chapters",
     chapterWordCountLabel: "Words per chapter",
     briefLabel: "Story brief / core premise",
-    briefPlaceholder: "Include the world, protagonist, goal, core conflict, and first arc direction.",
+    briefPlaceholder:
+      "Include the world, protagonist, goal, core conflict, and first arc direction.",
     createBook: "Create book",
     creatingBook: "Creating…",
     creationStatus: "Creating the book. The workspace will open automatically when it is ready.",
@@ -181,8 +186,10 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     assistantHint: "This draft area is optional. If a draft looks useful, apply it to the form.",
     applyDraft: "Apply draft",
     promptLabel: "Refine this book",
-    promptPlaceholder: "Example: I want a harbor-noir business thriller about a fixer trying to go legit.",
-    promptPlaceholderFollowup: "Example: move the world to a near-future port city; delay the heroine; make volume one about chasing ledgers first.",
+    promptPlaceholder:
+      "Example: I want a harbor-noir business thriller about a fixer trying to go legit.",
+    promptPlaceholderFollowup:
+      "Example: move the world to a near-future port city; delay the heroine; make volume one about chasing ledgers first.",
     submit: "Update draft",
     submitting: "Working…",
     create: "Create book from draft",
@@ -190,10 +197,12 @@ const PAGE_COPY: Record<"zh" | "en", PlatformCopy> = {
     discard: "Discard draft",
     draftHeading: "Current foundation draft",
     missingHeading: "Still missing",
-    missingHint: "You do not need every field immediately, but do not create the book while the foundation is still vague.",
+    missingHint:
+      "You do not need every field immediately, but do not create the book while the foundation is still vague.",
     syncedHint: "This draft is shared with TUI and Studio Chat.",
     helperTitle: "Recommended flow",
-    helperBody: "Lock the world and protagonist first, then settle the conflict, blurb, and volume-one direction. In TUI, use /draft to inspect the same draft.",
+    helperBody:
+      "Lock the world and protagonist first, then settle the conflict, blurb, and volume-one direction. In TUI, use /draft to inspect the same draft.",
   },
 };
 
@@ -230,11 +239,11 @@ function parsePositiveInteger(value: string): number | null {
 
 export function isBookCreateFormReady(form: BookCreateFormState): boolean {
   return Boolean(
-    form.title.trim()
-      && form.genre.trim()
-      && form.brief.trim()
-      && parsePositiveInteger(form.targetChapters)
-      && parsePositiveInteger(form.chapterWordCount),
+    form.title.trim() &&
+    form.genre.trim() &&
+    form.brief.trim() &&
+    parsePositiveInteger(form.targetChapters) &&
+    parsePositiveInteger(form.chapterWordCount),
   );
 }
 
@@ -245,7 +254,9 @@ export function buildBookCreatePayload(
   const targetChapters = parsePositiveInteger(form.targetChapters);
   const chapterWordCount = parsePositiveInteger(form.chapterWordCount);
   if (!targetChapters || !chapterWordCount || !isBookCreateFormReady(form)) {
-    throw new Error(language === "zh" ? "请先补齐建书表单。" : "Complete the book creation form first.");
+    throw new Error(
+      language === "zh" ? "请先补齐建书表单。" : "Complete the book creation form first.",
+    );
   }
   return {
     title: form.title.trim(),
@@ -274,10 +285,10 @@ export function canCreateFromDraft(draft?: BookCreationDraft): boolean {
     return true;
   }
   return Boolean(
-    draft.title?.trim()
-      && draft.genre?.trim()
-      && typeof draft.targetChapters === "number"
-      && typeof draft.chapterWordCount === "number",
+    draft.title?.trim() &&
+    draft.genre?.trim() &&
+    typeof draft.targetChapters === "number" &&
+    typeof draft.chapterWordCount === "number",
   );
 }
 
@@ -285,25 +296,46 @@ export function buildCreationDraftSummary(
   draft: BookCreationDraft,
   language: "zh" | "en",
 ): ReadonlyArray<DraftSummaryRow> {
-  const rows = language === "en"
-    ? [
-        draft.title ? { key: "title", label: "Title", value: draft.title } : undefined,
-        draft.worldPremise ? { key: "worldPremise", label: "World", value: draft.worldPremise } : undefined,
-        draft.protagonist ? { key: "protagonist", label: "Protagonist", value: draft.protagonist } : undefined,
-        draft.conflictCore ? { key: "conflictCore", label: "Core Conflict", value: draft.conflictCore } : undefined,
-        draft.volumeOutline ? { key: "volumeOutline", label: "Volume Direction", value: draft.volumeOutline } : undefined,
-        draft.blurb ? { key: "blurb", label: "Blurb", value: draft.blurb } : undefined,
-        draft.nextQuestion ? { key: "nextQuestion", label: "Next", value: draft.nextQuestion } : undefined,
-      ]
-    : [
-        draft.title ? { key: "title", label: "书名", value: draft.title } : undefined,
-        draft.worldPremise ? { key: "worldPremise", label: "世界观", value: draft.worldPremise } : undefined,
-        draft.protagonist ? { key: "protagonist", label: "主角", value: draft.protagonist } : undefined,
-        draft.conflictCore ? { key: "conflictCore", label: "核心冲突", value: draft.conflictCore } : undefined,
-        draft.volumeOutline ? { key: "volumeOutline", label: "卷纲方向", value: draft.volumeOutline } : undefined,
-        draft.blurb ? { key: "blurb", label: "简介", value: draft.blurb } : undefined,
-        draft.nextQuestion ? { key: "nextQuestion", label: "下一步", value: draft.nextQuestion } : undefined,
-      ];
+  const rows =
+    language === "en"
+      ? [
+          draft.title ? { key: "title", label: "Title", value: draft.title } : undefined,
+          draft.worldPremise
+            ? { key: "worldPremise", label: "World", value: draft.worldPremise }
+            : undefined,
+          draft.protagonist
+            ? { key: "protagonist", label: "Protagonist", value: draft.protagonist }
+            : undefined,
+          draft.conflictCore
+            ? { key: "conflictCore", label: "Core Conflict", value: draft.conflictCore }
+            : undefined,
+          draft.volumeOutline
+            ? { key: "volumeOutline", label: "Volume Direction", value: draft.volumeOutline }
+            : undefined,
+          draft.blurb ? { key: "blurb", label: "Blurb", value: draft.blurb } : undefined,
+          draft.nextQuestion
+            ? { key: "nextQuestion", label: "Next", value: draft.nextQuestion }
+            : undefined,
+        ]
+      : [
+          draft.title ? { key: "title", label: "书名", value: draft.title } : undefined,
+          draft.worldPremise
+            ? { key: "worldPremise", label: "世界观", value: draft.worldPremise }
+            : undefined,
+          draft.protagonist
+            ? { key: "protagonist", label: "主角", value: draft.protagonist }
+            : undefined,
+          draft.conflictCore
+            ? { key: "conflictCore", label: "核心冲突", value: draft.conflictCore }
+            : undefined,
+          draft.volumeOutline
+            ? { key: "volumeOutline", label: "卷纲方向", value: draft.volumeOutline }
+            : undefined,
+          draft.blurb ? { key: "blurb", label: "简介", value: draft.blurb } : undefined,
+          draft.nextQuestion
+            ? { key: "nextQuestion", label: "下一步", value: draft.nextQuestion }
+            : undefined,
+        ];
 
   return rows.filter((row): row is DraftSummaryRow => Boolean(row));
 }
@@ -354,14 +386,18 @@ export async function ensureBookCreateSessionId(
     return pendingDefaultBookCreateSessionId;
   }
 
-  const fetchSession = options.fetchSession
-    ?? ((sessionId: string) => fetchJson<SessionResponse>(`/sessions/${encodeURIComponent(sessionId)}`));
-  const createSession = options.createSession
-    ?? (() => fetchJson<SessionResponse>("/sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookId: null }),
-    }));
+  const fetchSession =
+    options.fetchSession ??
+    ((sessionId: string) =>
+      fetchJson<SessionResponse>(`/sessions/${encodeURIComponent(sessionId)}`));
+  const createSession =
+    options.createSession ??
+    (() =>
+      fetchJson<SessionResponse>("/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId: null }),
+      }));
   const getStoredSessionId = options.getStoredSessionId ?? getBookCreateSessionId;
   const setStoredSessionId = options.setStoredSessionId ?? setBookCreateSessionId;
   const clearStoredSessionId = options.clearStoredSessionId ?? clearBookCreateSessionId;
@@ -403,12 +439,17 @@ export async function waitForBookReady(
   options: WaitForBookReadyOptions = {},
 ): Promise<void> {
   const fetchBook = options.fetchBook ?? ((id: string) => fetchJson(`/books/${id}`));
-  const fetchStatus = options.fetchStatus ?? ((id: string) => fetchJson<{ status: string; error?: string }>(`/books/${id}/create-status`));
+  const fetchStatus =
+    options.fetchStatus ??
+    ((id: string) => fetchJson<{ status: string; error?: string }>(`/books/${id}/create-status`));
   const maxAttempts = options.maxAttempts ?? DEFAULT_BOOK_READY_MAX_ATTEMPTS;
   const delayMs = options.delayMs ?? DEFAULT_BOOK_READY_DELAY_MS;
-  const waitImpl = options.waitImpl ?? ((ms: number) => new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  }));
+  const waitImpl =
+    options.waitImpl ??
+    ((ms: number) =>
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, ms);
+      }));
 
   let lastError: unknown;
   let lastKnownStatus: string | undefined;
@@ -496,14 +537,18 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
       draft.protagonist,
       draft.conflictCore,
       draft.volumeOutline,
-    ].filter((part): part is string => Boolean(part?.trim())).join("\n\n");
+    ]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n");
     const platformValues = platformChoices.map((option) => option.value);
     setForm((current) => ({
       title: draft.title?.trim() || current.title,
       genre: draft.genre?.trim() || current.genre,
       platform: pickValidValue(draft.platform ?? current.platform, platformValues),
       targetChapters: draft.targetChapters ? String(draft.targetChapters) : current.targetChapters,
-      chapterWordCount: draft.chapterWordCount ? String(draft.chapterWordCount) : current.chapterWordCount,
+      chapterWordCount: draft.chapterWordCount
+        ? String(draft.chapterWordCount)
+        : current.chapterWordCount,
       brief: draftBrief || current.brief,
     }));
   };
@@ -518,10 +563,7 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
   useEffect(() => {
     let cancelled = false;
     setLoadingDraft(true);
-    void Promise.all([
-      ensureBookCreateSessionId(),
-      refreshDraft(),
-    ])
+    void Promise.all([ensureBookCreateSessionId(), refreshDraft()])
       .then(([sessionId]) => {
         if (!cancelled) {
           setBookCreateSessionIdState(sessionId);
@@ -557,7 +599,7 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
   }, [submitting, creating]);
 
   const runAgentInstruction = async (instruction: string): Promise<AgentResponse> => {
-    const sessionId = bookCreateSessionId ?? await ensureBookCreateSessionId();
+    const sessionId = bookCreateSessionId ?? (await ensureBookCreateSessionId());
     if (!bookCreateSessionId) {
       setBookCreateSessionIdState(sessionId);
     }
@@ -612,7 +654,11 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
         body: JSON.stringify(payload),
       });
       if (!data.bookId) {
-        throw new Error(projectLang === "zh" ? "创建请求没有返回书籍 ID。" : "Create request did not return a book id.");
+        throw new Error(
+          projectLang === "zh"
+            ? "创建请求没有返回书籍 ID。"
+            : "Create request did not return a book id.",
+        );
       }
       await waitForBookReady(data.bookId);
       nav.toBook(data.bookId);
@@ -635,7 +681,11 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
       const data = await runAgentInstruction("/create");
       const bookId = data.session?.activeBookId;
       if (!bookId) {
-        throw new Error(projectLang === "zh" ? "创建完成后没有返回书籍 ID。" : "Create succeeded but no book id was returned.");
+        throw new Error(
+          projectLang === "zh"
+            ? "创建完成后没有返回书籍 ID。"
+            : "Create succeeded but no book id was returned.",
+        );
       }
       setStatus(data.response ?? null);
       setDraft(undefined);
@@ -667,7 +717,9 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.books")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.books")}
+        </button>
         <span className="text-border">/</span>
         <span>{t("bread.newBook")}</span>
       </div>
@@ -677,11 +729,7 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
         <p className="text-sm text-muted-foreground leading-7 max-w-2xl">{copy.idleBody}</p>
       </div>
 
-      {error && (
-        <div className={`border ${c.error} rounded-md px-4 py-3`}>
-          {error}
-        </div>
-      )}
+      {error && <div className={`border ${c.error} rounded-md px-4 py-3`}>{error}</div>}
 
       {status && (
         <div className="border border-primary/20 bg-primary/5 rounded-md px-4 py-3 text-sm text-primary">
@@ -721,19 +769,25 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
 
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">{copy.platformLabel}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {copy.platformLabel}
+              </span>
               <select
                 value={form.platform}
                 onChange={(event) => updateForm({ platform: event.target.value })}
                 className={`w-full ${c.input} rounded-md px-3 py-2.5 focus:outline-none text-sm bg-background`}
               >
                 {platformChoices.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </select>
             </label>
             <label className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">{copy.targetChaptersLabel}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {copy.targetChaptersLabel}
+              </span>
               <input
                 type="number"
                 min={1}
@@ -743,7 +797,9 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
               />
             </label>
             <label className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground">{copy.chapterWordCountLabel}</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {copy.chapterWordCountLabel}
+              </span>
               <input
                 type="number"
                 min={1000}
@@ -768,7 +824,10 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
           {creating && (
             <div className="grid gap-2 sm:grid-cols-3">
               {copy.creationSteps.map((step) => (
-                <div key={step} className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                <div
+                  key={step}
+                  className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary"
+                >
                   <CheckCircle2 size={14} />
                   <span>{step}</span>
                 </div>
@@ -832,15 +891,24 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
             </div>
 
             {loadingDraft ? (
-              <div className="text-sm text-muted-foreground">{projectLang === "zh" ? "读取草案中…" : "Loading draft…"}</div>
+              <div className="text-sm text-muted-foreground">
+                {projectLang === "zh" ? "读取草案中…" : "Loading draft…"}
+              </div>
             ) : draft ? (
               <div className="space-y-4">
                 {summaryRows.length > 0 ? (
                   <div className="space-y-2">
                     {summaryRows.map((row) => (
-                      <div key={row.key} className="rounded-md border border-border/50 bg-background/70 px-3 py-2">
-                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">{row.label}</div>
-                        <div className="mt-1 text-sm leading-6 whitespace-pre-wrap">{row.value}</div>
+                      <div
+                        key={row.key}
+                        className="rounded-md border border-border/50 bg-background/70 px-3 py-2"
+                      >
+                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">
+                          {row.label}
+                        </div>
+                        <div className="mt-1 text-sm leading-6 whitespace-pre-wrap">
+                          {row.value}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -882,9 +950,7 @@ export function BookCreate({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
             ) : (
               <div className="rounded-md border border-dashed border-border/70 bg-background/50 px-4 py-5">
                 <div className="font-medium">{copy.idleTitle}</div>
-                <p className="mt-2 text-sm text-muted-foreground leading-7">
-                  {copy.helperBody}
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground leading-7">{copy.helperBody}</p>
               </div>
             )}
           </section>

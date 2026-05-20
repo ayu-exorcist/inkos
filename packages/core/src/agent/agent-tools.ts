@@ -1,16 +1,26 @@
-import { Type, type Static } from "@mariozechner/pi-ai";
-import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
+import { Type, type Static } from "@earendil-works/pi-ai";
+import type {
+  AgentTool,
+  AgentToolResult,
+  AgentToolUpdateCallback,
+} from "@earendil-works/pi-agent-core";
 import type { PipelineRunner } from "../pipeline/runner.js";
 import { type ReviseMode } from "../agents/reviser.js";
 import { readFile, writeFile, readdir, stat } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
 import { StateManager } from "../state/manager.js";
-import { assertSafeTruthFileName, createInteractionToolsFromDeps } from "../interaction/project-tools.js";
+import {
+  assertSafeTruthFileName,
+  createInteractionToolsFromDeps,
+} from "../interaction/project-tools.js";
 import { writeExportArtifact } from "../interaction/export-artifact.js";
 import { assertSafeBookId, deriveBookIdFromTitle } from "../utils/book-id.js";
 import { safeChildPath } from "../utils/path-safety.js";
 import { normalizePlatformId, normalizePlatformOrOther } from "../models/book.js";
-import { generateShortFictionCover, runShortFictionProduction } from "../pipeline/short-fiction-runner.js";
+import {
+  generateShortFictionCover,
+  runShortFictionProduction,
+} from "../pipeline/short-fiction-runner.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,46 +74,85 @@ const SubAgentParams = Type.Object({
     Type.Literal("exporter"),
   ]),
   instruction: Type.String({ description: "Natural language instruction for the sub-agent" }),
-  bookId: Type.Optional(Type.String({
-    description: "Optional book ID. In active-book sessions, omit it to use the current active book; if provided, it must match the current active book. For architect creation, this optionally sets the new book ID.",
-  })),
-  chapterNumber: Type.Optional(Type.Number({ description: "auditor/reviser: target chapter number. Omit to use the latest chapter." })),
+  bookId: Type.Optional(
+    Type.String({
+      description:
+        "Optional book ID. In active-book sessions, omit it to use the current active book; if provided, it must match the current active book. For architect creation, this optionally sets the new book ID.",
+    }),
+  ),
+  chapterNumber: Type.Optional(
+    Type.Number({
+      description: "auditor/reviser: target chapter number. Omit to use the latest chapter.",
+    }),
+  ),
   // -- architect params --
-  title: Type.Optional(Type.String({ description: "architect only: explicit book title. Required when creating a book." })),
-  genre: Type.Optional(Type.String({ description: "architect only: genre (xuanhuan, urban, mystery, romance, scifi, fantasy, wuxia, general, etc.)" })),
-  platform: Type.Optional(Type.Union([
-    Type.Literal("tomato"),
-    Type.Literal("qidian"),
-    Type.Literal("feilu"),
-    Type.Literal("other"),
-  ], { description: "architect only: target platform. Default: other" })),
-  language: Type.Optional(Type.Union([
-    Type.Literal("zh"),
-    Type.Literal("en"),
-  ], { description: "architect only: writing language. Default: zh" })),
-  targetChapters: Type.Optional(Type.Number({ description: "architect only: total chapter count. Default: 200" })),
-  chapterWordCount: Type.Optional(Type.Number({ description: "architect/writer: words per chapter. Default: 3000" })),
-  revise: Type.Optional(Type.Boolean({
-    description: "architect only: true 表示在当前 active book 上重新生成架构稿，而不是新建书籍。no-book creation sessions cannot revise an existing book.",
-  })),
-  feedback: Type.Optional(Type.String({
-    description: "architect only: revise 模式下的调整要求。举例：把架构稿从条目式升级成段落式架构稿、某个角色设定需要重新设计、主线冲突表达太弱需要加强等。如果是架构稿评审未通过要求重写的场景，把评审意见的 overallFeedback 原样传入即可",
-  })),
+  title: Type.Optional(
+    Type.String({
+      description: "architect only: explicit book title. Required when creating a book.",
+    }),
+  ),
+  genre: Type.Optional(
+    Type.String({
+      description:
+        "architect only: genre (xuanhuan, urban, mystery, romance, scifi, fantasy, wuxia, general, etc.)",
+    }),
+  ),
+  platform: Type.Optional(
+    Type.Union(
+      [
+        Type.Literal("tomato"),
+        Type.Literal("qidian"),
+        Type.Literal("feilu"),
+        Type.Literal("other"),
+      ],
+      { description: "architect only: target platform. Default: other" },
+    ),
+  ),
+  language: Type.Optional(
+    Type.Union([Type.Literal("zh"), Type.Literal("en")], {
+      description: "architect only: writing language. Default: zh",
+    }),
+  ),
+  targetChapters: Type.Optional(
+    Type.Number({ description: "architect only: total chapter count. Default: 200" }),
+  ),
+  chapterWordCount: Type.Optional(
+    Type.Number({ description: "architect/writer: words per chapter. Default: 3000" }),
+  ),
+  revise: Type.Optional(
+    Type.Boolean({
+      description:
+        "architect only: true 表示在当前 active book 上重新生成架构稿，而不是新建书籍。no-book creation sessions cannot revise an existing book.",
+    }),
+  ),
+  feedback: Type.Optional(
+    Type.String({
+      description:
+        "architect only: revise 模式下的调整要求。举例：把架构稿从条目式升级成段落式架构稿、某个角色设定需要重新设计、主线冲突表达太弱需要加强等。如果是架构稿评审未通过要求重写的场景，把评审意见的 overallFeedback 原样传入即可",
+    }),
+  ),
   // -- reviser params --
-  mode: Type.Optional(Type.Union([
-    Type.Literal("spot-fix"),
-    Type.Literal("polish"),
-    Type.Literal("rewrite"),
-    Type.Literal("rework"),
-    Type.Literal("anti-detect"),
-  ], { description: "reviser only: revision mode. Default: spot-fix" })),
+  mode: Type.Optional(
+    Type.Union(
+      [
+        Type.Literal("spot-fix"),
+        Type.Literal("polish"),
+        Type.Literal("rewrite"),
+        Type.Literal("rework"),
+        Type.Literal("anti-detect"),
+      ],
+      { description: "reviser only: revision mode. Default: spot-fix" },
+    ),
+  ),
   // -- exporter params --
-  format: Type.Optional(Type.Union([
-    Type.Literal("txt"),
-    Type.Literal("md"),
-    Type.Literal("epub"),
-  ], { description: "exporter only: export format. Default: txt" })),
-  approvedOnly: Type.Optional(Type.Boolean({ description: "exporter only: export only approved chapters. Default: false" })),
+  format: Type.Optional(
+    Type.Union([Type.Literal("txt"), Type.Literal("md"), Type.Literal("epub")], {
+      description: "exporter only: export format. Default: txt",
+    }),
+  ),
+  approvedOnly: Type.Optional(
+    Type.Boolean({ description: "exporter only: export only approved chapters. Default: false" }),
+  ),
 });
 
 type SubAgentParamsType = Static<typeof SubAgentParams>;
@@ -145,7 +194,23 @@ export function createSubAgentTool(
       _signal?: AbortSignal,
       onUpdate?: AgentToolUpdateCallback,
     ): Promise<AgentToolResult<unknown>> {
-      const { agent, instruction, bookId, title, chapterNumber, genre, platform, language, targetChapters, chapterWordCount, revise, feedback, mode, format, approvedOnly } = params;
+      const {
+        agent,
+        instruction,
+        bookId,
+        title,
+        chapterNumber,
+        genre,
+        platform,
+        language,
+        targetChapters,
+        chapterWordCount,
+        revise,
+        feedback,
+        mode,
+        format,
+        approvedOnly,
+      } = params;
 
       const progress = (msg: string) => {
         onUpdate?.(textResult(msg));
@@ -153,7 +218,9 @@ export function createSubAgentTool(
 
       try {
         if (!activeBookId && agent !== "architect") {
-          return textResult("No active book. Only the architect agent can create a book from this session.");
+          return textResult(
+            "No active book. Only the architect agent can create a book from this session.",
+          );
         }
         if (activeBookId && agent === "architect" && !revise) {
           return textResult("当前已有书籍，不需要建书。如果你想创建新书，请先回到首页。");
@@ -175,7 +242,7 @@ export function createSubAgentTool(
             }
             const resolvedTitle = title?.trim();
             if (!resolvedTitle) {
-              return textResult('Error: title is required for the architect agent.');
+              return textResult("Error: title is required for the architect agent.");
             }
             const id = bookId
               ? assertSafeBookId(bookId, "architect.bookId")
@@ -211,7 +278,7 @@ export function createSubAgentTool(
             progress(`Writer finished chapter for "${targetBookId}".`);
             return textResult(
               `Chapter written for "${targetBookId}". ` +
-              `Word count: ${(result as any).wordCount ?? "unknown"}.`,
+                `Word count: ${(result as any).wordCount ?? "unknown"}.`,
               {
                 kind: "chapter_written",
                 bookId: targetBookId,
@@ -233,27 +300,33 @@ export function createSubAgentTool(
               .join("\n");
             return textResult(
               `Audit chapter ${audit.chapterNumber}: ${audit.passed ? "PASSED" : "FAILED"}, ${(audit.issues ?? []).length} issue(s).` +
-              (issueLines ? `\n${issueLines}` : ""),
+                (issueLines ? `\n${issueLines}` : ""),
             );
           }
 
           case "reviser": {
             const targetBookId = resolveToolBookId("reviser", bookId, activeBookId);
             const resolvedMode: ReviseMode = (mode as ReviseMode) ?? "spot-fix";
-            progress(`Revising "${targetBookId}" chapter ${chapterNumber ?? "latest"} in ${resolvedMode} mode...`);
+            progress(
+              `Revising "${targetBookId}" chapter ${chapterNumber ?? "latest"} in ${resolvedMode} mode...`,
+            );
             await pipeline.reviseDraft(targetBookId, chapterNumber, resolvedMode);
             progress(`Revision complete for "${targetBookId}".`);
-            return textResult(`Revision (${resolvedMode}) complete for "${targetBookId}" chapter ${chapterNumber ?? "latest"}.`);
+            return textResult(
+              `Revision (${resolvedMode}) complete for "${targetBookId}" chapter ${chapterNumber ?? "latest"}.`,
+            );
           }
 
           case "exporter": {
             const targetBookId = resolveToolBookId("exporter", bookId, activeBookId);
             if (!projectRoot) return textResult("Error: exporter requires projectRoot.");
-            const inferredFormat = format ?? (/epub/i.test(instruction)
-              ? "epub"
-              : /markdown|\bmd\b/i.test(instruction)
-                ? "md"
-                : "txt");
+            const inferredFormat =
+              format ??
+              (/epub/i.test(instruction)
+                ? "epub"
+                : /markdown|\bmd\b/i.test(instruction)
+                  ? "md"
+                  : "txt");
             const exportApprovedOnly = approvedOnly ?? /approved|已通过|通过章节/.test(instruction);
             const state = new StateManager(projectRoot);
             const result = await writeExportArtifact(state, targetBookId, {
@@ -282,38 +355,63 @@ export function createSubAgentTool(
 
 const ShortFictionRunParams = Type.Object({
   direction: Type.String({
-    description: "Required short fiction direction, e.g. 女频短篇 婚姻背叛 证据反杀. Include genre, protagonist pressure, conflict, and desired payoff when known.",
+    description:
+      "Required short fiction direction, e.g. 女频短篇 婚姻背叛 证据反杀. Include genre, protagonist pressure, conflict, and desired payoff when known.",
   }),
-  reference: Type.Optional(Type.String({
-    description: "Optional user-provided reference notes or constraints. Do not paste copyrighted source text unless the user explicitly provided it.",
-  })),
-  storyId: Type.Optional(Type.String({
-    description: "Optional output id under shorts/. Leave empty to derive from the generated title.",
-  })),
-  chapters: Type.Optional(Type.Number({
-    description: "Target complete short chapter count, 12-18. Default 12.",
-  })),
-  chars: Type.Optional(Type.Number({
-    description: "Target Chinese characters per chapter, 900-1200. Default 1000.",
-  })),
-  cover: Type.Optional(Type.Boolean({
-    description: "Whether to attempt cover image generation after synopsis and cover prompt. Default true; use false if the user only wants text assets.",
-  })),
-  coverBaseUrl: Type.Optional(Type.String({
-    description: "Optional OpenAI-compatible Responses API base URL for cover generation.",
-  })),
-  coverEndpoint: Type.Optional(Type.String({
-    description: "Optional exact Responses endpoint for cover generation. Overrides coverBaseUrl.",
-  })),
-  coverModel: Type.Optional(Type.String({
-    description: "Optional image-capable Responses model. Default gpt-image-2.",
-  })),
-  coverSize: Type.Optional(Type.String({
-    description: "Optional image size, default 1024x1360.",
-  })),
-  coverApiKeyEnv: Type.Optional(Type.String({
-    description: "Optional env var containing the cover API key. Default INKOS_COVER_API_KEY.",
-  })),
+  reference: Type.Optional(
+    Type.String({
+      description:
+        "Optional user-provided reference notes or constraints. Do not paste copyrighted source text unless the user explicitly provided it.",
+    }),
+  ),
+  storyId: Type.Optional(
+    Type.String({
+      description:
+        "Optional output id under shorts/. Leave empty to derive from the generated title.",
+    }),
+  ),
+  chapters: Type.Optional(
+    Type.Number({
+      description: "Target complete short chapter count, 12-18. Default 12.",
+    }),
+  ),
+  chars: Type.Optional(
+    Type.Number({
+      description: "Target Chinese characters per chapter, 900-1200. Default 1000.",
+    }),
+  ),
+  cover: Type.Optional(
+    Type.Boolean({
+      description:
+        "Whether to attempt cover image generation after synopsis and cover prompt. Default true; use false if the user only wants text assets.",
+    }),
+  ),
+  coverBaseUrl: Type.Optional(
+    Type.String({
+      description: "Optional OpenAI-compatible Responses API base URL for cover generation.",
+    }),
+  ),
+  coverEndpoint: Type.Optional(
+    Type.String({
+      description:
+        "Optional exact Responses endpoint for cover generation. Overrides coverBaseUrl.",
+    }),
+  ),
+  coverModel: Type.Optional(
+    Type.String({
+      description: "Optional image-capable Responses model. Default gpt-image-2.",
+    }),
+  ),
+  coverSize: Type.Optional(
+    Type.String({
+      description: "Optional image size, default 1024x1360.",
+    }),
+  ),
+  coverApiKeyEnv: Type.Optional(
+    Type.String({
+      description: "Optional env var containing the cover API key. Default INKOS_COVER_API_KEY.",
+    }),
+  ),
 });
 
 type ShortFictionRunParamsType = Static<typeof ShortFictionRunParams>;
@@ -401,35 +499,58 @@ function summarizeCoverGenerationError(error: string | undefined): string {
 
 const GenerateCoverParams = Type.Object({
   title: Type.String({
-    description: "Required book or short-fiction title. Use the real story title when regenerating an existing cover.",
+    description:
+      "Required book or short-fiction title. Use the real story title when regenerating an existing cover.",
   }),
-  intro: Type.Optional(Type.String({
-    description: "Optional synopsis or one-paragraph story hook to guide the cover.",
-  })),
-  sellingPoints: Type.Optional(Type.String({
-    description: "Optional selling points separated by semicolons or new lines, e.g. 婚姻背叛；证据反杀；女主冷笑.",
-  })),
-  coverPrompt: Type.Optional(Type.String({
-    description: "Optional concrete or revised visual direction. Use this when the user changes the cover prompt through chat. Keep it short and commercial; do not paste the whole story.",
-  })),
-  outputDir: Type.Optional(Type.String({
-    description: "Optional project-relative directory for cover-prompt.md and cover.png. For an existing short or cover prompt revision, use its existing final/cover directory to overwrite that cover.",
-  })),
-  coverBaseUrl: Type.Optional(Type.String({
-    description: "Optional image API base URL. Usually omit and use Studio cover config.",
-  })),
-  coverEndpoint: Type.Optional(Type.String({
-    description: "Optional exact image endpoint. Overrides coverBaseUrl.",
-  })),
-  coverModel: Type.Optional(Type.String({
-    description: "Optional image model. Usually omit and use Studio cover config.",
-  })),
-  coverSize: Type.Optional(Type.String({
-    description: "Optional image size, default 1024x1360.",
-  })),
-  coverApiKeyEnv: Type.Optional(Type.String({
-    description: "Optional env var containing the cover API key. Usually omit and use Studio cover config.",
-  })),
+  intro: Type.Optional(
+    Type.String({
+      description: "Optional synopsis or one-paragraph story hook to guide the cover.",
+    }),
+  ),
+  sellingPoints: Type.Optional(
+    Type.String({
+      description:
+        "Optional selling points separated by semicolons or new lines, e.g. 婚姻背叛；证据反杀；女主冷笑.",
+    }),
+  ),
+  coverPrompt: Type.Optional(
+    Type.String({
+      description:
+        "Optional concrete or revised visual direction. Use this when the user changes the cover prompt through chat. Keep it short and commercial; do not paste the whole story.",
+    }),
+  ),
+  outputDir: Type.Optional(
+    Type.String({
+      description:
+        "Optional project-relative directory for cover-prompt.md and cover.png. For an existing short or cover prompt revision, use its existing final/cover directory to overwrite that cover.",
+    }),
+  ),
+  coverBaseUrl: Type.Optional(
+    Type.String({
+      description: "Optional image API base URL. Usually omit and use Studio cover config.",
+    }),
+  ),
+  coverEndpoint: Type.Optional(
+    Type.String({
+      description: "Optional exact image endpoint. Overrides coverBaseUrl.",
+    }),
+  ),
+  coverModel: Type.Optional(
+    Type.String({
+      description: "Optional image model. Usually omit and use Studio cover config.",
+    }),
+  ),
+  coverSize: Type.Optional(
+    Type.String({
+      description: "Optional image size, default 1024x1360.",
+    }),
+  ),
+  coverApiKeyEnv: Type.Optional(
+    Type.String({
+      description:
+        "Optional env var containing the cover API key. Usually omit and use Studio cover config.",
+    }),
+  ),
 });
 
 type GenerateCoverParamsType = Static<typeof GenerateCoverParams>;
@@ -482,7 +603,9 @@ export function createGenerateCoverTool(
 
 const WriteTruthFileParams = Type.Object({
   bookId: Type.Optional(Type.String({ description: "Book ID. Omit to use the active book." })),
-  fileName: Type.String({ description: "Truth file name under story/, e.g. story_bible.md or current_focus.md." }),
+  fileName: Type.String({
+    description: "Truth file name under story/, e.g. story_bible.md or current_focus.md.",
+  }),
   content: Type.String({ description: "Full replacement content for the truth file." }),
 });
 
@@ -524,15 +647,18 @@ export function createRenameEntityTool(
   const tools = createDeterministicInteractionTools(pipeline, projectRoot);
   return {
     name: "rename_entity",
-    description: "Rename an entity across truth files and chapters using deterministic edit control.",
+    description:
+      "Rename an entity across truth files and chapters using deterministic edit control.",
     label: "Rename Entity",
     parameters: RenameEntityParams,
     async execute(_toolCallId, params): Promise<AgentToolResult<undefined>> {
       const bookId = resolveToolBookId("rename_entity", params.bookId, activeBookId);
-      const result = await tools.renameEntity(bookId, params.oldValue, params.newValue) as {
+      const result = (await tools.renameEntity(bookId, params.oldValue, params.newValue)) as {
         readonly __interaction?: { readonly responseText?: string };
       };
-      const summary = result.__interaction?.responseText ?? `Renamed "${params.oldValue}" to "${params.newValue}" in "${bookId}".`;
+      const summary =
+        result.__interaction?.responseText ??
+        `Renamed "${params.oldValue}" to "${params.newValue}" in "${bookId}".`;
       return textResult(summary);
     },
   };
@@ -558,15 +684,17 @@ export function createPatchChapterTextTool(
     parameters: PatchChapterTextParams,
     async execute(_toolCallId, params): Promise<AgentToolResult<undefined>> {
       const bookId = resolveToolBookId("patch_chapter_text", params.bookId, activeBookId);
-      const result = await tools.patchChapterText(
+      const result = (await tools.patchChapterText(
         bookId,
         params.chapterNumber,
         params.targetText,
         params.replacementText,
-      ) as {
+      )) as {
         readonly __interaction?: { readonly responseText?: string };
       };
-      const summary = result.__interaction?.responseText ?? `Patched chapter ${params.chapterNumber} for "${bookId}".`;
+      const summary =
+        result.__interaction?.responseText ??
+        `Patched chapter ${params.chapterNumber} for "${bookId}".`;
       return textResult(summary);
     },
   };
@@ -577,14 +705,21 @@ export function createPatchChapterTextTool(
 // ---------------------------------------------------------------------------
 
 const ReadParams = Type.Object({
-  path: Type.String({ description: "File path relative to books/, or an absolute path when system path reading is enabled." }),
+  path: Type.String({
+    description:
+      "File path relative to books/, or an absolute path when system path reading is enabled.",
+  }),
 });
 
 export interface ReadToolOptions {
   readonly allowSystemPaths?: boolean;
 }
 
-function resolveReadPath(booksRoot: string, requestedPath: string, options: ReadToolOptions): string {
+function resolveReadPath(
+  booksRoot: string,
+  requestedPath: string,
+  options: ReadToolOptions,
+): string {
   if (options.allowSystemPaths && isAbsolute(requestedPath)) {
     return resolve(requestedPath);
   }
@@ -642,7 +777,7 @@ export function createEditTool(projectRoot: string): AgentTool<typeof EditParams
       "Edit a file under books/ via exact string replacement. " +
       "old_string must appear exactly once in the file. " +
       "For chapter text use patch_chapter_text; for canonical truth files (story_bible/volume_outline/book_rules/current_focus) prefer write_truth_file; " +
-      "to rewrite or polish a whole chapter call sub_agent with agent=\"reviser\".",
+      'to rewrite or polish a whole chapter call sub_agent with agent="reviser".',
     label: "Edit File",
     parameters: EditParams,
     async execute(
@@ -657,9 +792,12 @@ export function createEditTool(projectRoot: string): AgentTool<typeof EditParams
           return textResult(`old_string not found in "${params.path}".`);
         }
         if (content.indexOf(params.old_string, idx + 1) !== -1) {
-          return textResult(`old_string appears more than once in "${params.path}". Provide a more specific match.`);
+          return textResult(
+            `old_string appears more than once in "${params.path}". Provide a more specific match.`,
+          );
         }
-        const updated = content.slice(0, idx) + params.new_string + content.slice(idx + params.old_string.length);
+        const updated =
+          content.slice(0, idx) + params.new_string + content.slice(idx + params.old_string.length);
         await writeFile(filePath, updated, "utf-8");
         return textResult(`File "${params.path}" updated successfully.`);
       } catch (err: any) {
@@ -687,7 +825,7 @@ export function createWriteFileTool(projectRoot: string): AgentTool<typeof Write
       "Create a new file, or fully replace an existing file's content under books/. " +
       "Parent directories are created automatically. Existing content is overwritten silently — " +
       "for canonical truth files prefer write_truth_file; " +
-      "for whole-chapter rewrites/polishing call sub_agent with agent=\"reviser\".",
+      'for whole-chapter rewrites/polishing call sub_agent with agent="reviser".',
     label: "Write File",
     parameters: WriteFileParams,
     async execute(
@@ -740,6 +878,7 @@ export function createGrepTool(projectRoot: string): AgentTool<typeof GrepParams
           try {
             entries = await readdir(dir);
           } catch {
+            // failure expected, safe to ignore
             return; // directory doesn't exist
           }
           for (const entry of entries) {
@@ -769,9 +908,10 @@ export function createGrepTool(projectRoot: string): AgentTool<typeof GrepParams
           return textResult(`No matches for "${params.pattern}" in book "${params.bookId}".`);
         }
 
-        const truncated = results.length > 100
-          ? results.slice(0, 100).join("\n") + `\n\n... [${results.length - 100} more matches]`
-          : results.join("\n");
+        const truncated =
+          results.length > 100
+            ? results.slice(0, 100).join("\n") + `\n\n... [${results.length - 100} more matches]`
+            : results.join("\n");
 
         return textResult(truncated);
       } catch (err: any) {
@@ -788,7 +928,9 @@ export function createGrepTool(projectRoot: string): AgentTool<typeof GrepParams
 const LsParams = Type.Object({
   bookId: Type.String({ description: "Book ID" }),
   subdir: Type.Optional(
-    Type.String({ description: "Subdirectory within the book, e.g. 'story', 'chapters', 'story/runtime'" }),
+    Type.String({
+      description: "Subdirectory within the book, e.g. 'story', 'chapters', 'story/runtime'",
+    }),
   ),
 });
 
@@ -797,7 +939,8 @@ export function createLsTool(projectRoot: string): AgentTool<typeof LsParams> {
 
   return {
     name: "ls",
-    description: "List files in a book directory. Optionally specify a subdirectory like 'story' or 'chapters'.",
+    description:
+      "List files in a book directory. Optionally specify a subdirectory like 'story' or 'chapters'.",
     label: "List Files",
     parameters: LsParams,
     async execute(
@@ -818,6 +961,7 @@ export function createLsTool(projectRoot: string): AgentTool<typeof LsParams> {
             const suffix = entryStat.isDirectory() ? "/" : ` (${entryStat.size} bytes)`;
             details.push(`${entry}${suffix}`);
           } catch {
+            // failure expected, safe to ignore
             details.push(entry);
           }
         }
@@ -828,7 +972,9 @@ export function createLsTool(projectRoot: string): AgentTool<typeof LsParams> {
 
         return textResult(details.join("\n"));
       } catch (err: any) {
-        return textResult(`Failed to list "${params.bookId}/${params.subdir ?? ""}": ${err?.message ?? String(err)}`);
+        return textResult(
+          `Failed to list "${params.bookId}/${params.subdir ?? ""}": ${err?.message ?? String(err)}`,
+        );
       }
     },
   };

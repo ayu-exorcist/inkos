@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { validateToolArguments } from "@mariozechner/pi-ai";
+import { validateToolArguments } from "@earendil-works/pi-ai";
 import { createSubAgentTool } from "../agent/agent-tools.js";
 
 describe("SubAgentParams schema", () => {
@@ -54,10 +54,15 @@ describe("SubAgentParams schema", () => {
     });
 
     expect(prepared).toMatchObject({ platform: "tomato" });
-    expect(() => validateToolArguments(tool as any, {
-      name: "sub_agent",
-      arguments: prepared,
-    } as any)).not.toThrow();
+    expect(() =>
+      validateToolArguments(
+        tool as any,
+        {
+          name: "sub_agent",
+          arguments: prepared,
+        } as any,
+      ),
+    ).not.toThrow();
 
     const blankPlatform = tool.prepareArguments?.({
       agent: "architect",
@@ -69,10 +74,15 @@ describe("SubAgentParams schema", () => {
     });
 
     expect(blankPlatform).not.toHaveProperty("platform");
-    expect(() => validateToolArguments(tool as any, {
-      name: "sub_agent",
-      arguments: blankPlatform,
-    } as any)).not.toThrow();
+    expect(() =>
+      validateToolArguments(
+        tool as any,
+        {
+          name: "sub_agent",
+          arguments: blankPlatform,
+        } as any,
+      ),
+    ).not.toThrow();
   });
 });
 
@@ -111,7 +121,11 @@ describe("architect agent — BookConfig construction", () => {
   });
 
   it("uses defaults when optional params are omitted", async () => {
-    await tool.execute("tc2", { agent: "architect", instruction: "Create a book", title: "Test Book" });
+    await tool.execute("tc2", {
+      agent: "architect",
+      instruction: "Create a book",
+      title: "Test Book",
+    });
     const [bookConfig] = initBookMock.mock.calls[0];
     expect(bookConfig.genre).toBe("general");
     expect(bookConfig.platform).toBe("other");
@@ -146,7 +160,12 @@ describe("writer agent — wordCount passthrough", () => {
   });
 
   it("passes chapterWordCount as wordCount", async () => {
-    await tool.execute("tc1", { agent: "writer", instruction: "Write", bookId: "my-book", chapterWordCount: 5000 });
+    await tool.execute("tc1", {
+      agent: "writer",
+      instruction: "Write",
+      bookId: "my-book",
+      chapterWordCount: 5000,
+    });
     expect(writeNextChapterMock).toHaveBeenCalledWith("my-book", 5000);
   });
 
@@ -159,14 +178,20 @@ describe("writer agent — wordCount passthrough", () => {
 describe("auditor agent — rich return value", () => {
   it("returns issue details with severity", async () => {
     const auditDraftMock = vi.fn(async () => ({
-      chapterNumber: 3, passed: false,
+      chapterNumber: 3,
+      passed: false,
       issues: [
         { severity: "warning", description: "Pacing too fast" },
         { severity: "critical", description: "Name inconsistency" },
       ],
     }));
     const tool = createSubAgentTool({ auditDraft: auditDraftMock } as any, "my-book");
-    const result = await tool.execute("tc1", { agent: "auditor", instruction: "Audit", bookId: "my-book", chapterNumber: 3 });
+    const result = await tool.execute("tc1", {
+      agent: "auditor",
+      instruction: "Audit",
+      bookId: "my-book",
+      chapterNumber: 3,
+    });
     const text = (result.content[0] as { type: "text"; text: string }).text;
     expect(text).toContain("FAILED");
     expect(text).toContain("2 issue(s)");
@@ -186,7 +211,13 @@ describe("reviser agent — mode field", () => {
   });
 
   it("uses mode param directly", async () => {
-    await tool.execute("tc1", { agent: "reviser", instruction: "Fix", bookId: "my-book", chapterNumber: 5, mode: "anti-detect" });
+    await tool.execute("tc1", {
+      agent: "reviser",
+      instruction: "Fix",
+      bookId: "my-book",
+      chapterNumber: 5,
+      mode: "anti-detect",
+    });
     expect(reviseDraftMock).toHaveBeenCalledWith("my-book", 5, "anti-detect");
   });
 

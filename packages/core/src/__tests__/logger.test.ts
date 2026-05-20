@@ -42,7 +42,7 @@ describe("createStderrSink", () => {
 
     logger.info("colored message");
     expect(captured[0]).toContain("\x1b[36m"); // cyan for info
-    expect(captured[0]).toContain("\x1b[0m");  // reset
+    expect(captured[0]).toContain("\x1b[0m"); // reset
   });
 
   it("omits ANSI escape codes when enableColors=false", () => {

@@ -41,7 +41,9 @@ describe("tui layout", () => {
     expect(frame).toContain("writing");
     expect(frame).toContain("user: continue");
     expect(frame).toContain("task.completed: Completed write_next for harbor.");
-    expect(frame.indexOf("task.completed: Completed write_next for harbor.")).toBeLessThan(frame.indexOf("Ask InkOS"));
+    expect(frame.indexOf("task.completed: Completed write_next for harbor.")).toBeLessThan(
+      frame.indexOf("Ask InkOS"),
+    );
     expect(frame.indexOf("Mode auto")).toBeLessThan(frame.indexOf("Ask InkOS"));
   });
 

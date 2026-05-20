@@ -49,43 +49,45 @@ describe("ChapterAnalyzerAgent", () => {
       updatedAt: "2026-03-22T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== CHAPTER_TITLE ===",
-          "A Quiet Sky",
-          "",
-          "=== CHAPTER_CONTENT ===",
-          englishContent,
-          "",
-          "=== PRE_WRITE_CHECK ===",
-          "",
-          "=== POST_SETTLEMENT ===",
-          "",
-          "=== UPDATED_STATE ===",
-          "| Field | Value |",
-          "| --- | --- |",
-          "| Chapter | 1 |",
-          "",
-          "=== UPDATED_LEDGER ===",
-          "",
-          "=== UPDATED_HOOKS ===",
-          "| hook_id | status |",
-          "| --- | --- |",
-          "| h1 | open |",
-          "",
-          "=== CHAPTER_SUMMARY ===",
-          "| 1 | A Quiet Sky |",
-          "",
-          "=== UPDATED_SUBPLOTS ===",
-          "",
-          "=== UPDATED_EMOTIONAL_ARCS ===",
-          "",
-          "=== UPDATED_CHARACTER_MATRIX ===",
-          "",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== CHAPTER_TITLE ===",
+        "A Quiet Sky",
+        "",
+        "=== CHAPTER_CONTENT ===",
+        englishContent,
+        "",
+        "=== PRE_WRITE_CHECK ===",
+        "",
+        "=== POST_SETTLEMENT ===",
+        "",
+        "=== UPDATED_STATE ===",
+        "| Field | Value |",
+        "| --- | --- |",
+        "| Chapter | 1 |",
+        "",
+        "=== UPDATED_LEDGER ===",
+        "",
+        "=== UPDATED_HOOKS ===",
+        "| hook_id | status |",
+        "| --- | --- |",
+        "| h1 | open |",
+        "",
+        "=== CHAPTER_SUMMARY ===",
+        "| 1 | A Quiet Sky |",
+        "",
+        "=== UPDATED_SUBPLOTS ===",
+        "",
+        "=== UPDATED_EMOTIONAL_ARCS ===",
+        "",
+        "=== UPDATED_CHARACTER_MATRIX ===",
+        "",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     try {
       const output = await agent.analyzeChapter({
@@ -134,7 +136,8 @@ describe("ChapterAnalyzerAgent", () => {
       updatedAt: "2026-03-22T00:00:00.000Z",
     };
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== CHAPTER_TITLE ===",
@@ -224,8 +227,16 @@ describe("ChapterAnalyzerAgent", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still carries the oath token.\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 100\nReturn to the mentor oath conflict.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still carries the oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 100\nReturn to the mentor oath conflict.\n",
+        "utf-8",
+      ),
     ]);
 
     const agent = new ChapterAnalyzerAgent({
@@ -244,7 +255,8 @@ describe("ChapterAnalyzerAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== CHAPTER_TITLE ===",
@@ -316,7 +328,8 @@ describe("ChapterAnalyzerAgent", () => {
 
   it("preserves the supplied chapter content when the model omits CHAPTER_CONTENT", async () => {
     const bookDir = await mkdtemp(join(tmpdir(), "inkos-chapter-analyzer-fallback-"));
-    const chapterContent = "Lin Yue stepped into the archive and kept the real ledger hidden inside his sleeve.";
+    const chapterContent =
+      "Lin Yue stepped into the archive and kept the real ledger hidden inside his sleeve.";
     const agent = new ChapterAnalyzerAgent({
       client: {
         provider: "openai",
@@ -346,40 +359,42 @@ describe("ChapterAnalyzerAgent", () => {
       updatedAt: "2026-03-22T00:00:00.000Z",
     };
 
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== CHAPTER_TITLE ===",
-          "Archive Entry",
-          "",
-          "=== PRE_WRITE_CHECK ===",
-          "",
-          "=== POST_SETTLEMENT ===",
-          "",
-          "=== UPDATED_STATE ===",
-          "| Field | Value |",
-          "| --- | --- |",
-          "| Current Chapter | 1 |",
-          "",
-          "=== UPDATED_LEDGER ===",
-          "",
-          "=== UPDATED_HOOKS ===",
-          "| hook_id | status |",
-          "| --- | --- |",
-          "| h1 | open |",
-          "",
-          "=== CHAPTER_SUMMARY ===",
-          "| 1 | Archive Entry |",
-          "",
-          "=== UPDATED_SUBPLOTS ===",
-          "",
-          "=== UPDATED_EMOTIONAL_ARCS ===",
-          "",
-          "=== UPDATED_CHARACTER_MATRIX ===",
-          "",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== CHAPTER_TITLE ===",
+        "Archive Entry",
+        "",
+        "=== PRE_WRITE_CHECK ===",
+        "",
+        "=== POST_SETTLEMENT ===",
+        "",
+        "=== UPDATED_STATE ===",
+        "| Field | Value |",
+        "| --- | --- |",
+        "| Current Chapter | 1 |",
+        "",
+        "=== UPDATED_LEDGER ===",
+        "",
+        "=== UPDATED_HOOKS ===",
+        "| hook_id | status |",
+        "| --- | --- |",
+        "| h1 | open |",
+        "",
+        "=== CHAPTER_SUMMARY ===",
+        "| 1 | Archive Entry |",
+        "",
+        "=== UPDATED_SUBPLOTS ===",
+        "",
+        "=== UPDATED_EMOTIONAL_ARCS ===",
+        "",
+        "=== UPDATED_CHARACTER_MATRIX ===",
+        "",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     try {
       const output = await agent.analyzeChapter({
@@ -403,47 +418,75 @@ describe("ChapterAnalyzerAgent", () => {
     await mkdir(storyDir, { recursive: true });
 
     await Promise.all([
-      writeFile(join(storyDir, "story_bible.md"), "# Story Bible\n\n- Full bible should stay out of governed analyzer prompts.\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 100\nReturn to the mentor oath conflict.\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still carries the oath token.\n", "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), [
-        "# Pending Hooks",
-        "",
-        "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
-        "| guild-route | 1 | mystery | open | 2 | 6 | Merchant guild trail |",
-        "| mentor-oath | 8 | relationship | open | 99 | 101 | Mentor oath debt |",
-        "",
-      ].join("\n"), "utf-8"),
-      writeFile(join(storyDir, "subplot_board.md"), [
-        "# Subplot Board",
-        "",
-        "| subplot | status | last_update | notes |",
-        "| --- | --- | --- | --- |",
-        "| Guild trail | open | 99 | Still active |",
-        "| Harbor tax | resolved | 40 | Closed long ago |",
-        "",
-      ].join("\n"), "utf-8"),
-      writeFile(join(storyDir, "emotional_arcs.md"), [
-        "# Emotional Arcs",
-        "",
-        "| chapter | character | emotion | trigger | direction |",
-        "| --- | --- | --- | --- | --- |",
-        "| 95 | Lin Yue | grief | mentor silence | down |",
-        "| 100 | Lin Yue | resolve | oath token | up |",
-        "",
-      ].join("\n"), "utf-8"),
-      writeFile(join(storyDir, "character_matrix.md"), [
-        "# Character Matrix",
-        "",
-        "### Character Profiles",
-        "| character | role | status | notes |",
-        "| --- | --- | --- | --- |",
-        "| Lin Yue | protagonist | active | carries oath token |",
-        "| Mentor Shen | mentor | missing | tied to oath debt |",
-        "| Harbor Clerk | clerk | inactive | old tax subplot |",
-        "",
-      ].join("\n"), "utf-8"),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# Story Bible\n\n- Full bible should stay out of governed analyzer prompts.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 100\nReturn to the mentor oath conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still carries the oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "pending_hooks.md"),
+        [
+          "# Pending Hooks",
+          "",
+          "| hook_id | start_chapter | type | status | last_advanced_chapter | expected_payoff | notes |",
+          "| --- | --- | --- | --- | --- | --- | --- |",
+          "| guild-route | 1 | mystery | open | 2 | 6 | Merchant guild trail |",
+          "| mentor-oath | 8 | relationship | open | 99 | 101 | Mentor oath debt |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "subplot_board.md"),
+        [
+          "# Subplot Board",
+          "",
+          "| subplot | status | last_update | notes |",
+          "| --- | --- | --- | --- |",
+          "| Guild trail | open | 99 | Still active |",
+          "| Harbor tax | resolved | 40 | Closed long ago |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "emotional_arcs.md"),
+        [
+          "# Emotional Arcs",
+          "",
+          "| chapter | character | emotion | trigger | direction |",
+          "| --- | --- | --- | --- | --- |",
+          "| 95 | Lin Yue | grief | mentor silence | down |",
+          "| 100 | Lin Yue | resolve | oath token | up |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "character_matrix.md"),
+        [
+          "# Character Matrix",
+          "",
+          "### Character Profiles",
+          "| character | role | status | notes |",
+          "| --- | --- | --- | --- |",
+          "| Lin Yue | protagonist | active | carries oath token |",
+          "| Mentor Shen | mentor | missing | tied to oath debt |",
+          "| Harbor Clerk | clerk | inactive | old tax subplot |",
+          "",
+        ].join("\n"),
+        "utf-8",
+      ),
     ]);
 
     const agent = new ChapterAnalyzerAgent({
@@ -462,7 +505,8 @@ describe("ChapterAnalyzerAgent", () => {
       projectRoot: process.cwd(),
     });
 
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({
         content: [
           "=== CHAPTER_TITLE ===",
@@ -520,7 +564,8 @@ describe("ChapterAnalyzerAgent", () => {
         chapterNumber: 100,
         chapterTitle: "Mentor Oath Returns",
         chapterContent: "Lin Yue returned to the mentor oath and the missing explanation.",
-        chapterIntent: "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
+        chapterIntent:
+          "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
         contextPackage: {
           chapter: 100,
           selectedContext: [

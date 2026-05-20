@@ -63,7 +63,9 @@ export function buildShortFictionOutlineUserPrompt(input: ShortFictionOutlinePro
     "## 目标规格",
     `完整短篇 ${input.chapterCount} 章，每章约 ${input.charsPerChapter} 字。`,
     "",
-    input.reference?.text ? "## 可选参考文本\n" + trimForPrompt(input.reference.text, 12000) + "\n" : "",
+    input.reference?.text
+      ? "## 可选参考文本\n" + trimForPrompt(input.reference.text, 12000) + "\n"
+      : "",
     "## 产出要求",
     "先给一个平台感标题，再给完整故事方案。大纲要讲清楚主角为什么被压住、读者想看什么回报、主角靠什么翻盘、证据/关系/身份/规则如何递进、反派为什么会反扑、结尾如何落地。",
     "章节方案必须逐章写清：章节标题方向、当章发生的关键场面、角色动作、压力升级或回报、章尾继续读的理由。",
@@ -74,7 +76,9 @@ export function buildShortFictionOutlineUserPrompt(input: ShortFictionOutlinePro
     "只写一行平台感标题",
     "=== SHORT_FICTION_PLAN ===",
     "用 Markdown 写完整故事方案，包含：题材/受众、标题打法、开篇小钩子、人物与关系、核心压力、主角赢法、升级链、反转链、结尾回报、逐章方案。",
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function buildShortFictionOutlineReviewSystemPrompt(): string {
@@ -86,12 +90,16 @@ export function buildShortFictionOutlineReviewSystemPrompt(): string {
   ].join("\n");
 }
 
-export function buildShortFictionOutlineReviewUserPrompt(input: ShortFictionOutlineReviewPromptInput): string {
+export function buildShortFictionOutlineReviewUserPrompt(
+  input: ShortFictionOutlineReviewPromptInput,
+): string {
   return [
     "## 商业方向",
     input.direction,
     "",
-    input.reference?.text ? "## 可选参考文本\n" + trimForPrompt(input.reference.text, 8000) + "\n" : "",
+    input.reference?.text
+      ? "## 可选参考文本\n" + trimForPrompt(input.reference.text, 8000) + "\n"
+      : "",
     "## 待审故事方案",
     input.outline.rawContent,
     "",
@@ -104,7 +112,9 @@ export function buildShortFictionOutlineReviewUserPrompt(input: ShortFictionOutl
   ].join("\n");
 }
 
-export function buildShortFictionOutlineRevisionFollowup(input: ShortFictionOutlineRevisionPromptInput): string {
+export function buildShortFictionOutlineRevisionFollowup(
+  input: ShortFictionOutlineRevisionPromptInput,
+): string {
   return [
     "根据上面的审纲意见，继续给出第二版完整故事方案。",
     "这是同一次创作的第二轮，不要另起炉灶，不要只写修改说明。",
@@ -173,7 +183,9 @@ export function buildShortFictionDraftReviewSystemPrompt(): string {
   ].join("\n");
 }
 
-export function buildShortFictionDraftReviewUserPrompt(input: ShortFictionDraftReviewPromptInput): string {
+export function buildShortFictionDraftReviewUserPrompt(
+  input: ShortFictionDraftReviewPromptInput,
+): string {
   return [
     "## 商业方向",
     input.direction,
@@ -190,7 +202,9 @@ export function buildShortFictionDraftReviewUserPrompt(input: ShortFictionDraftR
   ].join("\n");
 }
 
-export function buildShortFictionDraftRevisionFollowup(input: ShortFictionDraftRevisionPromptInput): string {
+export function buildShortFictionDraftRevisionFollowup(
+  input: ShortFictionDraftRevisionPromptInput,
+): string {
   return [
     "根据审稿意见，继续写第二版完整正文。",
     "这是同一篇的第二轮写作：保留上一版能打的地方，修掉会让读者出戏或不想读的问题。",

@@ -1,11 +1,6 @@
 import type { ContextPackage } from "../models/input-governance.js";
-import {
-  parsePendingHooksMarkdown,
-  renderHookSnapshot,
-} from "./memory-retrieval.js";
-import {
-  isHookWithinChapterWindow,
-} from "./hook-lifecycle.js";
+import { parsePendingHooksMarkdown, renderHookSnapshot } from "./memory-retrieval.js";
+import { isHookWithinChapterWindow } from "./hook-lifecycle.js";
 
 export function buildGovernedHookWorkingSet(params: {
   readonly hooksMarkdown: string;
@@ -32,14 +27,11 @@ export function buildGovernedHookWorkingSet(params: {
       .filter(Boolean),
   );
   const agendaIds = collectHookAgendaIds(params.chapterIntent);
-  const workingSet = hooks.filter((hook) =>
-    selectedIds.has(hook.hookId)
-      || agendaIds.has(hook.hookId)
-      || isHookWithinChapterWindow(
-          hook,
-          params.chapterNumber,
-          params.keepRecent ?? 5,
-        ),
+  const workingSet = hooks.filter(
+    (hook) =>
+      selectedIds.has(hook.hookId) ||
+      agendaIds.has(hook.hookId) ||
+      isHookWithinChapterWindow(hook, params.chapterNumber, params.keepRecent ?? 5),
   );
 
   if (workingSet.length === 0 || workingSet.length >= hooks.length) {
@@ -76,7 +68,11 @@ function collectHookAgendaIds(chapterIntent?: string): Set<string> {
       break;
     }
 
-    if (line === "### Must Advance" || line === "### Eligible Resolve" || line === "### Stale Debt") {
+    if (
+      line === "### Must Advance" ||
+      line === "### Eligible Resolve" ||
+      line === "### Stale Debt"
+    ) {
       captureIds = true;
       continue;
     }
@@ -131,7 +127,9 @@ export function mergeTableMarkdownByKey(
     ...pickScaffold(originalTable.leadingLines, updatedTable.leadingLines),
     ...mergedRows.map(renderRow),
     ...pickScaffold(originalTable.trailingLines, updatedTable.trailingLines),
-  ].join("\n").trimEnd();
+  ]
+    .join("\n")
+    .trimEnd();
 }
 
 export function mergeCharacterMatrixMarkdown(original: string, updated: string): string {
@@ -141,11 +139,7 @@ export function mergeCharacterMatrixMarkdown(original: string, updated: string):
     return updated;
   }
 
-  const sectionKeyColumns: ReadonlyArray<ReadonlyArray<number>> = [
-    [0],
-    [0, 1],
-    [0, 3],
-  ];
+  const sectionKeyColumns: ReadonlyArray<ReadonlyArray<number>> = [[0], [0, 1], [0, 3]];
 
   const mergedSections = originalSections.sections.map((section, index) => {
     const next = updatedSections.sections[index];
@@ -158,14 +152,20 @@ export function mergeCharacterMatrixMarkdown(original: string, updated: string):
     };
   });
 
-  for (let index = originalSections.sections.length; index < updatedSections.sections.length; index += 1) {
+  for (
+    let index = originalSections.sections.length;
+    index < updatedSections.sections.length;
+    index += 1
+  ) {
     mergedSections.push(updatedSections.sections[index]!);
   }
 
   return [
     ...pickScaffold(originalSections.topLines, updatedSections.topLines),
     ...mergedSections.flatMap((section) => [section.heading, section.body]),
-  ].join("\n").trimEnd();
+  ]
+    .join("\n")
+    .trimEnd();
 }
 
 export function buildGovernedCharacterMatrixWorkingSet(params: {
@@ -193,7 +193,9 @@ export function buildGovernedCharacterMatrixWorkingSet(params: {
   return [
     ...parsed.topLines,
     ...filteredSections.flatMap((section) => [section.heading, section.body]),
-  ].join("\n").trimEnd();
+  ]
+    .join("\n")
+    .trimEnd();
 }
 
 interface ParsedTable {
@@ -212,9 +214,8 @@ function parseSingleTable(content: string): ParsedTable | null {
 
   const headerStart = tableIndexes[0]!;
   const nextIndex = tableIndexes[1];
-  const headerEnd = nextIndex !== undefined && lines[nextIndex]!.includes("---")
-    ? nextIndex
-    : headerStart;
+  const headerEnd =
+    nextIndex !== undefined && lines[nextIndex]!.includes("---") ? nextIndex : headerStart;
   const dataIndexes = tableIndexes.filter((index) => index > headerEnd);
   const lastDataIndex = dataIndexes.length > 0 ? dataIndexes[dataIndexes.length - 1]! : headerEnd;
 
@@ -327,9 +328,7 @@ function extractCharacterCandidatesFromMatrix(matrixMarkdown: string): string[] 
     if (!table) return;
 
     for (const row of table.dataRows) {
-      const candidates = index === 1
-        ? [row[0], row[1]]
-        : [row[0]];
+      const candidates = index === 1 ? [row[0], row[1]] : [row[0]];
       for (const candidate of candidates) {
         const normalized = candidate?.trim();
         if (normalized) {
@@ -364,11 +363,9 @@ function filterMatrixSection(
     return activeNames.has(row[0] ?? "");
   });
 
-  return [
-    ...table.leadingLines,
-    ...filteredRows.map(renderRow),
-    ...table.trailingLines,
-  ].join("\n").trimEnd();
+  return [...table.leadingLines, ...filteredRows.map(renderRow), ...table.trailingLines]
+    .join("\n")
+    .trimEnd();
 }
 
 function isNameMentioned(candidate: string, corpus: string): boolean {

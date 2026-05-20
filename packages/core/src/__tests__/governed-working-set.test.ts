@@ -129,14 +129,16 @@ describe("governed-working-set", () => {
 
     const filtered = buildGovernedCharacterMatrixWorkingSet({
       matrixMarkdown: matrix,
-      chapterIntent: "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
+      chapterIntent:
+        "# Chapter Intent\n\n## Goal\nBring the focus back to the mentor oath conflict.\n",
       contextPackage: {
         chapter: 100,
         selectedContext: [
           {
             source: "story/chapter_summaries.md#99",
             reason: "Relevant episodic memory.",
-            excerpt: "Locked Gate | Lin Yue chooses the mentor line over the guild line | mentor-oath advanced",
+            excerpt:
+              "Locked Gate | Lin Yue chooses the mentor line over the guild line | mentor-oath advanced",
           },
           {
             source: "story/pending_hooks.md#mentor-oath",
@@ -147,8 +149,12 @@ describe("governed-working-set", () => {
       },
     });
 
-    expect(filtered).toContain("| Lin Yue | oath | restraint | clipped | stubborn | self | repay debt | find mentor |");
-    expect(filtered).not.toContain("| Guildmaster Ren | guild | swagger | loud | opportunistic | rival | stall Mara | seize seal |");
+    expect(filtered).toContain(
+      "| Lin Yue | oath | restraint | clipped | stubborn | self | repay debt | find mentor |",
+    );
+    expect(filtered).not.toContain(
+      "| Guildmaster Ren | guild | swagger | loud | opportunistic | rival | stall Mara | seize seal |",
+    );
     expect(filtered).not.toContain("| Lin Yue | Guildmaster Ren | 1 | 5 | rivalry | strained |");
     expect(filtered).not.toContain("| Guildmaster Ren | Harbor roster | Mentor oath debt | 12 |");
   });

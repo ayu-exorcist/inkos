@@ -1,11 +1,19 @@
 import { Command } from "commander";
 import { StateManager, analyzeStyle, PipelineRunner } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
-export const styleCommand = new Command("style")
-  .description("Style fingerprint analysis and import");
+export const styleCommand = new Command("style").description(
+  "Style fingerprint analysis and import",
+);
 
 styleCommand
   .command("analyze")
@@ -26,7 +34,9 @@ styleCommand
         log(`  Avg sentence length: ${profile.avgSentenceLength} chars`);
         log(`  Sentence length std dev: ${profile.sentenceLengthStdDev}`);
         log(`  Avg paragraph length: ${profile.avgParagraphLength} chars`);
-        log(`  Paragraph range: ${profile.paragraphLengthRange.min}-${profile.paragraphLengthRange.max} chars`);
+        log(
+          `  Paragraph range: ${profile.paragraphLengthRange.min}-${profile.paragraphLengthRange.max} chars`,
+        );
         log(`  Vocabulary diversity (TTR): ${profile.vocabularyDiversity}`);
         if (profile.topPatterns.length > 0) {
           log(`  Top patterns: ${profile.topPatterns.join(", ")}`);
@@ -79,12 +89,18 @@ styleCommand
       }
 
       if (opts.json) {
-        log(JSON.stringify({
-          bookId,
-          file,
-          statsProfile: `story/style_profile.json`,
-          styleGuide: opts.statsOnly ? null : `story/style_guide.md`,
-        }, null, 2));
+        log(
+          JSON.stringify(
+            {
+              bookId,
+              file,
+              statsProfile: `story/style_profile.json`,
+              styleGuide: opts.statsOnly ? null : `story/style_guide.md`,
+            },
+            null,
+            2,
+          ),
+        );
       } else {
         log(`Style imported to "${bookId}" from "${file}"`);
       }

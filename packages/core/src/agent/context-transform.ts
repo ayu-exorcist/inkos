@@ -1,21 +1,16 @@
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { UserMessage } from "@mariozechner/pi-ai";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { UserMessage } from "@earendil-works/pi-ai";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { isNewLayoutBook } from "../utils/outline-paths.js";
 
 /** Files read in this order; anything else in story/ comes after, sorted alphabetically. */
-const PRIORITY_FILES = [
-  "story_bible.md",
-  "volume_outline.md",
-  "book_rules.md",
-  "current_focus.md",
-];
+const PRIORITY_FILES = ["story_bible.md", "volume_outline.md", "book_rules.md", "current_focus.md"];
 
 const UPGRADE_HINT =
   "[提示] 当前这本书的架构稿是旧的条目式格式（story_bible.md / volume_outline.md / character_matrix.md）。" +
   "如果作者有意愿升级成段落式架构稿 + 一人一卡的角色目录（outline/story_frame.md + outline/volume_map.md + roles/），" +
-  "可以调用 `sub_agent(architect, { revise: true, bookId, feedback: \"把架构稿从条目式升级成段落式架构稿，并把角色矩阵拆成 roles 目录一人一卡\" })`。" +
+  '可以调用 `sub_agent(architect, { revise: true, bookId, feedback: "把架构稿从条目式升级成段落式架构稿，并把角色矩阵拆成 roles 目录一人一卡" })`。' +
   "升级只改架构稿，不动已写的章节。在作者没明确同意前不要主动触发。";
 
 export function createBookContextTransform(
@@ -38,7 +33,8 @@ export function createBookContextTransform(
 
     const body =
       "[以下是当前书籍的真相文件，每次对话时自动从磁盘读取注入。请基于这些内容进行创作和判断。]" +
-      hintBlock + "\n\n" +
+      hintBlock +
+      "\n\n" +
       sections.map((s) => `=== ${s.name} ===\n${s.content}`).join("\n\n");
 
     const injected: UserMessage = {
@@ -61,6 +57,7 @@ async function readTruthFiles(storyDir: string): Promise<TruthFileSection[]> {
   try {
     entries = await readdir(storyDir);
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 

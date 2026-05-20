@@ -55,18 +55,20 @@ describe("matchServiceConfigEntryForDetail", () => {
 
 describe("saveServiceConfig", () => {
   it("shows a plain error when API key is empty", async () => {
-    await expect(saveServiceConfig({
-      effectiveServiceId: "openai",
-      serviceId: "openai",
-      isCustom: false,
-      resolvedCustomName: "",
-      apiKey: "",
-      baseUrl: "",
-      apiFormat: "chat",
-      stream: true,
-      temperature: "0.7",
-      detectedModel: "",
-    })).resolves.toMatchObject({
+    await expect(
+      saveServiceConfig({
+        effectiveServiceId: "openai",
+        serviceId: "openai",
+        isCustom: false,
+        resolvedCustomName: "",
+        apiKey: "",
+        baseUrl: "",
+        apiFormat: "chat",
+        stream: true,
+        temperature: "0.7",
+        detectedModel: "",
+      }),
+    ).resolves.toMatchObject({
       status: {
         state: "error",
         message: "请先输入 API Key",
@@ -107,20 +109,14 @@ describe("saveServiceConfig", () => {
       fetchJsonImpl: fetchJsonImpl as never,
     });
 
-    expect(calls).toEqual([
-      "/services/openai/test",
-      "/services/openai/secret",
-      "/services/config",
-    ]);
+    expect(calls).toEqual(["/services/openai/test", "/services/openai/secret", "/services/config"]);
     expect(bodies).toEqual([
       { apiKey: "sk-live", apiFormat: "chat", stream: true },
       { apiKey: "sk-live" },
       {
         service: "openai",
         defaultModel: "gpt-5.5",
-        services: [
-          { service: "openai", temperature: 0.7, apiFormat: "chat", stream: true },
-        ],
+        services: [{ service: "openai", temperature: 0.7, apiFormat: "chat", stream: true }],
       },
     ]);
     expect(result).toEqual({
@@ -164,18 +160,13 @@ describe("saveServiceConfig", () => {
       fetchJsonImpl: fetchJsonImpl as never,
     });
 
-    expect(calls).toEqual([
-      "/services/openai/secret",
-      "/services/config",
-    ]);
+    expect(calls).toEqual(["/services/openai/secret", "/services/config"]);
     expect(bodies).toEqual([
       { apiKey: "sk-live" },
       {
         service: "openai",
         defaultModel: "gpt-5.5",
-        services: [
-          { service: "openai", temperature: 0.7, apiFormat: "chat", stream: true },
-        ],
+        services: [{ service: "openai", temperature: 0.7, apiFormat: "chat", stream: true }],
       },
     ]);
     expect(result).toEqual({
@@ -200,19 +191,21 @@ describe("saveServiceConfig", () => {
       throw new Error(`unexpected path: ${path}`);
     });
 
-    await expect(saveServiceConfig({
-      effectiveServiceId: "openai",
-      serviceId: "openai",
-      isCustom: false,
-      resolvedCustomName: "",
-      apiKey: "sk-bad",
-      baseUrl: "",
-      apiFormat: "chat",
-      stream: true,
-      temperature: "0.7",
-      detectedModel: "",
-      fetchJsonImpl: fetchJsonImpl as never,
-    })).resolves.toEqual({
+    await expect(
+      saveServiceConfig({
+        effectiveServiceId: "openai",
+        serviceId: "openai",
+        isCustom: false,
+        resolvedCustomName: "",
+        apiKey: "sk-bad",
+        baseUrl: "",
+        apiFormat: "chat",
+        stream: true,
+        temperature: "0.7",
+        detectedModel: "",
+        fetchJsonImpl: fetchJsonImpl as never,
+      }),
+    ).resolves.toEqual({
       detectedModel: "",
       detectedConfig: null,
       status: { state: "error", message: "invalid key" },

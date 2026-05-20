@@ -18,7 +18,8 @@ export function parseSpotFixPatches(raw: string): SpotFixPatch[] {
     : raw;
 
   const patches: SpotFixPatch[] = [];
-  const regex = /--- PATCH(?:\s+\d+)? ---\s*TARGET_TEXT:\s*([\s\S]*?)\s*REPLACEMENT_TEXT:\s*([\s\S]*?)\s*--- END PATCH ---/g;
+  const regex =
+    /--- PATCH(?:\s+\d+)? ---\s*TARGET_TEXT:\s*([\s\S]*?)\s*REPLACEMENT_TEXT:\s*([\s\S]*?)\s*--- END PATCH ---/g;
 
   let match: RegExpExecArray | null;
   while ((match = regex.exec(normalized)) !== null) {
@@ -74,21 +75,18 @@ export function applySpotFixPatches(
     appliedPatchCount,
     skippedPatchCount,
     touchedChars,
-    rejectedReason: appliedPatchCount === 0
-      ? "No patches could be matched to the chapter content."
-      : undefined,
+    rejectedReason:
+      appliedPatchCount === 0 ? "No patches could be matched to the chapter content." : undefined,
   };
 }
 
-function tryApplyPatch(
-  content: string,
-  patch: SpotFixPatch,
-): { content: string } | null {
+function tryApplyPatch(content: string, patch: SpotFixPatch): { content: string } | null {
   // 1. Try exact match
   const exactResult = tryExactMatch(content, patch.targetText);
   if (exactResult) {
     return {
-      content: content.slice(0, exactResult.start) +
+      content:
+        content.slice(0, exactResult.start) +
         patch.replacementText +
         content.slice(exactResult.start + patch.targetText.length),
     };
@@ -98,7 +96,8 @@ function tryApplyPatch(
   const fuzzyResult = tryFuzzyMatch(content, patch.targetText);
   if (fuzzyResult) {
     return {
-      content: content.slice(0, fuzzyResult.start) +
+      content:
+        content.slice(0, fuzzyResult.start) +
         patch.replacementText +
         content.slice(fuzzyResult.end),
     };
@@ -107,10 +106,7 @@ function tryApplyPatch(
   return null;
 }
 
-function tryExactMatch(
-  content: string,
-  target: string,
-): { start: number } | null {
+function tryExactMatch(content: string, target: string): { start: number } | null {
   const start = content.indexOf(target);
   if (start === -1) return null;
 
@@ -121,10 +117,7 @@ function tryExactMatch(
   return { start };
 }
 
-function tryFuzzyMatch(
-  content: string,
-  target: string,
-): { start: number; end: number } | null {
+function tryFuzzyMatch(content: string, target: string): { start: number; end: number } | null {
   const normalizedTarget = normalizeWhitespace(target);
   if (normalizedTarget.length < 10) return null; // Too short to fuzzy match safely
 
@@ -138,7 +131,10 @@ function tryFuzzyMatch(
   if (matchStart === -1) return null;
 
   // Ensure unique
-  const anotherMatch = normalizedContent.indexOf(normalizedTarget, matchStart + normalizedTarget.length);
+  const anotherMatch = normalizedContent.indexOf(
+    normalizedTarget,
+    matchStart + normalizedTarget.length,
+  );
   if (anotherMatch !== -1) return null;
 
   // Map normalized position back to original position
@@ -185,5 +181,8 @@ function mapNormalizedToOriginal(original: string, normalizedPos: number): numbe
 }
 
 function trimField(value: string): string {
-  return value.replace(/^\s*\n/, "").replace(/\n\s*$/, "").trim();
+  return value
+    .replace(/^\s*\n/, "")
+    .replace(/\n\s*$/, "")
+    .trim();
 }

@@ -18,29 +18,19 @@ export async function dispatchNotification(
         case "telegram":
           {
             const { sendTelegram } = await import("./telegram.js");
-            await sendTelegram(
-              { botToken: channel.botToken, chatId: channel.chatId },
-              fullText,
-            );
+            await sendTelegram({ botToken: channel.botToken, chatId: channel.chatId }, fullText);
           }
           break;
         case "feishu":
           {
             const { sendFeishu } = await import("./feishu.js");
-            await sendFeishu(
-              { webhookUrl: channel.webhookUrl },
-              message.title,
-              message.body,
-            );
+            await sendFeishu({ webhookUrl: channel.webhookUrl }, message.title, message.body);
           }
           break;
         case "wechat-work":
           {
             const { sendWechatWork } = await import("./wechat-work.js");
-            await sendWechatWork(
-              { webhookUrl: channel.webhookUrl },
-              fullText,
-            );
+            await sendWechatWork({ webhookUrl: channel.webhookUrl }, fullText);
           }
           break;
         case "webhook":
@@ -62,9 +52,7 @@ export async function dispatchNotification(
       }
     } catch (e) {
       // Log but don't throw — notification failure shouldn't block pipeline
-      process.stderr.write(
-        `[notify] ${channel.type} failed: ${e}\n`,
-      );
+      process.stderr.write(`[notify] ${channel.type} failed: ${e}\n`);
     }
   });
 

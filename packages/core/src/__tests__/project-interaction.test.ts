@@ -91,22 +91,24 @@ describe("project interaction control", () => {
       activeBookId: "harbor",
     });
 
-    await expect(processProjectInteractionInput({
-      projectRoot,
-      input: "continue",
-      tools: {
-        listBooks: vi.fn(async () => ["harbor"]),
-        writeNextChapter: vi.fn(async () => {
-          throw new Error("boom");
-        }),
-        reviseDraft: vi.fn(async () => ({ ok: true })),
-        patchChapterText: vi.fn(async () => ({ ok: true })),
-        renameEntity: vi.fn(async () => ({ ok: true })),
-        updateCurrentFocus: vi.fn(async () => ({ ok: true })),
-        updateAuthorIntent: vi.fn(async () => ({ ok: true })),
-        writeTruthFile: vi.fn(async () => ({ ok: true })),
-      },
-    })).rejects.toThrow("boom");
+    await expect(
+      processProjectInteractionInput({
+        projectRoot,
+        input: "continue",
+        tools: {
+          listBooks: vi.fn(async () => ["harbor"]),
+          writeNextChapter: vi.fn(async () => {
+            throw new Error("boom");
+          }),
+          reviseDraft: vi.fn(async () => ({ ok: true })),
+          patchChapterText: vi.fn(async () => ({ ok: true })),
+          renameEntity: vi.fn(async () => ({ ok: true })),
+          updateCurrentFocus: vi.fn(async () => ({ ok: true })),
+          updateAuthorIntent: vi.fn(async () => ({ ok: true })),
+          writeTruthFile: vi.fn(async () => ({ ok: true })),
+        },
+      }),
+    ).rejects.toThrow("boom");
 
     const failedSession = await loadProjectSession(projectRoot);
     expect(failedSession.currentExecution?.status).toBe("failed");
@@ -225,15 +227,19 @@ describe("project interaction control", () => {
       });
 
       expect(result.request.intent).toBe("develop_book");
-      expect(result.session.creationDraft).toEqual(expect.objectContaining({
-        title: "夜港账本",
-        genre: "urban",
-      }));
+      expect(result.session.creationDraft).toEqual(
+        expect.objectContaining({
+          title: "夜港账本",
+          genre: "urban",
+        }),
+      );
 
       const persisted = await loadProjectSession(ideationRoot);
-      expect(persisted.creationDraft).toEqual(expect.objectContaining({
-        title: "夜港账本",
-      }));
+      expect(persisted.creationDraft).toEqual(
+        expect.objectContaining({
+          title: "夜港账本",
+        }),
+      );
     } finally {
       await rm(ideationRoot, { recursive: true, force: true });
     }

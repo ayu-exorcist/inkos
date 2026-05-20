@@ -1,5 +1,10 @@
 import { Command } from "commander";
-import { StateManager, formatLengthCount, readGenreProfile, resolveLengthCountingMode } from "@actalk/inkos-core";
+import {
+  StateManager,
+  formatLengthCount,
+  readGenreProfile,
+  resolveLengthCountingMode,
+} from "@actalk/inkos-core";
 import { findProjectRoot, getLegacyMigrationHint, log, logError } from "../utils.js";
 
 export const statusCommand = new Command("status")
@@ -38,15 +43,9 @@ export const statusCommand = new Command("status")
         const countingMode = resolveLengthCountingMode(book.language ?? genreProfile.language);
 
         const approved = index.filter((ch) => ch.status === "approved").length;
-        const pending = index.filter(
-          (ch) => ch.status === "ready-for-review",
-        ).length;
-        const failed = index.filter(
-          (ch) => ch.status === "audit-failed",
-        ).length;
-        const degraded = index.filter(
-          (ch) => ch.status === "state-degraded",
-        ).length;
+        const pending = index.filter((ch) => ch.status === "ready-for-review").length;
+        const failed = index.filter((ch) => ch.status === "audit-failed").length;
+        const degraded = index.filter((ch) => ch.status === "state-degraded").length;
         const totalWords = index.reduce((sum, ch) => sum + ch.wordCount, 0);
         const avgWords = index.length > 0 ? Math.round(totalWords / index.length) : 0;
 
@@ -65,17 +64,19 @@ export const statusCommand = new Command("status")
           failed,
           degraded,
           ...(migrationHint ? { migrationHint } : {}),
-          ...(opts.chapters ? {
-            chapterList: index.map((ch) => ({
-              number: ch.number,
-              title: ch.title,
-              status: ch.status,
-              wordCount: ch.wordCount,
-              ...(ch.status === "audit-failed" || ch.status === "state-degraded"
-                ? { issues: ch.auditIssues }
-                : {}),
-            })),
-          } : {}),
+          ...(opts.chapters
+            ? {
+                chapterList: index.map((ch) => ({
+                  number: ch.number,
+                  title: ch.title,
+                  status: ch.status,
+                  wordCount: ch.wordCount,
+                  ...(ch.status === "audit-failed" || ch.status === "state-degraded"
+                    ? { issues: ch.auditIssues }
+                    : {}),
+                })),
+              }
+            : {}),
         });
 
         if (!opts.json) {
@@ -84,7 +85,9 @@ export const statusCommand = new Command("status")
           log(`    Platform: ${book.platform} | Genre: ${book.genre}`);
           log(`    Chapters: ${persistedChapterCount} / ${book.targetChapters}`);
           log(`    Words: ${totalWords.toLocaleString()} (avg ${avgWords}/ch)`);
-          log(`    Approved: ${approved} | Pending: ${pending} | Failed: ${failed} | Degraded: ${degraded}`);
+          log(
+            `    Approved: ${approved} | Pending: ${pending} | Failed: ${failed} | Degraded: ${degraded}`,
+          );
           if (migrationHint) {
             log(`    Migration: ${migrationHint}`);
           }
@@ -92,15 +95,21 @@ export const statusCommand = new Command("status")
           if (opts.chapters && index.length > 0) {
             log("");
             for (const ch of index) {
-              const icon = ch.status === "approved"
-                ? "+"
-                : ch.status === "audit-failed"
-                  ? "!"
-                  : ch.status === "state-degraded"
-                    ? "x"
-                    : "~";
-              log(`    [${icon}] Ch.${ch.number} "${ch.title}" | ${formatLengthCount(ch.wordCount, countingMode)} | ${ch.status}`);
-              if ((ch.status === "audit-failed" || ch.status === "state-degraded") && ch.auditIssues.length > 0) {
+              const icon =
+                ch.status === "approved"
+                  ? "+"
+                  : ch.status === "audit-failed"
+                    ? "!"
+                    : ch.status === "state-degraded"
+                      ? "x"
+                      : "~";
+              log(
+                `    [${icon}] Ch.${ch.number} "${ch.title}" | ${formatLengthCount(ch.wordCount, countingMode)} | ${ch.status}`,
+              );
+              if (
+                (ch.status === "audit-failed" || ch.status === "state-degraded") &&
+                ch.auditIssues.length > 0
+              ) {
                 const criticals = ch.auditIssues.filter((i: string) => i.startsWith("[critical]"));
                 const warnings = ch.auditIssues.filter((i: string) => i.startsWith("[warning]"));
                 if (criticals.length > 0) {

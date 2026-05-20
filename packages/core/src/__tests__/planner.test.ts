@@ -86,7 +86,11 @@ async function seedStoryFiles(bookDir: string): Promise<void> {
   await mkdir(storyDir, { recursive: true });
   await Promise.all([
     writeFile(join(storyDir, "author_intent.md"), "# Intent\n- Tell a taut mystery.", "utf-8"),
-    writeFile(join(storyDir, "current_focus.md"), "# Focus\n- Keep pressure on the seventh gate.", "utf-8"),
+    writeFile(
+      join(storyDir, "current_focus.md"),
+      "# Focus\n- Keep pressure on the seventh gate.",
+      "utf-8",
+    ),
     writeFile(join(storyDir, "story_bible.md"), "# Bible\n- Protagonist: 阿泽", "utf-8"),
     writeFile(join(storyDir, "volume_outline.md"), "# Outline\n- 第 1 章：开场", "utf-8"),
     writeFile(join(storyDir, "chapter_summaries.md"), "# Summaries\n", "utf-8"),
@@ -183,7 +187,8 @@ describe("PlannerAgent.planChapter memo generation", () => {
   });
 
   it("retries when the first response is malformed and succeeds on retry", async () => {
-    const chatSpy = vi.spyOn(llmProvider, "chatCompletion")
+    const chatSpy = vi
+      .spyOn(llmProvider, "chatCompletion")
       .mockResolvedValueOnce({
         content: "no frontmatter here",
         usage: ZERO_USAGE,
@@ -324,7 +329,7 @@ defer:
       join(storyDir, "outline/story_frame.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: 阿泽",
         "  personalityLock: []",

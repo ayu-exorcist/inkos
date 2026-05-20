@@ -36,18 +36,24 @@ export function applyRuntimeStateDelta(params: {
   const delta = RuntimeStateDeltaSchema.parse(params.delta);
   const allowReapply = params.allowReapply ?? false;
 
-  if (allowReapply ? delta.chapter < snapshot.manifest.lastAppliedChapter : delta.chapter <= snapshot.manifest.lastAppliedChapter) {
+  if (
+    allowReapply
+      ? delta.chapter < snapshot.manifest.lastAppliedChapter
+      : delta.chapter <= snapshot.manifest.lastAppliedChapter
+  ) {
     throw new Error(`delta chapter ${delta.chapter} goes backwards`);
   }
 
   if (delta.chapterSummary && delta.chapterSummary.chapter !== delta.chapter) {
-    throw new Error(`chapter summary ${delta.chapterSummary.chapter} does not match delta chapter ${delta.chapter}`);
+    throw new Error(
+      `chapter summary ${delta.chapterSummary.chapter} does not match delta chapter ${delta.chapter}`,
+    );
   }
 
   if (
-    delta.chapterSummary
-    && snapshot.chapterSummaries.rows.some((row) => row.chapter === delta.chapterSummary?.chapter)
-    && !allowReapply
+    delta.chapterSummary &&
+    snapshot.chapterSummaries.rows.some((row) => row.chapter === delta.chapterSummary?.chapter) &&
+    !allowReapply
   ) {
     throw new Error(`duplicate summary row for chapter ${delta.chapterSummary.chapter}`);
   }
@@ -96,7 +102,9 @@ function applyHookOps(hooksState: HooksState, delta: RuntimeStateDelta): HooksSt
         const matchedHookId = admission.matchedHookId;
         const existing = matchedHookId ? hooksById.get(matchedHookId) : undefined;
         if (!existing) {
-          throw new Error(`duplicate active hook family: ${hook.hookId} overlaps ${admission.matchedHookId}`);
+          throw new Error(
+            `duplicate active hook family: ${hook.hookId} overlaps ${admission.matchedHookId}`,
+          );
         }
         hooksById.set(existing.hookId, mergeDuplicateHookFamily(existing, hook));
         continue;
@@ -132,11 +140,12 @@ function applyHookOps(hooksState: HooksState, delta: RuntimeStateDelta): HooksSt
   }
 
   return {
-    hooks: [...hooksById.values()].sort((left, right) => (
-      left.startChapter - right.startChapter
-      || left.lastAdvancedChapter - right.lastAdvancedChapter
-      || left.hookId.localeCompare(right.hookId)
-    )),
+    hooks: [...hooksById.values()].sort(
+      (left, right) =>
+        left.startChapter - right.startChapter ||
+        left.lastAdvancedChapter - right.lastAdvancedChapter ||
+        left.hookId.localeCompare(right.hookId),
+    ),
   };
 }
 
@@ -189,28 +198,28 @@ function applyCurrentStatePatch(
   }
 
   const nextFacts = [...currentState.facts];
-  const labels = language === "en"
-    ? {
-      currentLocation: ["Current Location", "当前位置"],
-      protagonistState: ["Protagonist State", "主角状态"],
-      currentGoal: ["Current Goal", "当前目标"],
-      currentConstraint: ["Current Constraint", "当前限制"],
-      currentAlliances: ["Current Alliances", "Current Relationships", "当前敌我"],
-      currentConflict: ["Current Conflict", "当前冲突"],
-    }
-    : {
-      currentLocation: ["当前位置", "Current Location"],
-      protagonistState: ["主角状态", "Protagonist State"],
-      currentGoal: ["当前目标", "Current Goal"],
-      currentConstraint: ["当前限制", "Current Constraint"],
-      currentAlliances: ["当前敌我", "Current Alliances", "Current Relationships"],
-      currentConflict: ["当前冲突", "Current Conflict"],
-    };
+  const labels =
+    language === "en"
+      ? {
+          currentLocation: ["Current Location", "当前位置"],
+          protagonistState: ["Protagonist State", "主角状态"],
+          currentGoal: ["Current Goal", "当前目标"],
+          currentConstraint: ["Current Constraint", "当前限制"],
+          currentAlliances: ["Current Alliances", "Current Relationships", "当前敌我"],
+          currentConflict: ["Current Conflict", "当前冲突"],
+        }
+      : {
+          currentLocation: ["当前位置", "Current Location"],
+          protagonistState: ["主角状态", "Protagonist State"],
+          currentGoal: ["当前目标", "Current Goal"],
+          currentConstraint: ["当前限制", "Current Constraint"],
+          currentAlliances: ["当前敌我", "Current Alliances", "Current Relationships"],
+          currentConflict: ["当前冲突", "Current Conflict"],
+        };
 
-  for (const [patchKey, aliases] of Object.entries(labels) as Array<[
-    keyof typeof labels,
-    string[],
-  ]>) {
+  for (const [patchKey, aliases] of Object.entries(labels) as Array<
+    [keyof typeof labels, string[]]
+  >) {
     const value = delta.currentStatePatch[patchKey];
     if (value === undefined) continue;
 
@@ -233,10 +242,10 @@ function applyCurrentStatePatch(
 
   return {
     chapter: delta.chapter,
-    facts: nextFacts.sort((left, right) => (
-      left.predicate.localeCompare(right.predicate)
-      || left.object.localeCompare(right.object)
-    )),
+    facts: nextFacts.sort(
+      (left, right) =>
+        left.predicate.localeCompare(right.predicate) || left.object.localeCompare(right.object),
+    ),
   };
 }
 
@@ -253,7 +262,9 @@ function applySummaryDelta(
 
   return {
     rows: [
-      ...(allowReapply ? state.rows.filter((row) => row.chapter !== delta.chapterSummary!.chapter) : state.rows),
+      ...(allowReapply
+        ? state.rows.filter((row) => row.chapter !== delta.chapterSummary!.chapter)
+        : state.rows),
       delta.chapterSummary,
     ].sort((left, right) => left.chapter - right.chapter),
   };

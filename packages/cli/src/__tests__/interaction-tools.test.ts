@@ -96,12 +96,17 @@ describe("interaction tools adapter", () => {
 
     const tools = createInteractionToolsFromDeps(projectRoot, pipeline, state);
 
-    await tools.updateCurrentFocus("harbor", "# Current Focus\n\nBring focus back to the old case.\n");
+    await tools.updateCurrentFocus(
+      "harbor",
+      "# Current Focus\n\nBring focus back to the old case.\n",
+    );
     await tools.updateAuthorIntent("harbor", "# Author Intent\n\nWrite a cold harbor mystery.\n");
 
-    await expect(readFile(join(projectRoot, "books", "harbor", "story", "current_focus.md"), "utf-8"))
-      .resolves.toContain("Bring focus back to the old case");
-    await expect(readFile(join(projectRoot, "books", "harbor", "story", "author_intent.md"), "utf-8"))
-      .resolves.toContain("Write a cold harbor mystery");
+    await expect(
+      readFile(join(projectRoot, "books", "harbor", "story", "current_focus.md"), "utf-8"),
+    ).resolves.toContain("Bring focus back to the old case");
+    await expect(
+      readFile(join(projectRoot, "books", "harbor", "story", "author_intent.md"), "utf-8"),
+    ).resolves.toContain("Write a cold harbor mystery");
   });
 });

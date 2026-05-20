@@ -15,11 +15,9 @@ export interface SplitChapter {
  * Each match marks the start of a new chapter. Content between matches
  * belongs to the preceding chapter.
  */
-export function splitChapters(
-  text: string,
-  pattern?: string,
-): ReadonlyArray<SplitChapter> {
-  const defaultPattern = /^#{0,2}\s*(?:第[零〇○Ｏ０一二三四五六七八九十百千万\d]+(?:章|回)(?:[:：]|\s+)?\s*(.*)|Chapter\s+(?:\d+|[IVXLCDM]+)(?:\.|:|\s+)?\s*(.*))/i;
+export function splitChapters(text: string, pattern?: string): ReadonlyArray<SplitChapter> {
+  const defaultPattern =
+    /^#{0,2}\s*(?:第[零〇○Ｏ０一二三四五六七八九十百千万\d]+(?:章|回)(?:[:：]|\s+)?\s*(.*)|Chapter\s+(?:\d+|[IVXLCDM]+)(?:\.|:|\s+)?\s*(.*))/i;
   const regex = pattern ? new RegExp(pattern, "m") : defaultPattern;
 
   const lines = text.split("\n");

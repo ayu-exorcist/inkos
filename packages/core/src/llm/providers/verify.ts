@@ -30,16 +30,25 @@ async function probe(
   proxyUrl?: string,
 ): Promise<VerifyResult["probe"]> {
   const provider = getEndpoint(service);
-  const probeBaseUrl = baseUrl || provider?.modelsBaseUrl || provider?.baseUrl || resolveServiceModelsBaseUrl(service);
+  const probeBaseUrl =
+    baseUrl || provider?.modelsBaseUrl || provider?.baseUrl || resolveServiceModelsBaseUrl(service);
   if (!probeBaseUrl) {
-    return { ok: false, models: 0, error: "无 baseUrl 可探测（custom / newapi / higress 需要用户填）" };
+    return {
+      ok: false,
+      models: 0,
+      error: "无 baseUrl 可探测（custom / newapi / higress 需要用户填）",
+    };
   }
   try {
     const url = probeBaseUrl.replace(/\/$/, "") + "/models";
-    const res = await fetchWithProxy(url, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      signal: AbortSignal.timeout(10_000),
-    }, proxyUrl);
+    const res = await fetchWithProxy(
+      url,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10_000),
+      },
+      proxyUrl,
+    );
     if (!res.ok) {
       return { ok: false, models: 0, error: `HTTP ${res.status} ${res.statusText}` };
     }
@@ -78,18 +87,24 @@ export async function verifyService(
   try {
     const { createLLMClient, chatCompletion } = await import("../provider.js");
     const { LLMConfigSchema } = await import("../../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: provider?.api === "anthropic-messages" ? "anthropic" : "openai",
-      service,
-      model: checkModel,
-      apiKey,
-      baseUrl: opts?.baseUrl ?? provider?.baseUrl ?? "",
-      proxyUrl: opts?.proxyUrl,
-      configSource: "studio",
-      stream: false,
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: provider?.api === "anthropic-messages" ? "anthropic" : "openai",
+        service,
+        model: checkModel,
+        apiKey,
+        baseUrl: opts?.baseUrl ?? provider?.baseUrl ?? "",
+        proxyUrl: opts?.proxyUrl,
+        configSource: "studio",
+        stream: false,
+      }),
+    );
     await chatCompletion(client, checkModel, [{ role: "user", content: "hi" }], { maxTokens: 10 });
-    return { recommendedTransport, probe: probeResult, chat: { ok: true, latencyMs: Date.now() - start } };
+    return {
+      recommendedTransport,
+      probe: probeResult,
+      chat: { ok: true, latencyMs: Date.now() - start },
+    };
   } catch (error) {
     return {
       recommendedTransport,

@@ -61,7 +61,19 @@ describe("revision-related CLI commands", () => {
   it("passes one-off brief into revise command pipeline config", async () => {
     const { reviseCommand } = await import("../commands/revise.js");
 
-    await reviseCommand.parseAsync(["node", "revise", "demo-book", "3", "--mode", "rewrite", "--brief", "把注意力拉回师债主线。"], { from: "node" });
+    await reviseCommand.parseAsync(
+      [
+        "node",
+        "revise",
+        "demo-book",
+        "3",
+        "--mode",
+        "rewrite",
+        "--brief",
+        "把注意力拉回师债主线。",
+      ],
+      { from: "node" },
+    );
 
     expect(buildPipelineConfigMock).toHaveBeenCalledWith(expect.anything(), "/project", {
       externalContext: "把注意力拉回师债主线。",
@@ -72,7 +84,10 @@ describe("revision-related CLI commands", () => {
   it("exposes write sync and passes brief into pipeline config", async () => {
     const { writeCommand } = await import("../commands/write.js");
 
-    await writeCommand.parseAsync(["node", "write", "sync", "demo-book", "3", "--brief", "以师债线为准同步状态。"], { from: "node" });
+    await writeCommand.parseAsync(
+      ["node", "write", "sync", "demo-book", "3", "--brief", "以师债线为准同步状态。"],
+      { from: "node" },
+    );
 
     expect(buildPipelineConfigMock).toHaveBeenCalledWith(expect.anything(), "/project", {
       externalContext: "以师债线为准同步状态。",

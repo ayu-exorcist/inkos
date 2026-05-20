@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApi } from "../hooks/use-api";
 import type { SSEMessage } from "../hooks/use-sse";
-import { applyBookCollectionEvent, shouldRefetchBookCollections, shouldRefetchDaemonStatus } from "../hooks/use-book-activity";
+import {
+  applyBookCollectionEvent,
+  shouldRefetchBookCollections,
+  shouldRefetchDaemonStatus,
+} from "../hooks/use-book-activity";
 import type { TFunction } from "../hooks/use-i18n";
 import { setProjectChatSessionId } from "../pages/chat-page-state";
 import { useChatStore } from "../store/chat";
 import { ConfirmDialog } from "./ConfirmDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,13 +60,22 @@ interface Nav {
   toDoctor: () => void;
 }
 
-export function Sidebar({ nav, activePage, sse, t }: {
+export function Sidebar({
+  nav,
+  activePage,
+  sse,
+  t,
+}: {
   nav: Nav;
   activePage: string;
   sse: { messages: ReadonlyArray<SSEMessage> };
   t: TFunction;
 }) {
-  const { data, refetch: refetchBooks, mutate: mutateBooks } = useApi<{ books: ReadonlyArray<BookSummary> }>("/books");
+  const {
+    data,
+    refetch: refetchBooks,
+    mutate: mutateBooks,
+  } = useApi<{ books: ReadonlyArray<BookSummary> }>("/books");
   const { data: daemon, refetch: refetchDaemon } = useApi<{ running: boolean }>("/daemon");
   const sessions = useChatStore((s) => s.sessions);
   const sessionIdsByBook = useChatStore((s) => s.sessionIdsByBook);
@@ -80,9 +87,14 @@ export function Sidebar({ nav, activePage, sse, t }: {
   const createDraftSession = useChatStore((s) => s.createDraftSession);
   const renameSession = useChatStore((s) => s.renameSession);
   const deleteSession = useChatStore((s) => s.deleteSession);
-  const [renameTarget, setRenameTarget] = useState<{ sessionId: string; currentTitle: string } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{
+    sessionId: string;
+    currentTitle: string;
+  } | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ sessionId: string; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ sessionId: string; title: string } | null>(
+    null,
+  );
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [projectChatExpanded, setProjectChatExpanded] = useState(true);
 
@@ -94,10 +106,12 @@ export function Sidebar({ nav, activePage, sse, t }: {
         .map((sessionId) => sessions[sessionId])
         .filter((session): session is NonNullable<(typeof sessions)[string]> => {
           if (!session) return false;
-          return Boolean(session.title)
-            || session.messages.length > 0
-            || session.isDraft
-            || session.sessionId === activeSessionId;
+          return (
+            Boolean(session.title) ||
+            session.messages.length > 0 ||
+            session.isDraft ||
+            session.sessionId === activeSessionId
+          );
         }),
     [activeSessionId, sessionIdsByBook, sessions],
   );
@@ -163,9 +177,7 @@ export function Sidebar({ nav, activePage, sse, t }: {
       Object.fromEntries(
         books.map((book) => [
           book.id,
-          (sessionIdsByBook[book.id] ?? [])
-            .map((sessionId) => sessions[sessionId])
-            .filter(Boolean),
+          (sessionIdsByBook[book.id] ?? []).map((sessionId) => sessions[sessionId]).filter(Boolean),
         ]),
       ) as Record<string, Array<(typeof sessions)[string]>>,
     [books, sessionIdsByBook, sessions],
@@ -227,7 +239,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
           </div>
           <div className="flex flex-col">
             <span className="font-serif text-xl leading-none italic font-medium">InkOS</span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mt-1">Studio</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mt-1">
+              Studio
+            </span>
           </div>
         </button>
       </div>
@@ -262,7 +276,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
                       type="button"
                       onClick={() => toggleBook(book.id)}
                       className={`flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 rounded-md text-sm transition-colors ${
-                        isActiveBook ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
+                        isActiveBook
+                          ? "text-foreground font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
                       }`}
                     >
                       <ChevronRight
@@ -278,7 +294,8 @@ export function Sidebar({ nav, activePage, sse, t }: {
                   {isExpanded && (
                     <div className="mt-0.5">
                       {bookSessions.map((session) => {
-                        const isActiveSession = isActiveBook && activeSessionId === session.sessionId;
+                        const isActiveSession =
+                          isActiveBook && activeSessionId === session.sessionId;
                         const label = getSessionLabel(session);
                         return (
                           <div
@@ -290,7 +307,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
                               onClick={() => openSession(book.id, session.sessionId)}
                               className="flex min-w-0 flex-1 items-center gap-2 pl-9 pr-2 py-1 text-left text-[13px] transition-colors"
                             >
-                              <span className={`truncate flex-1 ${isActiveSession ? "text-foreground" : "text-muted-foreground group-hover/session:text-foreground"}`}>
+                              <span
+                                className={`truncate flex-1 ${isActiveSession ? "text-foreground" : "text-muted-foreground group-hover/session:text-foreground"}`}
+                              >
                                 {label}
                               </span>
                               {session.isStreaming ? (
@@ -309,7 +328,10 @@ export function Sidebar({ nav, activePage, sse, t }: {
                               <DropdownMenuContent side="right" align="start" className="w-36">
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    setRenameTarget({ sessionId: session.sessionId, currentTitle: label });
+                                    setRenameTarget({
+                                      sessionId: session.sessionId,
+                                      currentTitle: label,
+                                    });
                                     setRenameValue(session.title ?? "");
                                   }}
                                 >
@@ -319,7 +341,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   variant="destructive"
-                                  onClick={() => setDeleteTarget({ sessionId: session.sessionId, title: label })}
+                                  onClick={() =>
+                                    setDeleteTarget({ sessionId: session.sessionId, title: label })
+                                  }
                                 >
                                   <Trash2 size={14} />
                                   <span>删除</span>
@@ -371,7 +395,7 @@ export function Sidebar({ nav, activePage, sse, t }: {
               active={activePage === "services"}
               onClick={nav.toServices}
             />
-{/*            <SidebarItem
+            {/*            <SidebarItem
               label={t("nav.daemon")}
               icon={<Zap size={16} />}
               active={activePage === "daemon"}
@@ -413,7 +437,14 @@ export function Sidebar({ nav, activePage, sse, t }: {
                       : "text-foreground font-medium hover:text-foreground hover:bg-secondary/50"
                   }`}
                 >
-                  <MessageSquare size={16} className={activePage === "chat" ? "text-primary" : "text-muted-foreground group-hover/chat:text-foreground"} />
+                  <MessageSquare
+                    size={16}
+                    className={
+                      activePage === "chat"
+                        ? "text-primary"
+                        : "text-muted-foreground group-hover/chat:text-foreground"
+                    }
+                  />
                   <span className="flex-1 text-left">{t("nav.chat")}</span>
                   <ChevronRight
                     size={13}
@@ -425,7 +456,8 @@ export function Sidebar({ nav, activePage, sse, t }: {
               {projectChatExpanded && (
                 <div className="mt-0.5">
                   {projectChatSessions.map((session) => {
-                    const isActiveSession = activePage === "chat" && activeSessionId === session.sessionId;
+                    const isActiveSession =
+                      activePage === "chat" && activeSessionId === session.sessionId;
                     const label = getSessionLabel(session);
                     return (
                       <div
@@ -437,7 +469,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
                           onClick={() => openProjectChatSession(session.sessionId)}
                           className="flex min-w-0 flex-1 items-center gap-2 pl-9 pr-2 py-1 text-left text-[13px] transition-colors"
                         >
-                          <span className={`truncate flex-1 ${isActiveSession ? "text-foreground" : "text-muted-foreground group-hover/session:text-foreground"}`}>
+                          <span
+                            className={`truncate flex-1 ${isActiveSession ? "text-foreground" : "text-muted-foreground group-hover/session:text-foreground"}`}
+                          >
                             {label}
                           </span>
                           {session.isStreaming ? (
@@ -456,7 +490,10 @@ export function Sidebar({ nav, activePage, sse, t }: {
                           <DropdownMenuContent side="right" align="start" className="w-36">
                             <DropdownMenuItem
                               onClick={() => {
-                                setRenameTarget({ sessionId: session.sessionId, currentTitle: label });
+                                setRenameTarget({
+                                  sessionId: session.sessionId,
+                                  currentTitle: label,
+                                });
                                 setRenameValue(session.title ?? "");
                               }}
                             >
@@ -466,7 +503,9 @@ export function Sidebar({ nav, activePage, sse, t }: {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               variant="destructive"
-                              onClick={() => setDeleteTarget({ sessionId: session.sessionId, title: label })}
+                              onClick={() =>
+                                setDeleteTarget({ sessionId: session.sessionId, title: label })
+                              }
                             >
                               <Trash2 size={14} />
                               <span>删除</span>
@@ -536,10 +575,7 @@ export function Sidebar({ nav, activePage, sse, t }: {
           }
         }}
       >
-        <DialogContent
-          showCloseButton={false}
-          className="sm:max-w-[360px] p-4 gap-3"
-        >
+        <DialogContent showCloseButton={false} className="sm:max-w-[360px] p-4 gap-3">
           <DialogHeader className="space-y-0 gap-0">
             <DialogTitle className="font-sans text-sm font-medium">重命名会话</DialogTitle>
           </DialogHeader>
@@ -594,7 +630,11 @@ export function Sidebar({ nav, activePage, sse, t }: {
   );
 }
 
-function getSessionLabel(session: { sessionId: string; title: string | null; messages: ReadonlyArray<{ role: string; content: string }> }): string {
+function getSessionLabel(session: {
+  sessionId: string;
+  title: string | null;
+  messages: ReadonlyArray<{ role: string; content: string }>;
+}): string {
   if (session.title) return session.title;
   // 后端会在第一条用户消息发送时立即把消息内容持久化为占位标题。
   // 这里处理的是"已有消息但标题还没同步回来"的短暂中间态（乐观显示）。
@@ -621,7 +661,14 @@ function formatRelativeTime(sessionId: string): string {
   return `${months} 个月`;
 }
 
-function SidebarItem({ label, icon, active, onClick, badge, badgeColor }: {
+function SidebarItem({
+  label,
+  icon,
+  active,
+  onClick,
+  badge,
+  badgeColor,
+}: {
   label: string;
   icon: React.ReactNode;
   active: boolean;
@@ -638,12 +685,16 @@ function SidebarItem({ label, icon, active, onClick, badge, badgeColor }: {
           : "text-foreground font-medium hover:text-foreground hover:bg-secondary/50"
       }`}
     >
-      <span className={`transition-colors ${active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}>
+      <span
+        className={`transition-colors ${active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`}
+      >
         {icon}
       </span>
       <span className="flex-1 text-left">{label}</span>
       {badge && (
-        <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight ${badgeColor}`}>
+        <span
+          className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight ${badgeColor}`}
+        >
           {badge}
         </span>
       )}

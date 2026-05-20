@@ -99,9 +99,7 @@ ${truncated ? "\n注意：原作素材过长，已截断。请基于已有部分
 
     const content = response.content;
     const extract = (tag: string): string => {
-      const regex = new RegExp(
-        `=== SECTION: ${tag} ===\\s*([\\s\\S]*?)(?==== SECTION:|$)`,
-      );
+      const regex = new RegExp(`=== SECTION: ${tag} ===\\s*([\\s\\S]*?)(?==== SECTION:|$)`);
       const match = content.match(regex);
       return match?.[1]?.trim() ?? "";
     };

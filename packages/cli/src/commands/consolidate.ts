@@ -1,9 +1,18 @@
 import { Command } from "commander";
 import { ConsolidatorAgent } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 
 export const consolidateCommand = new Command("consolidate")
-  .description("Consolidate chapter summaries into volume-level summaries (reduces context for long books)")
+  .description(
+    "Consolidate chapter summaries into volume-level summaries (reduces context for long books)",
+  )
   .argument("[book-id]", "Book ID (auto-detected if only one book)")
   .option("--json", "Output JSON")
   .action(async (bookIdArg: string | undefined, opts) => {

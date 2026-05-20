@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  analyzeLongSpanFatigue,
-  buildEnglishVarianceBrief,
-} from "../utils/long-span-fatigue.js";
+import { analyzeLongSpanFatigue, buildEnglishVarianceBrief } from "../utils/long-span-fatigue.js";
 
 async function createBookDir(prefix: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), prefix));
@@ -15,7 +12,12 @@ async function createBookDir(prefix: string): Promise<string> {
   return bookDir;
 }
 
-async function writeChapter(bookDir: string, chapter: number, title: string, body: string): Promise<void> {
+async function writeChapter(
+  bookDir: string,
+  chapter: number,
+  title: string,
+  body: string,
+): Promise<void> {
   const filename = `${String(chapter).padStart(4, "0")}_${title}.md`;
   await writeFile(
     join(bookDir, "chapters", filename),
@@ -29,8 +31,18 @@ describe("analyzeLongSpanFatigue", () => {
     const bookDir = await createBookDir("inkos-long-span-type-test-");
 
     await Promise.all([
-      writeChapter(bookDir, 1, "铺陈", "城门口下着雨。林越压低斗笠，慢慢走进旧巷。风从墙缝里钻出来。"),
-      writeChapter(bookDir, 2, "潜伏", "午后的石街很亮。林越在茶棚外停了一下，随后绕向后院。铜铃轻轻响了一声。"),
+      writeChapter(
+        bookDir,
+        1,
+        "铺陈",
+        "城门口下着雨。林越压低斗笠，慢慢走进旧巷。风从墙缝里钻出来。",
+      ),
+      writeChapter(
+        bookDir,
+        2,
+        "潜伏",
+        "午后的石街很亮。林越在茶棚外停了一下，随后绕向后院。铜铃轻轻响了一声。",
+      ),
       writeFile(
         join(bookDir, "story", "chapter_summaries.md"),
         [
@@ -49,7 +61,8 @@ describe("analyzeLongSpanFatigue", () => {
       const result = await analyzeLongSpanFatigue({
         bookDir,
         chapterNumber: 3,
-        chapterContent: "夜色像潮水一样漫到院墙根。林越没有立刻翻墙，而是先贴着墙根听了一阵。最后，他把手按在那道旧债印上。",
+        chapterContent:
+          "夜色像潮水一样漫到院墙根。林越没有立刻翻墙，而是先贴着墙根听了一阵。最后，他把手按在那道旧债印上。",
         chapterSummary: "| 3 | 试探 | 林越 | 继续潜伏 | 目标未变 | 债印未解 | 克制 | 布局 |",
         language: "zh",
       });
@@ -64,20 +77,35 @@ describe("analyzeLongSpanFatigue", () => {
     const bookDir = await createBookDir("inkos-long-span-ending-test-");
 
     await Promise.all([
-      writeChapter(bookDir, 1, "Debt", "The rain had finally stopped. The harbor lights thinned behind him. He knew the debt had only grown heavier."),
-      writeChapter(bookDir, 2, "Weight", "Morning fog crawled over the quay. No one called his name. He knew the debt had only grown heavier tonight."),
+      writeChapter(
+        bookDir,
+        1,
+        "Debt",
+        "The rain had finally stopped. The harbor lights thinned behind him. He knew the debt had only grown heavier.",
+      ),
+      writeChapter(
+        bookDir,
+        2,
+        "Weight",
+        "Morning fog crawled over the quay. No one called his name. He knew the debt had only grown heavier tonight.",
+      ),
     ]);
 
     try {
       const result = await analyzeLongSpanFatigue({
         bookDir,
         chapterNumber: 3,
-        chapterContent: "The alley was empty by the time he turned back. Even the dogs had gone quiet. He knew the debt had only grown heavier again.",
+        chapterContent:
+          "The alley was empty by the time he turned back. Even the dogs had gone quiet. He knew the debt had only grown heavier again.",
         language: "en",
       });
 
-      expect(result.issues.some((issue) => issue.category === "Ending Pattern Repetition")).toBe(true);
-      expect(result.issues.some((issue) => issue.description.includes("last 3 chapter endings"))).toBe(true);
+      expect(result.issues.some((issue) => issue.category === "Ending Pattern Repetition")).toBe(
+        true,
+      );
+      expect(
+        result.issues.some((issue) => issue.description.includes("last 3 chapter endings")),
+      ).toBe(true);
     } finally {
       await rm(join(bookDir, ".."), { recursive: true, force: true });
     }
@@ -87,9 +115,24 @@ describe("analyzeLongSpanFatigue", () => {
     const bookDir = await createBookDir("inkos-variance-brief-test-");
 
     await Promise.all([
-      writeChapter(bookDir, 1, "Ledger", "Mara kept the ledger close to her chest. The corridor stayed quiet after the bell. There it was again."),
-      writeChapter(bookDir, 2, "Ash", "Mara kept the ledger close to her chest while the ash fell. The corridor stayed quiet until Taryn stopped. There it was again."),
-      writeChapter(bookDir, 3, "Harbor", "Mara kept the ledger close to her chest near the harbor gate. The corridor stayed quiet while the guards changed. There it was again."),
+      writeChapter(
+        bookDir,
+        1,
+        "Ledger",
+        "Mara kept the ledger close to her chest. The corridor stayed quiet after the bell. There it was again.",
+      ),
+      writeChapter(
+        bookDir,
+        2,
+        "Ash",
+        "Mara kept the ledger close to her chest while the ash fell. The corridor stayed quiet until Taryn stopped. There it was again.",
+      ),
+      writeChapter(
+        bookDir,
+        3,
+        "Harbor",
+        "Mara kept the ledger close to her chest near the harbor gate. The corridor stayed quiet while the guards changed. There it was again.",
+      ),
       writeFile(
         join(bookDir, "story", "chapter_summaries.md"),
         [
@@ -126,8 +169,18 @@ describe("analyzeLongSpanFatigue", () => {
     const bookDir = await createBookDir("inkos-long-span-cadence-test-");
 
     await Promise.all([
-      writeChapter(bookDir, 1, "名单之前", "风贴着走廊吹。周谨川没有停，手指一直压着那份发潮的薄册。"),
-      writeChapter(bookDir, 2, "名单之后", "楼道里只有脚步声。周谨川顺着裂灯往下走，肩背始终绷着。"),
+      writeChapter(
+        bookDir,
+        1,
+        "名单之前",
+        "风贴着走廊吹。周谨川没有停，手指一直压着那份发潮的薄册。",
+      ),
+      writeChapter(
+        bookDir,
+        2,
+        "名单之后",
+        "楼道里只有脚步声。周谨川顺着裂灯往下走，肩背始终绷着。",
+      ),
       writeFile(
         join(bookDir, "story", "chapter_summaries.md"),
         [
@@ -146,8 +199,10 @@ describe("analyzeLongSpanFatigue", () => {
       const result = await analyzeLongSpanFatigue({
         bookDir,
         chapterNumber: 3,
-        chapterContent: "墙角的灰一直没落定。周谨川盯着名单最后一行，喉结很轻地滚了一下，还是没有把气松出来。",
-        chapterSummary: "| 3 | 名单未落 | 周谨川 | 名单追查继续推进 | 目标未变 | 名单线继续发酵 | 压迫、窒息 | 调查章 |",
+        chapterContent:
+          "墙角的灰一直没落定。周谨川盯着名单最后一行，喉结很轻地滚了一下，还是没有把气松出来。",
+        chapterSummary:
+          "| 3 | 名单未落 | 周谨川 | 名单追查继续推进 | 目标未变 | 名单线继续发酵 | 压迫、窒息 | 调查章 |",
         language: "zh",
       });
 

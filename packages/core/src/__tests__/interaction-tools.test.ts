@@ -70,7 +70,10 @@ describe("interaction tools", () => {
 
     expect(pipeline.writeNextChapter).toHaveBeenCalledWith("harbor");
     expect(pipeline.reviseDraft).toHaveBeenCalledWith("harbor", 3, "rewrite");
-    expect((writeResult as { __interaction?: { activeChapterNumber?: number } }).__interaction?.activeChapterNumber).toBe(1);
+    expect(
+      (writeResult as { __interaction?: { activeChapterNumber?: number } }).__interaction
+        ?.activeChapterNumber,
+    ).toBe(1);
     expect(events).toEqual([]);
   });
 
@@ -79,23 +82,27 @@ describe("interaction tools", () => {
       config: {
         logger: createLogger({
           tag: "test",
-          sinks: [{
-            write() {},
-          }],
+          sinks: [
+            {
+              write() {},
+            },
+          ],
         }),
       },
-      writeNextChapter: vi.fn(async function (this: { config: { logger?: { info: (msg: string) => void } } }) {
-        this.config.logger?.info("Stage: preparing chapter inputs");
-        this.config.logger?.info("Stage: writing chapter draft");
-        return {
-          chapterNumber: 4,
-          title: "Draft",
-          wordCount: 1000,
-          revised: false,
-          status: "ready-for-review" as const,
-          auditResult: { passed: true, issues: [], summary: "ok" },
-        };
-      }),
+      writeNextChapter: vi.fn(
+        async function (this: { config: { logger?: { info: (msg: string) => void } } }) {
+          this.config.logger?.info("Stage: preparing chapter inputs");
+          this.config.logger?.info("Stage: writing chapter draft");
+          return {
+            chapterNumber: 4,
+            title: "Draft",
+            wordCount: 1000,
+            revised: false,
+            status: "ready-for-review" as const,
+            auditResult: { passed: true, issues: [], summary: "ok" },
+          };
+        },
+      ),
       reviseDraft: vi.fn(async () => ({
         chapterNumber: 3,
         wordCount: 1200,
@@ -126,13 +133,25 @@ describe("interaction tools", () => {
     const tools = createInteractionToolsFromDeps(pipeline, state);
     const result = await tools.writeNextChapter("harbor");
 
-    expect((result as {
-      __interaction?: {
-        events?: ReadonlyArray<{ kind: string; status: string; detail?: string }>;
-      };
-    }).__interaction?.events).toEqual([
-      expect.objectContaining({ kind: "stage.changed", status: "planning", detail: "preparing chapter inputs" }),
-      expect.objectContaining({ kind: "stage.changed", status: "writing", detail: "writing chapter draft" }),
+    expect(
+      (
+        result as {
+          __interaction?: {
+            events?: ReadonlyArray<{ kind: string; status: string; detail?: string }>;
+          };
+        }
+      ).__interaction?.events,
+    ).toEqual([
+      expect.objectContaining({
+        kind: "stage.changed",
+        status: "planning",
+        detail: "preparing chapter inputs",
+      }),
+      expect.objectContaining({
+        kind: "stage.changed",
+        status: "writing",
+        detail: "writing chapter draft",
+      }),
     ]);
   });
 
@@ -178,10 +197,12 @@ describe("interaction tools", () => {
     await tools.updateCurrentFocus("harbor", "# Current Focus\n\nBring focus back.\n");
     await tools.updateAuthorIntent("harbor", "# Author Intent\n\nWrite a harbor mystery.\n");
 
-    await expect(readFile(join(projectRoot, "books", "harbor", "story", "current_focus.md"), "utf-8"))
-      .resolves.toContain("Bring focus back");
-    await expect(readFile(join(projectRoot, "books", "harbor", "story", "author_intent.md"), "utf-8"))
-      .resolves.toContain("harbor mystery");
+    await expect(
+      readFile(join(projectRoot, "books", "harbor", "story", "current_focus.md"), "utf-8"),
+    ).resolves.toContain("Bring focus back");
+    await expect(
+      readFile(join(projectRoot, "books", "harbor", "story", "author_intent.md"), "utf-8"),
+    ).resolves.toContain("harbor mystery");
   });
 
   it("rejects truth-file writes outside the canonical truth-file allowlist", async () => {
@@ -223,8 +244,9 @@ describe("interaction tools", () => {
       },
     );
 
-    await expect(tools.writeTruthFile("harbor", "runtime/agent_notes.md", "notes"))
-      .rejects.toThrow("Invalid truth file name");
+    await expect(tools.writeTruthFile("harbor", "runtime/agent_notes.md", "notes")).rejects.toThrow(
+      "Invalid truth file name",
+    );
   });
 
   it("forwards foundation draft fields into shared book creation", async () => {

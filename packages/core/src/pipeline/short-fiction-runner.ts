@@ -22,7 +22,11 @@ import {
   type ShortFictionReference,
   type ShortFictionSalesPackage,
 } from "../agents/short-fiction.js";
-import { coverSecretKey, resolveCoverProviderPreset, type CoverProviderPreset } from "../llm/cover-providers.js";
+import {
+  coverSecretKey,
+  resolveCoverProviderPreset,
+  type CoverProviderPreset,
+} from "../llm/cover-providers.js";
 import { loadSecrets } from "../llm/secrets.js";
 import { safeChildPath } from "../utils/path-safety.js";
 
@@ -115,7 +119,9 @@ export async function runShortFictionProduction(
     reference: options.reference,
   });
 
-  const storyId = safeSegment(options.storyId || slugify(outlineV1.storyTitle || options.direction));
+  const storyId = safeSegment(
+    options.storyId || slugify(outlineV1.storyTitle || options.direction),
+  );
   const baseDir = join(normalizeOutputDir(options.outDir ?? "shorts"), storyId);
   await writeText(root, join(baseDir, "outline", "v001.md"), outlineV1.rawContent);
 
@@ -184,18 +190,19 @@ export async function runShortFictionProduction(
   });
   await writePackageArtifacts(root, baseDir, salesPackage);
 
-  const coverArtifacts: { readonly coverImagePath?: string; readonly coverError?: string } = options.cover === false
-    ? { coverError: "disabled" }
-    : await generateCoverArtifact({
-        root,
-        baseDir,
-        salesPackage,
-        coverBaseUrl: options.coverBaseUrl,
-        coverEndpoint: options.coverEndpoint,
-        coverModel: options.coverModel,
-        coverSize: options.coverSize,
-        coverApiKeyEnv: options.coverApiKeyEnv,
-      }).catch((error: unknown) => ({ coverError: String(error) }));
+  const coverArtifacts: { readonly coverImagePath?: string; readonly coverError?: string } =
+    options.cover === false
+      ? { coverError: "disabled" }
+      : await generateCoverArtifact({
+          root,
+          baseDir,
+          salesPackage,
+          coverBaseUrl: options.coverBaseUrl,
+          coverEndpoint: options.coverEndpoint,
+          coverModel: options.coverModel,
+          coverSize: options.coverSize,
+          coverApiKeyEnv: options.coverApiKeyEnv,
+        }).catch((error: unknown) => ({ coverError: String(error) }));
 
   return {
     storyId,
@@ -258,48 +265,64 @@ async function writeDraftArtifacts(
   const draftDir = join(baseDir, "drafts", version);
   await writeText(root, join(draftDir, "full.md"), renderShortFictionDraftMarkdown(draft));
   await writeJson(root, join(draftDir, "draft.json"), draft);
-  await Promise.all(draft.chapters.map((chapter) =>
-    writeText(root, join(draftDir, "chapters", `${String(chapter.number).padStart(4, "0")}.md`), [
-      `# 第${chapter.number}章 ${chapter.title}`,
-      "",
-      chapter.content,
-    ].join("\n")),
-  ));
+  await Promise.all(
+    draft.chapters.map((chapter) =>
+      writeText(
+        root,
+        join(draftDir, "chapters", `${String(chapter.number).padStart(4, "0")}.md`),
+        [`# 第${chapter.number}章 ${chapter.title}`, "", chapter.content].join("\n"),
+      ),
+    ),
+  );
 }
 
-async function writeFinalArtifacts(root: string, baseDir: string, draft: ShortFictionBatchDraft): Promise<void> {
+async function writeFinalArtifacts(
+  root: string,
+  baseDir: string,
+  draft: ShortFictionBatchDraft,
+): Promise<void> {
   const finalDir = join(baseDir, "final");
   const markdown = renderShortFictionDraftMarkdown(draft);
   await writeText(root, join(finalDir, "full.md"), markdown);
   await writeText(root, join(finalDir, `${safeFileName(draft.storyTitle)}.md`), markdown);
   await writeJson(root, join(finalDir, "short-story.json"), draft);
-  await Promise.all(draft.chapters.map((chapter) =>
-    writeText(root, join(finalDir, "chapters", `${String(chapter.number).padStart(4, "0")}.md`), [
-      `# 第${chapter.number}章 ${chapter.title}`,
-      "",
-      chapter.content,
-    ].join("\n")),
-  ));
+  await Promise.all(
+    draft.chapters.map((chapter) =>
+      writeText(
+        root,
+        join(finalDir, "chapters", `${String(chapter.number).padStart(4, "0")}.md`),
+        [`# 第${chapter.number}章 ${chapter.title}`, "", chapter.content].join("\n"),
+      ),
+    ),
+  );
 }
 
-async function writePackageArtifacts(root: string, baseDir: string, salesPackage: ShortFictionSalesPackage): Promise<void> {
+async function writePackageArtifacts(
+  root: string,
+  baseDir: string,
+  salesPackage: ShortFictionSalesPackage,
+): Promise<void> {
   const finalDir = join(baseDir, "final");
   await writeJson(root, join(finalDir, "sales-package.json"), salesPackage);
-  await writeText(root, join(finalDir, "sales-package.md"), [
-    `# ${salesPackage.title}`,
-    "",
-    "## 简介",
-    "",
-    salesPackage.intro,
-    "",
-    "## 卖点",
-    "",
-    ...salesPackage.sellingPoints.map((point) => `- ${point}`),
-    "",
-    "## 封面提示词",
-    "",
-    salesPackage.coverPrompt,
-  ].join("\n"));
+  await writeText(
+    root,
+    join(finalDir, "sales-package.md"),
+    [
+      `# ${salesPackage.title}`,
+      "",
+      "## 简介",
+      "",
+      salesPackage.intro,
+      "",
+      "## 卖点",
+      "",
+      ...salesPackage.sellingPoints.map((point) => `- ${point}`),
+      "",
+      "## 封面提示词",
+      "",
+      salesPackage.coverPrompt,
+    ].join("\n"),
+  );
   await writeText(root, join(finalDir, "cover-prompt.md"), salesPackage.coverPrompt || "(empty)");
 }
 
@@ -341,7 +364,10 @@ async function generateCoverImageArtifact(input: {
   if (request.api === "gemini") {
     const prompt = buildCoverImagePrompt(input.salesPackage);
     const payload = await generateGeminiCover(request, prompt);
-    const coverPath = join(input.outputDir, payload.extension === "jpg" ? "cover.jpg" : "cover.png");
+    const coverPath = join(
+      input.outputDir,
+      payload.extension === "jpg" ? "cover.jpg" : "cover.png",
+    );
     await writeBinary(input.root, coverPath, Buffer.from(payload.base64, "base64"));
     return { coverImagePath: projectPath(coverPath) };
   }
@@ -349,7 +375,10 @@ async function generateCoverImageArtifact(input: {
   if (request.api === "images") {
     const prompt = buildCoverImagePrompt(input.salesPackage);
     const payload = await generateImagesCover(request, prompt, size);
-    const coverPath = join(input.outputDir, payload.extension === "jpg" ? "cover.jpg" : "cover.png");
+    const coverPath = join(
+      input.outputDir,
+      payload.extension === "jpg" ? "cover.jpg" : "cover.png",
+    );
     await writeBinary(input.root, coverPath, payload.buffer);
     return { coverImagePath: projectPath(coverPath) };
   }
@@ -404,11 +433,17 @@ export async function resolveCoverGenerationRequest(input: {
   readonly coverModel?: string;
   readonly coverApiKeyEnv?: string;
 }): Promise<ShortFictionCoverRequest> {
-  if (input.coverEndpoint || input.coverBaseUrl || process.env.INKOS_COVER_ENDPOINT || process.env.INKOS_COVER_BASE_URL) {
+  if (
+    input.coverEndpoint ||
+    input.coverBaseUrl ||
+    process.env.INKOS_COVER_ENDPOINT ||
+    process.env.INKOS_COVER_BASE_URL
+  ) {
     const endpoint = resolveCoverEndpoint(input.coverEndpoint, input.coverBaseUrl);
-    const baseUrl = input.coverBaseUrl || process.env.INKOS_COVER_BASE_URL || endpoint
-      .replace(/\/responses\/?$/u, "")
-      .replace(/\/images\/generations\/?$/u, "");
+    const baseUrl =
+      input.coverBaseUrl ||
+      process.env.INKOS_COVER_BASE_URL ||
+      endpoint.replace(/\/responses\/?$/u, "").replace(/\/images\/generations\/?$/u, "");
     return {
       api: endpoint.includes("/responses") ? "responses" : "images",
       baseUrl,
@@ -420,7 +455,9 @@ export async function resolveCoverGenerationRequest(input: {
 
   const projectCover = await readProjectCoverConfig(input.root);
   if (!projectCover) {
-    throw new Error("cover endpoint is required. Configure cover generation in Studio or set INKOS_COVER_BASE_URL.");
+    throw new Error(
+      "cover endpoint is required. Configure cover generation in Studio or set INKOS_COVER_BASE_URL.",
+    );
   }
 
   const preset = resolveCoverProviderPreset(projectCover.service);
@@ -440,7 +477,9 @@ export async function resolveCoverGenerationRequest(input: {
   };
 }
 
-async function readProjectCoverConfig(root: string): Promise<{ readonly service: string; readonly model?: string } | undefined> {
+async function readProjectCoverConfig(
+  root: string,
+): Promise<{ readonly service: string; readonly model?: string } | undefined> {
   try {
     const raw = await readFile(join(root, "inkos.json"), "utf-8");
     const parsed = JSON.parse(raw) as { llm?: { cover?: { service?: unknown; model?: unknown } } };
@@ -453,16 +492,19 @@ async function readProjectCoverConfig(root: string): Promise<{ readonly service:
         : {}),
     };
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }
 
 async function resolveProjectCoverApiKey(root: string, service: string): Promise<string> {
   const secrets = await loadSecrets(root);
-  return secrets.services[coverSecretKey(service)]?.apiKey
-    || secrets.services[service]?.apiKey
-    || process.env[`${service.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase()}_API_KEY`]
-    || "";
+  return (
+    secrets.services[coverSecretKey(service)]?.apiKey ||
+    secrets.services[service]?.apiKey ||
+    process.env[`${service.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase()}_API_KEY`] ||
+    ""
+  );
 }
 
 async function generateImagesCover(
@@ -509,10 +551,14 @@ async function generateImagesCover(
   throw new Error("cover generation response did not include image URL or base64 data.");
 }
 
-export function extractImagesGenerationImage(payload: unknown): (
-  | { readonly base64: string; readonly extension: "png" | "jpg"; readonly url?: undefined }
-  | { readonly url: string; readonly base64?: undefined; readonly extension?: undefined }
-) | undefined {
+export function extractImagesGenerationImage(
+  payload: unknown,
+):
+  | (
+      | { readonly base64: string; readonly extension: "png" | "jpg"; readonly url?: undefined }
+      | { readonly url: string; readonly base64?: undefined; readonly extension?: undefined }
+    )
+  | undefined {
   const data = (payload as { data?: unknown }).data;
   if (!Array.isArray(data)) return undefined;
 
@@ -534,12 +580,15 @@ async function downloadGeneratedCoverImage(
   apiKey: string,
 ): Promise<{ readonly buffer: Buffer; readonly extension: "png" | "jpg" }> {
   const response = await fetch(url);
-  const fallbackResponse = response.status === 401 || response.status === 403
-    ? await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } })
-    : response;
+  const fallbackResponse =
+    response.status === 401 || response.status === 403
+      ? await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } })
+      : response;
   if (!fallbackResponse.ok) {
     const text = await fallbackResponse.text();
-    throw new Error(`cover image download failed: HTTP ${fallbackResponse.status} ${text.slice(0, 300)}`);
+    throw new Error(
+      `cover image download failed: HTTP ${fallbackResponse.status} ${text.slice(0, 300)}`,
+    );
   }
   const contentType = fallbackResponse.headers.get("content-type") ?? "";
   const buffer = Buffer.from(await fallbackResponse.arrayBuffer());
@@ -551,7 +600,9 @@ async function downloadGeneratedCoverImage(
 
 function coverImageExtension(contentType: string, url: string): "png" | "jpg" {
   const normalized = `${contentType} ${url}`.toLowerCase();
-  return normalized.includes("jpeg") || normalized.includes(".jpg") || normalized.includes(".jpeg") ? "jpg" : "png";
+  return normalized.includes("jpeg") || normalized.includes(".jpg") || normalized.includes(".jpeg")
+    ? "jpg"
+    : "png";
 }
 
 async function generateGeminiCover(
@@ -592,14 +643,20 @@ export function extractResponsesImageBase64(payload: unknown): string | undefine
 
   for (const item of output) {
     const record = item as { type?: unknown; result?: unknown; content?: unknown };
-    if (record.type === "image_generation_call" && typeof record.result === "string" && record.result.trim()) {
+    if (
+      record.type === "image_generation_call" &&
+      typeof record.result === "string" &&
+      record.result.trim()
+    ) {
       return record.result.trim();
     }
     if (Array.isArray(record.content)) {
       for (const contentItem of record.content) {
         const contentRecord = contentItem as { result?: unknown; image_base64?: unknown };
-        if (typeof contentRecord.result === "string" && contentRecord.result.trim()) return contentRecord.result.trim();
-        if (typeof contentRecord.image_base64 === "string" && contentRecord.image_base64.trim()) return contentRecord.image_base64.trim();
+        if (typeof contentRecord.result === "string" && contentRecord.result.trim())
+          return contentRecord.result.trim();
+        if (typeof contentRecord.image_base64 === "string" && contentRecord.image_base64.trim())
+          return contentRecord.image_base64.trim();
       }
     }
   }
@@ -607,7 +664,9 @@ export function extractResponsesImageBase64(payload: unknown): string | undefine
   return undefined;
 }
 
-export function extractGeminiImageBase64(payload: unknown): { readonly base64: string; readonly extension: "png" | "jpg" } | undefined {
+export function extractGeminiImageBase64(
+  payload: unknown,
+): { readonly base64: string; readonly extension: "png" | "jpg" } | undefined {
   const candidates = (payload as { candidates?: unknown }).candidates;
   if (!Array.isArray(candidates)) return undefined;
 
@@ -615,9 +674,12 @@ export function extractGeminiImageBase64(payload: unknown): { readonly base64: s
     const parts = (candidate as { content?: { parts?: unknown } }).content?.parts;
     if (!Array.isArray(parts)) continue;
     for (const part of parts) {
-      const inlineData = (part as { inlineData?: unknown; inline_data?: unknown }).inlineData
-        ?? (part as { inlineData?: unknown; inline_data?: unknown }).inline_data;
-      const record = inlineData as { data?: unknown; mimeType?: unknown; mime_type?: unknown } | undefined;
+      const inlineData =
+        (part as { inlineData?: unknown; inline_data?: unknown }).inlineData ??
+        (part as { inlineData?: unknown; inline_data?: unknown }).inline_data;
+      const record = inlineData as
+        | { data?: unknown; mimeType?: unknown; mime_type?: unknown }
+        | undefined;
       if (typeof record?.data !== "string" || !record.data.trim()) continue;
       const mimeType = String(record.mimeType ?? record.mime_type ?? "image/png").toLowerCase();
       return {
@@ -643,7 +705,9 @@ function resolveCoverEndpoint(coverEndpoint?: string, coverBaseUrl?: string): st
   if (endpoint) return endpoint;
   const baseUrl = coverBaseUrl || process.env.INKOS_COVER_BASE_URL;
   if (!baseUrl) {
-    throw new Error("cover endpoint is required. Set INKOS_COVER_BASE_URL or disable cover generation.");
+    throw new Error(
+      "cover endpoint is required. Set INKOS_COVER_BASE_URL or disable cover generation.",
+    );
   }
   return `${baseUrl.replace(/\/+$/u, "")}/images/generations`;
 }
@@ -659,10 +723,14 @@ function buildCoverImagePrompt(salesPackage: ShortFictionSalesPackage): string {
     "封面方向：平台短篇书封，不是电影海报。标题字要成为主视觉，预留两到四行大字排版区；人物近景或半身，表情有冷笑、震惊、崩溃、压迫或反杀感；道具少而大，一眼能看出冲突。",
     "颜色高对比、高饱和，适合手机列表缩略图。避免写实会议摄影、横版视频缩略图、杂志大片、小清新细字和长段文字。",
     "如果模型文字不稳定，优先生成明确标题留白/字块/排版空间，不要把大量乱码文字铺满画面。",
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
-function normalizeSellingPoints(value: string | ReadonlyArray<string> | undefined): ReadonlyArray<string> {
+function normalizeSellingPoints(
+  value: string | ReadonlyArray<string> | undefined,
+): ReadonlyArray<string> {
   if (typeof value === "string" || value === undefined) {
     return (value ?? "")
       .split(/[;；\n]/u)
@@ -699,7 +767,13 @@ function projectPath(value: string): string {
   return value.replace(/\\/gu, "/");
 }
 
-function boundedInteger(value: number | undefined, fallback: number, name: string, min: number, max: number): number {
+function boundedInteger(
+  value: number | undefined,
+  fallback: number,
+  name: string,
+  min: number,
+  max: number,
+): number {
   const parsed = value ?? fallback;
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
     throw new Error(`${name} must be an integer between ${min} and ${max}.`);

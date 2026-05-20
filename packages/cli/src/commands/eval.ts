@@ -1,9 +1,5 @@
 import { Command } from "commander";
-import {
-  StateManager,
-  analyzeAITells,
-  computeAnalytics,
-} from "@actalk/inkos-core";
+import { StateManager, analyzeAITells, computeAnalytics } from "@actalk/inkos-core";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { findProjectRoot, resolveBookId, log, logError } from "../utils.js";
@@ -38,7 +34,7 @@ function computeChapterScore(ch: ChapterEval): number {
   // Penalties: audit issues, AI tells, paragraph problems
   let score = 100;
   score -= ch.auditIssueCount * 5; // -5 per audit issue
-  score -= ch.aiTellDensity * 20;  // -20 per AI tell per 1k chars
+  score -= ch.aiTellDensity * 20; // -20 per AI tell per 1k chars
   score -= ch.paragraphWarnings * 3; // -3 per paragraph warning
   return Math.max(0, Math.min(100, score));
 }
@@ -66,9 +62,7 @@ export const evalCommand = new Command("eval")
         endCh = parts[1] ? parseInt(parts[1], 10) : startCh;
       }
 
-      const filteredIndex = index.filter(
-        (ch) => ch.number >= startCh && ch.number <= endCh,
-      );
+      const filteredIndex = index.filter((ch) => ch.number >= startCh && ch.number <= endCh);
 
       // Read chapter files and evaluate each
       const chapterFiles = await readdir(chaptersDir).catch(() => [] as string[]);
@@ -77,9 +71,7 @@ export const evalCommand = new Command("eval")
 
       for (const ch of filteredIndex) {
         const paddedNum = String(ch.number).padStart(4, "0");
-        const file = chapterFiles.find(
-          (f) => f.startsWith(paddedNum) && f.endsWith(".md"),
-        );
+        const file = chapterFiles.find((f) => f.startsWith(paddedNum) && f.endsWith(".md"));
         let content = "";
         if (file) {
           content = await readFile(join(chaptersDir, file), "utf-8");
@@ -87,13 +79,15 @@ export const evalCommand = new Command("eval")
 
         const aiTells = content ? analyzeAITells(content) : { issues: [] };
         // Simple paragraph shape check: count short paragraphs
-        const paragraphs = content.split(/\n\s*\n/).map((p) => p.trim()).filter((p) => p.length > 0 && !p.startsWith("#"));
+        const paragraphs = content
+          .split(/\n\s*\n/)
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0 && !p.startsWith("#"));
         const shortParas = paragraphs.filter((p) => p.length < 35);
         const paragraphWarningCount = shortParas.length > paragraphs.length * 0.4 ? 1 : 0;
 
-        const aiTellDensity = content.length > 0
-          ? (aiTells.issues.length / content.length) * 1000
-          : 0;
+        const aiTellDensity =
+          content.length > 0 ? (aiTells.issues.length / content.length) * 1000 : 0;
 
         chapterEvals.push({
           number: ch.number,
@@ -118,14 +112,17 @@ export const evalCommand = new Command("eval")
         let totalHooks = 0;
         let resolvedHooks = 0;
         for (const line of lines) {
-          if (/^\|.*\|.*\|/.test(line) && !line.includes("---") && !line.toLowerCase().includes("hook") && !line.toLowerCase().includes("伏笔")) {
+          if (
+            /^\|.*\|.*\|/.test(line) &&
+            !line.includes("---") &&
+            !line.toLowerCase().includes("hook") &&
+            !line.toLowerCase().includes("伏笔")
+          ) {
             totalHooks++;
             if (/resolved|已回收|已解决/i.test(line)) resolvedHooks++;
           }
         }
-        hookResolveRate = totalHooks > 0
-          ? Math.round((resolvedHooks / totalHooks) * 100)
-          : 0;
+        hookResolveRate = totalHooks > 0 ? Math.round((resolvedHooks / totalHooks) * 100) : 0;
       }
 
       // Duplicate titles: simple exact match
@@ -139,20 +136,22 @@ export const evalCommand = new Command("eval")
 
       // Composite score
       const analytics = computeAnalytics(bookId, index);
-      const avgAiTellDensity = chapterEvals.length > 0
-        ? chapterEvals.reduce((s, c) => s + c.aiTellDensity, 0) / chapterEvals.length
-        : 0;
-      const avgParagraphWarnings = chapterEvals.length > 0
-        ? chapterEvals.reduce((s, c) => s + c.paragraphWarnings, 0) / chapterEvals.length
-        : 0;
+      const avgAiTellDensity =
+        chapterEvals.length > 0
+          ? chapterEvals.reduce((s, c) => s + c.aiTellDensity, 0) / chapterEvals.length
+          : 0;
+      const avgParagraphWarnings =
+        chapterEvals.length > 0
+          ? chapterEvals.reduce((s, c) => s + c.paragraphWarnings, 0) / chapterEvals.length
+          : 0;
 
       // Quality score: weighted composite (0-100)
       const qualityScore = Math.round(
-        analytics.auditPassRate * 0.3 +                        // 30% audit
-        Math.max(0, 100 - avgAiTellDensity * 30) * 0.25 +     // 25% AI tells
-        Math.max(0, 100 - avgParagraphWarnings * 10) * 0.15 +  // 15% paragraphs
-        hookResolveRate * 0.2 +                                 // 20% hooks
-        Math.max(0, 100 - duplicateTitles * 20) * 0.1,         // 10% title dedup
+        analytics.auditPassRate * 0.3 + // 30% audit
+          Math.max(0, 100 - avgAiTellDensity * 30) * 0.25 + // 25% AI tells
+          Math.max(0, 100 - avgParagraphWarnings * 10) * 0.15 + // 15% paragraphs
+          hookResolveRate * 0.2 + // 20% hooks
+          Math.max(0, 100 - duplicateTitles * 20) * 0.1, // 10% title dedup
       );
 
       // Quality trend (per-chapter scores)
@@ -201,9 +200,12 @@ export const evalCommand = new Command("eval")
         if (qualityTrend.length >= 6) {
           const mid = Math.floor(qualityTrend.length / 2);
           const firstHalf = qualityTrend.slice(0, mid).reduce((s, c) => s + c.score, 0) / mid;
-          const secondHalf = qualityTrend.slice(mid).reduce((s, c) => s + c.score, 0) / (qualityTrend.length - mid);
+          const secondHalf =
+            qualityTrend.slice(mid).reduce((s, c) => s + c.score, 0) / (qualityTrend.length - mid);
           const drift = Math.round(secondHalf - firstHalf);
-          log(`  Quality Drift: ${drift > 0 ? "+" : ""}${drift} (${drift >= 0 ? "stable/improving" : "DEGRADING"})`);
+          log(
+            `  Quality Drift: ${drift > 0 ? "+" : ""}${drift} (${drift >= 0 ? "stable/improving" : "DEGRADING"})`,
+          );
         }
       }
     } catch (e) {

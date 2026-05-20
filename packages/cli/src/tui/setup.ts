@@ -4,9 +4,18 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, basename } from "node:path";
 import readline from "node:readline/promises";
 import {
-  c, bold, dim, italic,
-  cyan, green, yellow, gray, red,
-  brightCyan, brightGreen, brightWhite,
+  c,
+  bold,
+  dim,
+  italic,
+  cyan,
+  green,
+  yellow,
+  gray,
+  red,
+  brightCyan,
+  brightGreen,
+  brightWhite,
 } from "./ansi.js";
 import { resolveTuiLocale, type TuiLocale } from "./i18n.js";
 import { GLOBAL_ENV_PATH, loadConfig } from "../utils.js";
@@ -14,12 +23,12 @@ import { ensureProjectGitignore } from "../project-bootstrap.js";
 
 const PROVIDERS = ["openai", "anthropic", "kkaiapi", "custom"] as const;
 const KKAIAPI_BASE_URL = "https://api.kkaiapi.com/v1";
-type SetupProvider = typeof PROVIDERS[number];
+type SetupProvider = (typeof PROVIDERS)[number];
 type RuntimeProvider = "openai" | "anthropic" | "custom";
 
 export function resolveSetupProvider(provider: string, baseUrl: string): RuntimeProvider {
   const normalizedProvider = PROVIDERS.includes(provider.trim() as SetupProvider)
-    ? provider.trim() as SetupProvider
+    ? (provider.trim() as SetupProvider)
     : "openai";
   const normalizedUrl = baseUrl.trim().toLowerCase();
   if (normalizedUrl.includes("api.kimi.com/coding")) {
@@ -136,7 +145,10 @@ export function buildInteractiveSetupCopy(locale: TuiLocale): InteractiveSetupCo
   };
 }
 
-export function buildAutoInitMessages(projectName: string, locale: TuiLocale): {
+export function buildAutoInitMessages(
+  projectName: string,
+  locale: TuiLocale,
+): {
   readonly initializing: string;
   readonly initialized: string;
   readonly envTemplateHeader: string;
@@ -168,9 +180,7 @@ export async function ensureProject(cwd: string): Promise<SetupResult> {
   return { projectRoot: cwd, hasLlmConfig: hasLlm };
 }
 
-export async function interactiveLlmSetup(
-  projectRoot: string,
-): Promise<void> {
+export async function interactiveLlmSetup(projectRoot: string): Promise<void> {
   const projectLanguage = await detectProjectLanguage(projectRoot);
   const locale = resolveTuiLocale(process.env, projectLanguage);
   const copy = buildInteractiveSetupCopy(locale);
@@ -190,9 +200,10 @@ export async function interactiveLlmSetup(
     console.log(c(`     ${copy.hints.provider}`, dim));
     const providerInput = await rl.question(`     ${c("❯", cyan)} `);
     const provider = PROVIDERS.includes(providerInput.trim() as SetupProvider)
-      ? providerInput.trim() as SetupProvider
-      : copy.defaults.provider as SetupProvider;
-    const providerDefaultBaseUrl = provider === "kkaiapi" ? KKAIAPI_BASE_URL : copy.defaults.baseUrl;
+      ? (providerInput.trim() as SetupProvider)
+      : (copy.defaults.provider as SetupProvider);
+    const providerDefaultBaseUrl =
+      provider === "kkaiapi" ? KKAIAPI_BASE_URL : copy.defaults.baseUrl;
     console.log(`     ${c("✓", brightGreen)} ${provider}`);
     console.log();
 
@@ -207,9 +218,10 @@ export async function interactiveLlmSetup(
     console.log(`  ${c("3", cyan)}  ${c(copy.steps.apiKey, gray)}`);
     console.log(c(`     ${copy.hints.apiKey}`, dim));
     const apiKey = await rl.question(`     ${c("❯", cyan)} `);
-    const maskedKey = apiKey.trim().length > 8
-      ? apiKey.trim().slice(0, 4) + "···" + apiKey.trim().slice(-4)
-      : "···";
+    const maskedKey =
+      apiKey.trim().length > 8
+        ? apiKey.trim().slice(0, 4) + "···" + apiKey.trim().slice(-4)
+        : "···";
     console.log(`     ${c("✓", brightGreen)} ${maskedKey}`);
     console.log();
 
@@ -225,7 +237,8 @@ export async function interactiveLlmSetup(
     console.log(c(`     ${copy.hints.scope}`, dim));
     const scope = await rl.question(`     ${c("❯", cyan)} ${c(copy.defaults.scope, dim)} `);
     const useGlobal = scope.trim().toLowerCase() !== "project";
-    const effectiveBaseUrl = baseUrl.trim() || (provider === "kkaiapi" ? providerDefaultBaseUrl : "");
+    const effectiveBaseUrl =
+      baseUrl.trim() || (provider === "kkaiapi" ? providerDefaultBaseUrl : "");
     const finalProvider = resolveSetupProvider(provider, effectiveBaseUrl);
     const finalService = resolveSetupService(provider, effectiveBaseUrl);
 
@@ -242,7 +255,9 @@ export async function interactiveLlmSetup(
       await mkdir(globalDir, { recursive: true });
       await writeFile(GLOBAL_ENV_PATH, envContent + "\n", "utf-8");
       console.log();
-      console.log(`  ${c("✓", brightGreen, bold)} ${c(copy.savedTo, dim)} ${c(GLOBAL_ENV_PATH, gray)}`);
+      console.log(
+        `  ${c("✓", brightGreen, bold)} ${c(copy.savedTo, dim)} ${c(GLOBAL_ENV_PATH, gray)}`,
+      );
     } else {
       await writeFile(join(projectRoot, ".env"), envContent + "\n", "utf-8");
       console.log();
@@ -283,11 +298,7 @@ async function autoInit(cwd: string): Promise<void> {
     },
   };
 
-  await writeFile(
-    join(cwd, "inkos.json"),
-    JSON.stringify(config, null, 2),
-    "utf-8",
-  );
+  await writeFile(join(cwd, "inkos.json"), JSON.stringify(config, null, 2), "utf-8");
 
   const hasGlobal = await hasGlobalConfig();
   if (!hasGlobal) {
@@ -325,6 +336,7 @@ async function checkEnvForKey(envPath: string): Promise<boolean> {
     const match = content.match(/INKOS_LLM_API_KEY=(.+)/);
     return !!match && match[1]!.trim().length > 0 && !match[1]!.includes("your-api-key");
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }
@@ -364,6 +376,7 @@ export async function detectProjectLanguage(projectRoot: string): Promise<string
     const parsed = JSON.parse(raw) as { language?: string };
     return parsed.language;
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }
@@ -383,6 +396,7 @@ async function parseEnvModel(envPath: string): Promise<ModelInfo | undefined> {
       baseUrl: get("INKOS_LLM_BASE_URL") || "",
     };
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }
@@ -392,6 +406,7 @@ async function fileExists(path: string): Promise<boolean> {
     await access(path);
     return true;
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }

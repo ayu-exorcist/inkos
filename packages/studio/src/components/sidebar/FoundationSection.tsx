@@ -35,9 +35,7 @@ export function FoundationSection({ bookId }: FoundationSectionProps) {
       .catch(() => setFiles([]));
   }, [bookId, bookDataVersion]);
 
-  const available = FOUNDATION_FILES.filter((f) =>
-    files.some((tf) => tf.name === f.file),
-  );
+  const available = FOUNDATION_FILES.filter((f) => files.some((tf) => tf.name === f.file));
 
   if (available.length === 0) return null;
 

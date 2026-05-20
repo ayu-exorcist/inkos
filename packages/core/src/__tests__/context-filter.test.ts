@@ -40,11 +40,7 @@ describe("context-filter", () => {
   });
 
   it("caps oversized truth context while preserving beginning and latest tail", () => {
-    const longContext = [
-      "BEGIN-ANCHOR",
-      "中段旧设定。".repeat(2000),
-      "LATEST-TAIL",
-    ].join("\n");
+    const longContext = ["BEGIN-ANCHOR", "中段旧设定。".repeat(2000), "LATEST-TAIL"].join("\n");
 
     const capped = capContextBlock(longContext, {
       label: "story_bible",

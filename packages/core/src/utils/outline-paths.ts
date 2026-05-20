@@ -26,6 +26,7 @@ export async function isNewLayoutBook(bookDir: string): Promise<boolean> {
     await access(join(bookDir, "story", "outline", "story_frame.md"));
     return true;
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }
@@ -34,6 +35,7 @@ async function readOr(path: string, fallback: string): Promise<string> {
   try {
     return await readFile(path, "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return fallback;
   }
 }
@@ -195,7 +197,7 @@ export function buildECCMContext(name: string, eccm: ECCMProfile): string {
   parts.push(`3. 这个反应是否符合他的决策矩阵中的默认模式？`);
   parts.push(`4. 他的身体反应是什么？来源是什么？`);
   parts.push(`5. 如果读者看到他的行为，能否倒推出他的过去？`);
-  parts.push("**禁止**：使用性格标签（\"他很固执\"），必须用具体动作展示。");
+  parts.push('**禁止**：使用性格标签（"他很固执"），必须用具体动作展示。');
 
   return parts.join("\n");
 }
@@ -240,11 +242,17 @@ function extractListItems(section: string, headings: ReadonlyArray<string>): str
 
 function extractTableRows(section: string): string[] {
   if (!section) return [];
-  const lines = section.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = section
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   const rows: string[] = [];
   for (const line of lines) {
     if (!line.startsWith("|")) continue;
-    const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+    const cells = line
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
     if (cells.some((c) => /^-+/.test(c))) continue; // separator
     if (cells[0]?.toLowerCase().includes("情境")) continue; // header
     const row = cells.filter(Boolean).join(" · ");
@@ -287,6 +295,7 @@ async function collectRoleDir(
   try {
     entries = await readdir(dir);
   } catch {
+    // failure expected, safe to ignore
     return;
   }
   const reads = entries
@@ -353,10 +362,7 @@ export async function readCharacterContext(
  * Marker substring emitted by architect.writeFoundationFiles when seeding
  * current_state.md. Its presence is how readers detect "nothing real yet".
  */
-const CURRENT_STATE_SEED_MARKERS = [
-  "建书时占位",
-  "Seeded at book creation",
-];
+const CURRENT_STATE_SEED_MARKERS = ["建书时占位", "Seeded at book creation"];
 
 export function isCurrentStateSeedPlaceholder(raw: string): boolean {
   const trimmed = raw.trim();
@@ -381,12 +387,18 @@ function extractCurrentStateFromRole(content: string): string | null {
 
 function extractSeedHooksFromPendingHooks(raw: string): string[] {
   if (!raw.trim()) return [];
-  const lines = raw.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   const seedRows: string[] = [];
   for (const line of lines) {
     if (!line.startsWith("|")) continue;
     if (/^\|\s*-/.test(line)) continue;
-    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
+    const cells = line
+      .split("|")
+      .slice(1, -1)
+      .map((cell) => cell.trim());
     if (cells.length < 2) continue;
     if (cells[0]?.toLowerCase() === "hook_id" || cells[0] === "hookId") continue;
     const startCh = Number.parseInt(cells[1] ?? "", 10);

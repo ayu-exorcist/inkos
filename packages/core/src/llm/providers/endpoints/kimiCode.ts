@@ -17,7 +17,5 @@ export const KIMI_CODE: InkosEndpoint = {
   temperatureRange: [0, 2],
   defaultTemperature: 1,
   writingTemperature: 1,
-  models: [
-    { id: "kimi-for-coding", maxOutput: 32768, contextWindowTokens: 262144, enabled: true },
-  ],
+  models: [{ id: "kimi-for-coding", maxOutput: 32768, contextWindowTokens: 262144, enabled: true }],
 };

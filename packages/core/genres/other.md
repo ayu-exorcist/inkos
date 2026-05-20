@@ -8,7 +8,7 @@ powerScaling: false
 eraResearch: false
 pacingRule: "每2-3章有一个明确的进展或反馈"
 satisfactionTypes: ["目标达成", "困难克服", "真相揭示", "关系转变"]
-auditDimensions: [1,2,3,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+auditDimensions: [1, 2, 3, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## 题材禁忌

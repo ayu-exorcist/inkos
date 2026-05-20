@@ -1,9 +1,4 @@
-import {
-  Zap,
-  Search,
-  FileOutput,
-  TrendingUp,
-} from "lucide-react";
+import { Zap, Search, FileOutput, TrendingUp } from "lucide-react";
 
 export interface QuickActionsProps {
   readonly onAction: (command: string) => void;

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildStudioBookConfig, normalizeStudioPlatform, waitForStudioBookReady } from "./book-create";
+import {
+  buildStudioBookConfig,
+  normalizeStudioPlatform,
+  waitForStudioBookReady,
+} from "./book-create";
 
 describe("normalizeStudioPlatform", () => {
   it("keeps supported chinese platform ids and folds unsupported values to other", () => {
@@ -57,18 +61,25 @@ describe("waitForStudioBookReady", () => {
   it("retries until the created book becomes readable", async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ error: "Book not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        book: { id: "new-book" },
-        chapters: [],
-        nextChapter: 1,
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Book not found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            book: { id: "new-book" },
+            chapters: [],
+            nextChapter: 1,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
     const wait = vi.fn(async () => {});
 
     const result = await waitForStudioBookReady("new-book", {
@@ -94,11 +105,13 @@ describe("waitForStudioBookReady", () => {
       }),
     );
 
-    await expect(waitForStudioBookReady("missing-book", {
-      fetchImpl,
-      wait: async () => {},
-      maxAttempts: 2,
-      retryDelayMs: 1,
-    })).rejects.toThrow('Book "missing-book" was not ready after 2 attempts.');
+    await expect(
+      waitForStudioBookReady("missing-book", {
+        fetchImpl,
+        wait: async () => {},
+        maxAttempts: 2,
+        retryDelayMs: 1,
+      }),
+    ).rejects.toThrow('Book "missing-book" was not ready after 2 attempts.');
   });
 });

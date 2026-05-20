@@ -56,6 +56,7 @@ async function parseEnvFile(path: string): Promise<LLMEnvMap> {
   try {
     return parse(await readFile(path, "utf-8"));
   } catch {
+    // failure expected, safe to ignore
     return {};
   }
 }

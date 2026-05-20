@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { TranscriptEventSchema, type TranscriptEvent } from "./session-transcript-schema.js";
 import type { TranscriptRole } from "./session-transcript-schema.js";
 
@@ -28,6 +28,7 @@ export async function readTranscriptEvents(
   try {
     raw = await readFile(transcriptPath(projectRoot, sessionId), "utf-8");
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 
@@ -38,6 +39,7 @@ export async function readTranscriptEvents(
       const parsed = TranscriptEventSchema.safeParse(JSON.parse(line));
       if (parsed.success) events.push(parsed.data);
     } catch {
+      // failure expected, safe to ignore
       continue;
     }
   }
@@ -84,7 +86,10 @@ export async function appendTranscriptEvents(
     );
   });
 
-  appendQueues.set(key, next.catch(() => undefined));
+  appendQueues.set(
+    key,
+    next.catch(() => undefined),
+  );
   await next;
   return result;
 }
@@ -134,21 +139,25 @@ export async function appendManualSessionMessages(
 ): Promise<void> {
   const persistedMessages = messages
     .map((message) => ({ message, role: transcriptRoleForMessage(message) }))
-    .filter((entry): entry is { message: AgentMessage; role: TranscriptRole } => entry.role !== null);
+    .filter(
+      (entry): entry is { message: AgentMessage; role: TranscriptRole } => entry.role !== null,
+    );
   if (persistedMessages.length === 0) return;
 
   const requestId = randomUUID();
   await appendTranscriptEvents(projectRoot, sessionId, ({ nextSeq }) => {
     let seq = nextSeq;
-    const events: TranscriptEvent[] = [{
-      type: "request_started",
-      version: 1,
-      sessionId,
-      requestId,
-      seq: seq++,
-      timestamp: Date.now(),
-      input,
-    }];
+    const events: TranscriptEvent[] = [
+      {
+        type: "request_started",
+        version: 1,
+        sessionId,
+        requestId,
+        seq: seq++,
+        timestamp: Date.now(),
+        input,
+      },
+    ];
 
     let parentUuid: string | null = null;
     let lastAssistantUuid: string | null = null;

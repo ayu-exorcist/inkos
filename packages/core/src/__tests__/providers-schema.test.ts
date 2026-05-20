@@ -7,7 +7,9 @@ describe("providers structural integrity", () => {
     for (const p of getAllEndpoints()) {
       expect(p.id).toBeTruthy();
       expect(p.label).toBeTruthy();
-      expect(p.api).toMatch(/^(openai-completions|openai-responses|anthropic-messages|google-generative-ai)$/);
+      expect(p.api).toMatch(
+        /^(openai-completions|openai-responses|anthropic-messages|google-generative-ai)$/,
+      );
       // gateway/anchor provider 允许 baseUrl 为空（由用户填）
       if (gatewayProviders.has(p.id)) {
         expect(typeof p.baseUrl).toBe("string");
@@ -22,7 +24,9 @@ describe("providers structural integrity", () => {
       for (const m of p.models) {
         expect(m.id, `provider=${p.id}`).toBeTruthy();
         expect(m.maxOutput, `provider=${p.id} model=${m.id}`).toBeGreaterThan(0);
-        expect(m.contextWindowTokens, `provider=${p.id} model=${m.id}`).toBeGreaterThanOrEqual(m.maxOutput);
+        expect(m.contextWindowTokens, `provider=${p.id} model=${m.id}`).toBeGreaterThanOrEqual(
+          m.maxOutput,
+        );
       }
     }
   });
@@ -44,17 +48,41 @@ describe("providers structural integrity", () => {
     expect(deepseek?.checkModel).toBe("deepseek-v4-flash");
 
     expect(deepseek?.models).toEqual([
-      { id: "deepseek-v4-flash", maxOutput: 393216, contextWindowTokens: 1_000_000, enabled: true, releasedAt: "2026-04-24" },
-      { id: "deepseek-v4-pro", maxOutput: 393216, contextWindowTokens: 1_000_000, enabled: true, releasedAt: "2026-04-24" },
-      { id: "deepseek-chat", maxOutput: 393216, contextWindowTokens: 1_000_000, releasedAt: "2026-04-24" },
-      { id: "deepseek-reasoner", maxOutput: 393216, contextWindowTokens: 1_000_000, releasedAt: "2026-04-24" },
+      {
+        id: "deepseek-v4-flash",
+        maxOutput: 393216,
+        contextWindowTokens: 1_000_000,
+        enabled: true,
+        releasedAt: "2026-04-24",
+      },
+      {
+        id: "deepseek-v4-pro",
+        maxOutput: 393216,
+        contextWindowTokens: 1_000_000,
+        enabled: true,
+        releasedAt: "2026-04-24",
+      },
+      {
+        id: "deepseek-chat",
+        maxOutput: 393216,
+        contextWindowTokens: 1_000_000,
+        releasedAt: "2026-04-24",
+      },
+      {
+        id: "deepseek-reasoner",
+        maxOutput: 393216,
+        contextWindowTokens: 1_000_000,
+        releasedAt: "2026-04-24",
+      },
     ]);
   });
 
   it("Zhipu check model uses a stable chat alias", () => {
     const zhipu = getEndpoint("zhipu");
     expect(zhipu?.checkModel).toBe("glm-4-flash");
-    expect(zhipu?.models.some((model) => model.id === "glm-4-flash" && model.enabled !== false)).toBe(true);
+    expect(
+      zhipu?.models.some((model) => model.id === "glm-4-flash" && model.enabled !== false),
+    ).toBe(true);
   });
 
   it("A 组至少有 5 个核心 provider", () => {
@@ -73,8 +101,15 @@ describe("providers structural integrity", () => {
   it("B1：中国原厂批次 1 全部收录（9 个，PPIO 默认入口已下架）", () => {
     const ids = getAllEndpoints().map((p) => p.id);
     for (const id of [
-      "moonshot", "zhipu", "siliconcloud", "bailian",
-      "volcengine", "hunyuan", "baichuan", "stepfun", "wenxin",
+      "moonshot",
+      "zhipu",
+      "siliconcloud",
+      "bailian",
+      "volcengine",
+      "hunyuan",
+      "baichuan",
+      "stepfun",
+      "wenxin",
     ]) {
       expect(ids).toContain(id);
     }
@@ -110,7 +145,16 @@ describe("providers structural integrity", () => {
 
   it("B4：海外/本地/自定义/聚合/GH 全部收录（8 个）", () => {
     const ids = getAllEndpoints().map((p) => p.id);
-    for (const id of ["ollama", "openrouter", "custom", "mistral", "xai", "newapi", "githubCopilot", "kkaiapi"]) {
+    for (const id of [
+      "ollama",
+      "openrouter",
+      "custom",
+      "mistral",
+      "xai",
+      "newapi",
+      "githubCopilot",
+      "kkaiapi",
+    ]) {
       expect(ids).toContain(id);
     }
   });
@@ -128,9 +172,14 @@ describe("providers structural integrity", () => {
   it("B6：CodingPlan 8 个 provider 全部收录", () => {
     const ids = getAllEndpoints().map((p) => p.id);
     for (const id of [
-      "kimiCodingPlan", "minimaxCodingPlan", "bailianCodingPlan",
-      "glmCodingPlan", "volcengineCodingPlan", "opencodeCodingPlan",
-      "astronCodingPlan", "kimicode",
+      "kimiCodingPlan",
+      "minimaxCodingPlan",
+      "bailianCodingPlan",
+      "glmCodingPlan",
+      "volcengineCodingPlan",
+      "opencodeCodingPlan",
+      "astronCodingPlan",
+      "kimicode",
     ]) {
       expect(ids).toContain(id);
     }
@@ -142,9 +191,14 @@ describe("providers structural integrity", () => {
 
   it("B6：CodingPlan provider 都走 anthropic-messages", () => {
     for (const id of [
-      "kimiCodingPlan", "minimaxCodingPlan", "bailianCodingPlan",
-      "glmCodingPlan", "volcengineCodingPlan", "opencodeCodingPlan",
-      "astronCodingPlan", "kimicode",
+      "kimiCodingPlan",
+      "minimaxCodingPlan",
+      "bailianCodingPlan",
+      "glmCodingPlan",
+      "volcengineCodingPlan",
+      "opencodeCodingPlan",
+      "astronCodingPlan",
+      "kimicode",
     ]) {
       expect(getEndpoint(id)?.api).toBe("anthropic-messages");
     }

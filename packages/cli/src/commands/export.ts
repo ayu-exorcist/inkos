@@ -23,13 +23,19 @@ export const exportCommand = new Command("export")
       });
 
       if (opts.json) {
-        log(JSON.stringify({
-          bookId,
-          chaptersExported: result.chaptersExported,
-          totalWords: result.totalWords,
-          format: result.format,
-          outputPath: result.outputPath,
-        }, null, 2));
+        log(
+          JSON.stringify(
+            {
+              bookId,
+              chaptersExported: result.chaptersExported,
+              totalWords: result.totalWords,
+              format: result.format,
+              outputPath: result.outputPath,
+            },
+            null,
+            2,
+          ),
+        );
       } else {
         log(`Exported ${result.chaptersExported} chapters (${result.totalWords} words)`);
         log(`Output: ${result.outputPath}`);

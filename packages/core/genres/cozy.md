@@ -3,13 +3,36 @@ name: Cozy Fantasy
 id: cozy
 language: en
 chapterTypes: ["Slice-of-Life", "Community", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: false
 powerScaling: false
 eraResearch: false
 pacingRule: "Slow, meditative pacing. Each chapter advances an emotional arc or community bond. Seasonal/cyclical structure works well."
-satisfactionTypes: ["Relationship Deepened", "Community Problem Solved", "Emotional Breakthrough", "Craft Mastered", "Found Family Moment", "Small Wonder Discovered"]
-auditDimensions: [1,2,3,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Relationship Deepened",
+    "Community Problem Solved",
+    "Emotional Breakthrough",
+    "Craft Mastered",
+    "Found Family Moment",
+    "Small Wonder Discovered",
+  ]
+auditDimensions: [1, 2, 3, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

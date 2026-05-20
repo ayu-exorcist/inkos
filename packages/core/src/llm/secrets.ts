@@ -26,16 +26,14 @@ function migrateLegacyServiceIds(secrets: SecretsFile): { data: SecretsFile; cha
 
 async function readSecretsRaw(projectRoot: string): Promise<SecretsFile> {
   try {
-    const raw = await readFile(
-      join(projectRoot, SECRETS_DIR, SECRETS_FILE),
-      "utf-8",
-    );
+    const raw = await readFile(join(projectRoot, SECRETS_DIR, SECRETS_FILE), "utf-8");
     const parsed = JSON.parse(raw) as SecretsFile;
     if (!parsed || typeof parsed !== "object" || !parsed.services) {
       return { services: {} };
     }
     return parsed;
   } catch {
+    // failure expected, safe to ignore
     return { services: {} };
   }
 }
@@ -47,17 +45,10 @@ export async function loadSecrets(projectRoot: string): Promise<SecretsFile> {
   return data;
 }
 
-export async function saveSecrets(
-  projectRoot: string,
-  secrets: SecretsFile,
-): Promise<void> {
+export async function saveSecrets(projectRoot: string, secrets: SecretsFile): Promise<void> {
   const dir = join(projectRoot, SECRETS_DIR);
   await mkdir(dir, { recursive: true });
-  await writeFile(
-    join(dir, SECRETS_FILE),
-    JSON.stringify(secrets, null, 2),
-    "utf-8",
-  );
+  await writeFile(join(dir, SECRETS_FILE), JSON.stringify(secrets, null, 2), "utf-8");
 }
 
 export async function getServiceApiKey(

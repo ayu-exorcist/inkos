@@ -19,7 +19,11 @@ interface BookRef {
 }
 
 export function coerceSharedSessionMessages(
-  messages: ReadonlyArray<{ role: "user" | "assistant" | "system"; content: string; timestamp: number }>,
+  messages: ReadonlyArray<{
+    role: "user" | "assistant" | "system";
+    content: string;
+    timestamp: number;
+  }>,
 ): ReadonlyArray<ChatMessage> {
   return messages
     .filter((message) => message.role === "user" || message.role === "assistant")
@@ -52,5 +56,7 @@ export function formatSharedSessionContext(meta: SharedSessionMeta): string {
     meta.draftTitle ? `draft:${meta.draftTitle}` : undefined,
     meta.automationMode ?? "semi",
     meta.currentStage,
-  ].filter(Boolean).join(" · ");
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

@@ -9,22 +9,51 @@ describe("InkosEndpoint.group", () => {
 
   it("每个 group 的 endpoint 数量匹配分组清单", () => {
     const all = getAllEndpoints();
-    const byGroup = (g: string) => all.filter((ep) => ep.group === g).map((e) => e.id).sort();
+    const byGroup = (g: string) =>
+      all
+        .filter((ep) => ep.group === g)
+        .map((e) => e.id)
+        .sort();
 
     expect(byGroup("overseas")).toEqual(["anthropic", "google", "mistral", "openai", "xai"].sort());
-    expect(byGroup("china")).toEqual([
-      "ai360", "baichuan", "bailian", "deepseek", "hunyuan", "internlm", "longcat",
-      "minimax", "moonshot", "sensenova", "spark", "stepfun", "tencentcloud",
-      "volcengine", "wenxin", "xiaomimimo", "zeroone", "zhipu",
-    ].sort());
-    expect(byGroup("aggregator")).toEqual([
-      "kkaiapi", "newapi", "openrouter", "siliconcloud",
-    ].sort());
+    expect(byGroup("china")).toEqual(
+      [
+        "ai360",
+        "baichuan",
+        "bailian",
+        "deepseek",
+        "hunyuan",
+        "internlm",
+        "longcat",
+        "minimax",
+        "moonshot",
+        "sensenova",
+        "spark",
+        "stepfun",
+        "tencentcloud",
+        "volcengine",
+        "wenxin",
+        "xiaomimimo",
+        "zeroone",
+        "zhipu",
+      ].sort(),
+    );
+    expect(byGroup("aggregator")).toEqual(
+      ["kkaiapi", "newapi", "openrouter", "siliconcloud"].sort(),
+    );
     expect(byGroup("local")).toEqual(["githubCopilot", "ollama"].sort());
-    expect(byGroup("codingPlan")).toEqual([
-      "astronCodingPlan", "bailianCodingPlan", "glmCodingPlan", "kimiCodingPlan", "kimicode",
-      "minimaxCodingPlan", "opencodeCodingPlan", "volcengineCodingPlan",
-    ].sort());
+    expect(byGroup("codingPlan")).toEqual(
+      [
+        "astronCodingPlan",
+        "bailianCodingPlan",
+        "glmCodingPlan",
+        "kimiCodingPlan",
+        "kimicode",
+        "minimaxCodingPlan",
+        "opencodeCodingPlan",
+        "volcengineCodingPlan",
+      ].sort(),
+    );
   });
 
   it("custom endpoint 不参与分组计数", () => {

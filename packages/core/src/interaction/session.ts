@@ -25,7 +25,7 @@ export const ToolExecutionSchema = z.object({
   agent: z.string().optional(),
   label: z.string(),
   status: z.enum(["running", "processing", "completed", "error"]),
-  args: z.record(z.unknown()).optional(),
+  args: z.record(z.string(), z.unknown()).optional(),
   result: z.string().optional(),
   details: z.unknown().optional(),
   error: z.string().optional(),
@@ -211,7 +211,9 @@ export function appendInteractionMessage(
 ): InteractionSession {
   return {
     ...session,
-    messages: [...session.messages, message].sort((left, right) => left.timestamp - right.timestamp),
+    messages: [...session.messages, message].sort(
+      (left, right) => left.timestamp - right.timestamp,
+    ),
   };
 }
 

@@ -12,12 +12,7 @@ export type ApiProtocol =
   | "anthropic-messages"
   | "google-generative-ai";
 
-export type EndpointGroup =
-  | "overseas"
-  | "china"
-  | "aggregator"
-  | "local"
-  | "codingPlan";
+export type EndpointGroup = "overseas" | "china" | "aggregator" | "local" | "codingPlan";
 
 export interface InkosModel {
   /** API 请求体里实际用的 model id（可能带斜线如 'deepseek/deepseek-v3'）。UI 也直接用 id 显示 */

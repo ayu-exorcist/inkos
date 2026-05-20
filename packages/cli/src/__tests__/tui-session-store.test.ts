@@ -43,10 +43,12 @@ describe("tui session store", () => {
   });
 
   it("resolves active book from session when it still exists", async () => {
-    await writeFile(join(projectRoot, "books", "night-harbor", "book.json"), "{}", "utf-8").catch(async () => {
-      await mkdir(join(projectRoot, "books", "night-harbor"), { recursive: true });
-      await writeFile(join(projectRoot, "books", "night-harbor", "book.json"), "{}", "utf-8");
-    });
+    await writeFile(join(projectRoot, "books", "night-harbor", "book.json"), "{}", "utf-8").catch(
+      async () => {
+        await mkdir(join(projectRoot, "books", "night-harbor"), { recursive: true });
+        await writeFile(join(projectRoot, "books", "night-harbor", "book.json"), "{}", "utf-8");
+      },
+    );
 
     const session = {
       ...createProjectSession(projectRoot),

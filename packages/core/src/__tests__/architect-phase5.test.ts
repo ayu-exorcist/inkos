@@ -138,7 +138,7 @@ const SAMPLE_RESPONSE = [
   "",
   "=== SECTION: book_rules ===",
   "---",
-  "version: \"1.0\"",
+  'version: "1.0"',
   "protagonist:",
   "  name: 林辞",
   "  personalityLock: [沉默, 执拗, 理性]",
@@ -189,8 +189,10 @@ describe("ArchitectAgent — Phase 5 prose output", () => {
 
   it("parses storyFrame / volumeMap / rhythmPrinciples / roles from the response", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const result = await agent.generateFoundation(baseBook());
 
@@ -210,8 +212,10 @@ describe("ArchitectAgent — Phase 5 prose output", () => {
 
   it("writes outline/* prose files, roles/*, and compat shims for story_bible/character_matrix", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     const result = await agent.generateFoundation(baseBook());
     await agent.writeFoundationFiles(bookDir, result, false, "zh");
@@ -257,18 +261,20 @@ describe("ArchitectAgent — Phase 5 prose output", () => {
 
   it("still requires book_rules / roles / pending_hooks to be present (current_state is optional after consolidation)", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: story_frame ===",
-          "# frame",
-          "=== SECTION: volume_map ===",
-          "# map",
-          "=== SECTION: pending_hooks ===",
-          "# hooks",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: story_frame ===",
+        "# frame",
+        "=== SECTION: volume_map ===",
+        "# map",
+        "=== SECTION: pending_hooks ===",
+        "# hooks",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     // book_rules + roles both missing — the error message lists them.
     await expect(agent.generateFoundation(baseBook())).rejects.toThrow(/book_rules/i);
@@ -285,32 +291,35 @@ describe("ArchitectAgent — Phase 5 prose output", () => {
 
   it("requires at least one of story_frame or legacy story_bible", async () => {
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({
-        content: [
-          "=== SECTION: volume_map ===",
-          "# map",
-          "=== SECTION: roles ===",
-          "---ROLE---",
-          "tier: major",
-          "name: X",
-          "---CONTENT---",
-          "## 核心标签",
-          "只是占位",
-          "=== SECTION: book_rules ===",
-          "---\nversion: \"1.0\"\n---",
-          "=== SECTION: pending_hooks ===",
-          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 备注 |",
-        ].join("\n"),
-        usage: ZERO_USAGE,
-      });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({
+      content: [
+        "=== SECTION: volume_map ===",
+        "# map",
+        "=== SECTION: roles ===",
+        "---ROLE---",
+        "tier: major",
+        "name: X",
+        "---CONTENT---",
+        "## 核心标签",
+        "只是占位",
+        "=== SECTION: book_rules ===",
+        '---\nversion: "1.0"\n---',
+        "=== SECTION: pending_hooks ===",
+        "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 备注 |",
+      ].join("\n"),
+      usage: ZERO_USAGE,
+    });
 
     await expect(agent.generateFoundation(baseBook())).rejects.toThrow(/story_frame/i);
   });
 
   it("system prompt emphasises volume-level prose for volume_map and contrast-detail for roles", async () => {
     const agent = buildAgent();
-    const chat = vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
+    const chat = vi
+      .spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
       .mockResolvedValue({ content: SAMPLE_RESPONSE, usage: ZERO_USAGE });
 
     await agent.generateFoundation(baseBook());
@@ -400,7 +409,7 @@ describe("writeFoundationFiles — rhythm file is skipped when rhythmPrinciples 
       "",
       "=== SECTION: book_rules ===",
       "---",
-      "version: \"1.0\"",
+      'version: "1.0"',
       "---",
       "",
       "=== SECTION: pending_hooks ===",
@@ -410,8 +419,10 @@ describe("writeFoundationFiles — rhythm file is skipped when rhythmPrinciples 
     ].join("\n");
 
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: noRhythmResponse, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: noRhythmResponse, usage: ZERO_USAGE });
 
     const out = await agent.generateFoundation(baseBook());
     expect((out.rhythmPrinciples ?? "").trim()).toBe("");
@@ -420,15 +431,10 @@ describe("writeFoundationFiles — rhythm file is skipped when rhythmPrinciples 
 
     // No standalone rhythm file on disk — rhythm content lives in
     // volume_map's closing paragraph.
-    await expect(
-      readFile(join(bookDir, "story/outline/节奏原则.md"), "utf-8"),
-    ).rejects.toThrow();
+    await expect(readFile(join(bookDir, "story/outline/节奏原则.md"), "utf-8")).rejects.toThrow();
 
     // But volume_map still exists and carries the rhythm tail.
-    const volumeMap = await readFile(
-      join(bookDir, "story/outline/volume_map.md"),
-      "utf-8",
-    );
+    const volumeMap = await readFile(join(bookDir, "story/outline/volume_map.md"), "utf-8");
     expect(volumeMap).toContain("节奏原则（具体化 + 通用）");
   });
 
@@ -438,18 +444,17 @@ describe("writeFoundationFiles — rhythm file is skipped when rhythmPrinciples 
     // for back-compat.
     const withRhythmResponse = SAMPLE_RESPONSE;
     const agent = buildAgent();
-    vi.spyOn(agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> }, "chat")
-      .mockResolvedValue({ content: withRhythmResponse, usage: ZERO_USAGE });
+    vi.spyOn(
+      agent as unknown as { chat: (...args: unknown[]) => Promise<unknown> },
+      "chat",
+    ).mockResolvedValue({ content: withRhythmResponse, usage: ZERO_USAGE });
 
     const out = await agent.generateFoundation(baseBook());
     expect((out.rhythmPrinciples ?? "").trim().length).toBeGreaterThan(0);
 
     await agent.writeFoundationFiles(bookDir, out, false, "zh");
 
-    const rhythm = await readFile(
-      join(bookDir, "story/outline/节奏原则.md"),
-      "utf-8",
-    );
+    const rhythm = await readFile(join(bookDir, "story/outline/节奏原则.md"), "utf-8");
     expect(rhythm).toContain("高潮间距");
   });
 });

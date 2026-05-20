@@ -16,9 +16,7 @@ export function parseCreativeOutput(
   countingMode: LengthCountingMode = "zh_chars",
 ): CreativeOutput {
   const extract = (tag: string): string => {
-    const regex = new RegExp(
-      `=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`,
-    );
+    const regex = new RegExp(`=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`);
     const match = content.match(regex);
     return match?.[1]?.trim() ?? "";
   };
@@ -130,9 +128,7 @@ export function parseWriterOutput(
   countingMode: LengthCountingMode = "zh_chars",
 ): ParsedWriterOutput {
   const extract = (tag: string): string => {
-    const regex = new RegExp(
-      `=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`,
-    );
+    const regex = new RegExp(`=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`);
     const match = content.match(regex);
     return match?.[1]?.trim() ?? "";
   };
@@ -148,7 +144,7 @@ export function parseWriterOutput(
     postSettlement: extract("POST_SETTLEMENT"),
     updatedState: extract("UPDATED_STATE") || defaultStatePlaceholder(countingMode),
     updatedLedger: genreProfile.numericalSystem
-      ? (extract("UPDATED_LEDGER") || defaultLedgerPlaceholder(countingMode))
+      ? extract("UPDATED_LEDGER") || defaultLedgerPlaceholder(countingMode)
       : "",
     updatedHooks: extract("UPDATED_HOOKS") || defaultHooksPlaceholder(countingMode),
     chapterSummary: extract("CHAPTER_SUMMARY"),
@@ -158,10 +154,7 @@ export function parseWriterOutput(
   };
 }
 
-function defaultChapterTitle(
-  chapterNumber: number,
-  countingMode: LengthCountingMode,
-): string {
+function defaultChapterTitle(chapterNumber: number, countingMode: LengthCountingMode): string {
   return countingMode === "en_words" ? `Chapter ${chapterNumber}` : `第${chapterNumber}章`;
 }
 

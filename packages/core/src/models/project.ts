@@ -10,10 +10,12 @@ const LLMServiceEntrySchema = z.object({
   stream: z.boolean().optional(),
 });
 
-const LLMCoverConfigSchema = z.object({
-  service: z.enum(["kkaiapi", "openai", "google"]),
-  model: z.string().min(1),
-}).optional();
+const LLMCoverConfigSchema = z
+  .object({
+    service: z.enum(["kkaiapi", "openai", "google"]),
+    model: z.string().min(1),
+  })
+  .optional();
 
 // C1 (v2.0.0 breaking): 删除 maxTokens / maxTokensCap 字段。
 // 每个模型的真实 maxOutput 来自 providers/<name>.ts 的 InkosModel.maxOutput；
@@ -28,8 +30,8 @@ export const LLMConfigSchema = z.object({
   proxyUrl: z.string().url().optional(),
   temperature: z.number().min(0).max(2).default(0.7),
   thinkingBudget: z.number().int().min(0).default(0),
-  extra: z.record(z.unknown()).optional(),
-  headers: z.record(z.string()).optional(),
+  extra: z.record(z.string(), z.unknown()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   apiFormat: z.enum(["chat", "responses"]).default("chat"),
   stream: z.boolean().default(true),
   services: z.array(LLMServiceEntrySchema).optional(),
@@ -125,37 +127,39 @@ export const ProjectConfigSchema = z.object({
   }),
   modelOverrides: z.record(z.string(), ModelOverrideValueSchema).optional(),
   inputGovernanceMode: InputGovernanceModeSchema.default("v2"),
-  daemon: z.object({
-    schedule: z.object({
-      radarCron: z.string().default("0 */6 * * *"),
-      writeCron: z.string().default("*/15 * * * *"),
+  daemon: z
+    .object({
+      schedule: z.object({
+        radarCron: z.string().default("0 */6 * * *"),
+        writeCron: z.string().default("*/15 * * * *"),
+      }),
+      maxConcurrentBooks: z.number().int().min(1).default(3),
+      chaptersPerCycle: z.number().int().min(1).max(20).default(1),
+      retryDelayMs: z.number().int().min(0).default(30_000),
+      cooldownAfterChapterMs: z.number().int().min(0).default(10_000),
+      maxChaptersPerDay: z.number().int().min(1).default(50),
+      qualityGates: QualityGatesSchema.default({
+        maxAuditRetries: 2,
+        pauseAfterConsecutiveFailures: 3,
+        retryTemperatureStep: 0.1,
+      }),
+    })
+    .default({
+      schedule: {
+        radarCron: "0 */6 * * *",
+        writeCron: "*/15 * * * *",
+      },
+      maxConcurrentBooks: 3,
+      chaptersPerCycle: 1,
+      retryDelayMs: 30_000,
+      cooldownAfterChapterMs: 10_000,
+      maxChaptersPerDay: 50,
+      qualityGates: {
+        maxAuditRetries: 2,
+        pauseAfterConsecutiveFailures: 3,
+        retryTemperatureStep: 0.1,
+      },
     }),
-    maxConcurrentBooks: z.number().int().min(1).default(3),
-    chaptersPerCycle: z.number().int().min(1).max(20).default(1),
-    retryDelayMs: z.number().int().min(0).default(30_000),
-    cooldownAfterChapterMs: z.number().int().min(0).default(10_000),
-    maxChaptersPerDay: z.number().int().min(1).default(50),
-    qualityGates: QualityGatesSchema.default({
-      maxAuditRetries: 2,
-      pauseAfterConsecutiveFailures: 3,
-      retryTemperatureStep: 0.1,
-    }),
-  }).default({
-    schedule: {
-      radarCron: "0 */6 * * *",
-      writeCron: "*/15 * * * *",
-    },
-    maxConcurrentBooks: 3,
-    chaptersPerCycle: 1,
-    retryDelayMs: 30_000,
-    cooldownAfterChapterMs: 10_000,
-    maxChaptersPerDay: 50,
-    qualityGates: {
-      maxAuditRetries: 2,
-      pauseAfterConsecutiveFailures: 3,
-      retryTemperatureStep: 0.1,
-    },
-  }),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;

@@ -62,11 +62,23 @@ export function filterMatrixByPOV(characterMatrix: string, povCharacter: string)
     // In the info boundary table, keep only the POV character's row
     // and add a note about what other characters know
     const lines = section.split("\n");
-    const headerLines = lines.filter((l) =>
-      l.startsWith("|") && (l.includes("---") || l.includes("角色") || l.includes("Character") || l.includes("已知") || l.includes("Known")),
+    const headerLines = lines.filter(
+      (l) =>
+        l.startsWith("|") &&
+        (l.includes("---") ||
+          l.includes("角色") ||
+          l.includes("Character") ||
+          l.includes("已知") ||
+          l.includes("Known")),
     );
-    const dataLines = lines.filter((l) =>
-      l.startsWith("|") && !l.includes("---") && !l.includes("角色") && !l.includes("Character") && !l.includes("已知") && !l.includes("Known"),
+    const dataLines = lines.filter(
+      (l) =>
+        l.startsWith("|") &&
+        !l.includes("---") &&
+        !l.includes("角色") &&
+        !l.includes("Character") &&
+        !l.includes("已知") &&
+        !l.includes("Known"),
     );
 
     // Keep POV character's row + a summary note
@@ -103,11 +115,11 @@ export function filterHooksByPOV(
   if (!povCharacter) return hooks;
 
   const lines = hooks.split("\n");
-  const headerLines = lines.filter((l) =>
-    l.startsWith("|") && (l.includes("hook_id") || l.includes("---")),
+  const headerLines = lines.filter(
+    (l) => l.startsWith("|") && (l.includes("hook_id") || l.includes("---")),
   );
-  const dataLines = lines.filter((l) =>
-    l.startsWith("|") && !l.includes("hook_id") && !l.includes("---"),
+  const dataLines = lines.filter(
+    (l) => l.startsWith("|") && !l.includes("hook_id") && !l.includes("---"),
   );
 
   // Parse summary rows to find which chapters the POV character appeared in

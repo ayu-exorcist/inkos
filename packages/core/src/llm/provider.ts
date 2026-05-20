@@ -4,7 +4,7 @@ import {
   stream as piStream,
   completeSimple as piCompleteSimple,
   complete as piComplete,
-} from "@mariozechner/pi-ai";
+} from "@earendil-works/pi-ai";
 import type {
   Api as PiApi,
   Model as PiModel,
@@ -13,13 +13,12 @@ import type {
   Tool as PiTool,
   TextContent as PiTextContent,
   ToolCall as PiToolCall,
-} from "@mariozechner/pi-ai";
+} from "@earendil-works/pi-ai";
 import { resolveServicePreset } from "./service-presets.js";
 import { getEndpoint } from "./providers/index.js";
 import { lookupModel } from "./providers/lookup.js";
 import { fetchWithProxy } from "../utils/proxy-fetch.js";
 import { isApiKeyOptionalForEndpoint } from "../utils/llm-endpoint-auth.js";
-
 
 // === Streaming Monitor Types ===
 
@@ -162,7 +161,11 @@ export interface ToolCall {
 export type AgentMessage =
   | { readonly role: "system"; readonly content: string }
   | { readonly role: "user"; readonly content: string }
-  | { readonly role: "assistant"; readonly content: string | null; readonly toolCalls?: ReadonlyArray<ToolCall> }
+  | {
+      readonly role: "assistant";
+      readonly content: string | null;
+      readonly toolCalls?: ReadonlyArray<ToolCall>;
+    }
   | { readonly role: "tool"; readonly toolCallId: string; readonly content: string };
 
 export interface ChatWithToolsResult {
@@ -191,12 +194,15 @@ export function createLLMClient(config: LLMConfig): LLMClient {
   const inkosProvider = getEndpoint(serviceName);
   const modelCard = lookupModel(serviceName, config.model);
 
-  const piApi = resolvePiApi(serviceName, config.apiFormat, (inkosProvider?.api ?? preset?.api) as PiApi) as PiApi;
+  const piApi = resolvePiApi(
+    serviceName,
+    config.apiFormat,
+    (inkosProvider?.api ?? preset?.api) as PiApi,
+  ) as PiApi;
   const baseUrl = config.baseUrl || inkosProvider?.baseUrl || preset?.baseUrl || "";
   const extraHeaders = sanitizeHttpHeaders(config.headers ?? parseEnvHeaders());
-  const compat = piApi === "openai-completions"
-    ? resolveProviderCompat(inkosProvider, baseUrl)
-    : undefined;
+  const compat =
+    piApi === "openai-completions" ? resolveProviderCompat(inkosProvider, baseUrl) : undefined;
 
   const provider = config.provider === "anthropic" ? "anthropic" : "openai";
   // pi-ai provider 字段：大多数情况 pi-ai 会按 baseUrl 自动嗅探（openrouter.ai / api.z.ai /
@@ -346,11 +352,12 @@ export function __resetFixedTemperatureWarnings(): void {
 
 // === Error Wrapping ===
 
-function wrapLLMError(error: unknown, context?: { readonly baseUrl?: string; readonly model?: string; readonly service?: string }): Error {
+function wrapLLMError(
+  error: unknown,
+  context?: { readonly baseUrl?: string; readonly model?: string; readonly service?: string },
+): Error {
   const msg = String(error);
-  const ctxLine = context
-    ? `\n  (baseUrl: ${context.baseUrl}, model: ${context.model})`
-    : "";
+  const ctxLine = context ? `\n  (baseUrl: ${context.baseUrl}, model: ${context.model})` : "";
 
   if (msg.includes("400")) {
     // 抽上游 error body 的 message / reason / code（和下方 5xx 一致），让真实错因浮到用户面前
@@ -359,26 +366,31 @@ function wrapLLMError(error: unknown, context?: { readonly baseUrl?: string; rea
       const err = error as { error?: unknown; body?: unknown; message?: string };
       const bodyLike = err.error ?? err.body;
       if (bodyLike && typeof bodyLike === "object") {
-        const b = bodyLike as { reason?: string; message?: string; code?: number | string; type?: string };
+        const b = bodyLike as {
+          reason?: string;
+          message?: string;
+          code?: number | string;
+          type?: string;
+        };
         if (b.message) detail = b.type ? `${b.type}: ${b.message}` : b.message;
         else if (b.reason) detail = b.reason;
       }
     }
     return new Error(
       `API 返回 400（请求参数错误）。${detail ? `上游详情：${detail}。\n` : ""}` +
-      `常见原因：\n` +
-      `  1. temperature / max_tokens 超出模型约束（如 Moonshot kimi-k2.X 强制 temperature=1）\n` +
-      `  2. 模型名称不正确或未上架\n` +
-      `  3. 消息格式不兼容（部分服务不支持 system role 或 developer role）${ctxLine}`,
+        `常见原因：\n` +
+        `  1. temperature / max_tokens 超出模型约束（如 Moonshot kimi-k2.X 强制 temperature=1）\n` +
+        `  2. 模型名称不正确或未上架\n` +
+        `  3. 消息格式不兼容（部分服务不支持 system role 或 developer role）${ctxLine}`,
     );
   }
   if (msg.includes("403")) {
     return new Error(
       `API 返回 403 (请求被拒绝)。可能原因：\n` +
-      `  1. API Key 无效或过期\n` +
-      `  2. API 提供方的内容审查拦截了请求（公益/免费 API 常见）\n` +
-      `  3. 账户余额不足\n` +
-      `  建议：用 inkos doctor 测试 API 连通性，或换一个不限制内容的 API 提供方${ctxLine}`,
+        `  1. API Key 无效或过期\n` +
+        `  2. API 提供方的内容审查拦截了请求（公益/免费 API 常见）\n` +
+        `  3. 账户余额不足\n` +
+        `  建议：用 inkos doctor 测试 API 连通性，或换一个不限制内容的 API 提供方${ctxLine}`,
     );
   }
   if (msg.includes("401")) {
@@ -387,27 +399,25 @@ function wrapLLMError(error: unknown, context?: { readonly baseUrl?: string; rea
     );
   }
   if (msg.includes("429")) {
-    return new Error(
-      `API 返回 429 (请求过多)。请稍后重试，或检查 API 配额。${ctxLine}`,
-    );
+    return new Error(`API 返回 429 (请求过多)。请稍后重试，或检查 API 配额。${ctxLine}`);
   }
   if (
-    msg.includes("Connection error")
-    || msg.includes("ECONNREFUSED")
-    || msg.includes("ENOTFOUND")
-    || msg.includes("fetch failed")
-    || msg.includes("terminated")
-    || msg.includes("UND_ERR_SOCKET")
-    || msg.includes("ECONNRESET")
-    || msg.includes("ETIMEDOUT")
-    || msg.includes("EPIPE")
+    msg.includes("Connection error") ||
+    msg.includes("ECONNREFUSED") ||
+    msg.includes("ENOTFOUND") ||
+    msg.includes("fetch failed") ||
+    msg.includes("terminated") ||
+    msg.includes("UND_ERR_SOCKET") ||
+    msg.includes("ECONNRESET") ||
+    msg.includes("ETIMEDOUT") ||
+    msg.includes("EPIPE")
   ) {
     return new Error(
       `无法连接到 API 服务。可能原因：\n` +
-      `  1. baseUrl 地址不正确（当前：${context?.baseUrl ?? "未知"}）\n` +
-      `  2. 网络不通或被防火墙拦截\n` +
-      `  3. API 服务暂时不可用\n` +
-      `  建议：检查 INKOS_LLM_BASE_URL 是否包含完整路径（如 /v1）`,
+        `  1. baseUrl 地址不正确（当前：${context?.baseUrl ?? "未知"}）\n` +
+        `  2. 网络不通或被防火墙拦截\n` +
+        `  3. API 服务暂时不可用\n` +
+        `  建议：检查 INKOS_LLM_BASE_URL 是否包含完整路径（如 /v1）`,
     );
   }
   // R4 Bug 2: 5xx "status code (no body)" — 尝试从 OpenAI SDK APIError 里抽 body 给用户看具体原因
@@ -425,10 +435,10 @@ function wrapLLMError(error: unknown, context?: { readonly baseUrl?: string; rea
     }
     return new Error(
       `API 返回 5xx（上游服务异常）。${detail ? `上游详情：${detail}。` : ""}\n` +
-      `可能原因：\n` +
-      `  1. 模型在 /models 列表但 inference 未上架（如 PPIO 返回 MODEL_NOT_AVAILABLE）\n` +
-      `  2. 服务端临时故障，稍后重试\n` +
-      `  3. 当前 apikey 无权限调用该模型${ctxLine}`,
+        `可能原因：\n` +
+        `  1. 模型在 /models 列表但 inference 未上架（如 PPIO 返回 MODEL_NOT_AVAILABLE）\n` +
+        `  2. 服务端临时故障，稍后重试\n` +
+        `  3. 当前 apikey 无权限调用该模型${ctxLine}`,
     );
   }
   return error instanceof Error ? error : new Error(msg);
@@ -477,10 +487,10 @@ async function withTransientLLMRetry<T>(
     } catch (error) {
       lastError = error;
       if (
-        !enabled
-        || attempt >= TRANSIENT_LLM_RETRIES
-        || error instanceof PartialResponseError
-        || !isTransientLLMTransportError(error)
+        !enabled ||
+        attempt >= TRANSIENT_LLM_RETRIES ||
+        error instanceof PartialResponseError ||
+        !isTransientLLMTransportError(error)
       ) {
         throw error;
       }
@@ -495,40 +505,48 @@ function shouldUseNativeCustomTransport(client: LLMClient): boolean {
   }
   if (client.service === "custom") {
     if (
-      client.configSource === "studio"
-      && (client.provider === "openai" || client.provider === "anthropic")
+      client.configSource === "studio" &&
+      (client.provider === "openai" || client.provider === "anthropic")
     ) {
       return true;
     }
     return client.provider === "openai" && shouldUseNativeLocalOpenAICompatibleTransport(client);
   }
-  return client.service === "ollama"
-    && client.provider === "openai"
-    && shouldUseNativeLocalOpenAICompatibleTransport(client);
+  return (
+    client.service === "ollama" &&
+    client.provider === "openai" &&
+    shouldUseNativeLocalOpenAICompatibleTransport(client)
+  );
 }
 
 function shouldUseNativeLocalOpenAICompatibleTransport(client: LLMClient): boolean {
-  return !client._apiKey
-    && isApiKeyOptionalForEndpoint({
+  return (
+    !client._apiKey &&
+    isApiKeyOptionalForEndpoint({
       provider: client.provider,
       baseUrl: client._piModel?.baseUrl,
-    });
+    })
+  );
 }
 
 function buildCustomHeaders(client: LLMClient): Record<string, string> {
   const apiKey = sanitizeHeaderApiKey(client._apiKey);
-  return sanitizeHttpHeaders({
-    "Content-Type": "application/json",
-    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-    ...(client._piModel?.headers ?? {}),
-  }) ?? { "Content-Type": "application/json" };
+  return (
+    sanitizeHttpHeaders({
+      "Content-Type": "application/json",
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+      ...(client._piModel?.headers ?? {}),
+    }) ?? { "Content-Type": "application/json" }
+  );
 }
 
 function sanitizeHeaderApiKey(apiKey: string | undefined): string {
   const trimmed = apiKey?.trim() ?? "";
   if (!trimmed) return "";
   if (!/^[\x20-\x7e]+$/.test(trimmed)) {
-    throw new Error("API Key contains non-ASCII characters; please remove any pasted Chinese notes or whitespace.");
+    throw new Error(
+      "API Key contains non-ASCII characters; please remove any pasted Chinese notes or whitespace.",
+    );
   }
   return trimmed;
 }
@@ -540,7 +558,9 @@ function joinSystemPrompt(messages: ReadonlyArray<LLMMessage>): string | undefin
   return systemParts.length > 0 ? systemParts.join("\n\n") : undefined;
 }
 
-function buildChatMessages(messages: ReadonlyArray<LLMMessage>): Array<{ role: string; content: string }> {
+function buildChatMessages(
+  messages: ReadonlyArray<LLMMessage>,
+): Array<{ role: string; content: string }> {
   return messages
     .filter((message) => message.role !== "system")
     .map((message) => ({
@@ -549,16 +569,23 @@ function buildChatMessages(messages: ReadonlyArray<LLMMessage>): Array<{ role: s
     }));
 }
 
-function buildAnthropicMessages(messages: ReadonlyArray<LLMMessage>): Array<{ role: "user" | "assistant"; content: string }> {
+function buildAnthropicMessages(
+  messages: ReadonlyArray<LLMMessage>,
+): Array<{ role: "user" | "assistant"; content: string }> {
   return messages
-    .filter((message): message is Readonly<LLMMessage> & { role: "user" | "assistant" } => message.role === "user" || message.role === "assistant")
+    .filter(
+      (message): message is Readonly<LLMMessage> & { role: "user" | "assistant" } =>
+        message.role === "user" || message.role === "assistant",
+    )
     .map((message) => ({
       role: message.role,
       content: message.content,
     }));
 }
 
-function buildResponsesInput(messages: ReadonlyArray<LLMMessage>): Array<{ role: string; content: Array<{ type: "input_text"; text: string }> }> {
+function buildResponsesInput(
+  messages: ReadonlyArray<LLMMessage>,
+): Array<{ role: string; content: Array<{ type: "input_text"; text: string }> }> {
   return messages
     .filter((message) => message.role !== "system")
     .map((message) => ({
@@ -582,21 +609,23 @@ function foldSystemMessagesIntoFirstUser(messages: ReadonlyArray<LLMMessage>): L
     return [{ role: "user", content: `System instructions:\n${system}` }, ...nonSystemMessages];
   }
 
-  return nonSystemMessages.map((message, index) => index === firstUserIndex
-    ? { ...message, content: `${prefix}${message.content}` }
-    : message);
+  return nonSystemMessages.map((message, index) =>
+    index === firstUserIndex ? { ...message, content: `${prefix}${message.content}` } : message,
+  );
 }
 
 function isSystemRoleUnsupportedErrorText(text: string): boolean {
   const normalized = text.toLowerCase();
   const mentionsSystemRole = normalized.includes("system") && normalized.includes("role");
   if (!mentionsSystemRole) return false;
-  return normalized.includes("unsupported")
-    || normalized.includes("not support")
-    || normalized.includes("does not support")
-    || normalized.includes("invalid")
-    || normalized.includes("不支持")
-    || normalized.includes("不允许");
+  return (
+    normalized.includes("unsupported") ||
+    normalized.includes("not support") ||
+    normalized.includes("does not support") ||
+    normalized.includes("invalid") ||
+    normalized.includes("不支持") ||
+    normalized.includes("不允许")
+  );
 }
 
 async function readErrorResponse(res: Response): Promise<string> {
@@ -619,7 +648,10 @@ type ParsedSseEvent = {
   readonly data?: string;
 };
 
-function parseSseEvents(buffer: string): { readonly events: ParsedSseEvent[]; readonly rest: string } {
+function parseSseEvents(buffer: string): {
+  readonly events: ParsedSseEvent[];
+  readonly rest: string;
+} {
   const chunks = buffer.split(/\n\n/);
   const rest = chunks.pop() ?? "";
   const events: ParsedSseEvent[] = [];
@@ -650,7 +682,13 @@ function extractOpenAITextPart(value: any): string {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) {
     return value
-      .map((item) => typeof item?.text === "string" ? item.text : typeof item?.content === "string" ? item.content : "")
+      .map((item) =>
+        typeof item?.text === "string"
+          ? item.text
+          : typeof item?.content === "string"
+            ? item.content
+            : "",
+      )
       .join("");
   }
   return "";
@@ -658,7 +696,9 @@ function extractOpenAITextPart(value: any): string {
 
 function extractChatContent(json: any): string {
   const message = json?.choices?.[0]?.message;
-  return extractOpenAITextPart(message?.content) || extractOpenAITextPart(message?.reasoning_content);
+  return (
+    extractOpenAITextPart(message?.content) || extractOpenAITextPart(message?.reasoning_content)
+  );
 }
 
 function extractChatDeltaContent(json: any): string {
@@ -672,7 +712,7 @@ function extractChatDeltaReasoningContent(json: any): string {
 function extractResponsesContent(json: any): string {
   const output = Array.isArray(json?.output) ? json.output : [];
   return output
-    .flatMap((item: any) => Array.isArray(item?.content) ? item.content : [])
+    .flatMap((item: any) => (Array.isArray(item?.content) ? item.content : []))
     .map((part: any) => {
       if (typeof part?.text === "string") return part.text;
       if (typeof part?.content === "string") return part.content;
@@ -684,16 +724,18 @@ function extractResponsesContent(json: any): string {
 
 function extractAnthropicContent(json: any): string {
   const content = Array.isArray(json?.content) ? json.content : [];
-  return content
-    .map((part: any) => typeof part?.text === "string" ? part.text : "")
-    .join("");
+  return content.map((part: any) => (typeof part?.text === "string" ? part.text : "")).join("");
 }
 
 async function chatCompletionViaCustomAnthropicCompatible(
   client: LLMClient,
   model: string,
   messages: ReadonlyArray<LLMMessage>,
-  resolved: { readonly temperature: number; readonly maxTokens: number; readonly extra: Record<string, unknown> },
+  resolved: {
+    readonly temperature: number;
+    readonly maxTokens: number;
+    readonly extra: Record<string, unknown>;
+  },
   onStreamProgress?: OnStreamProgress,
   onTextDelta?: (text: string) => void,
 ): Promise<LLMResponse> {
@@ -712,25 +754,29 @@ async function chatCompletionViaCustomAnthropicCompatible(
   if (system) payload.system = system;
 
   const apiKey = sanitizeHeaderApiKey(client._apiKey);
-  const response = await fetchWithProxy(`${baseUrl.replace(/\/$/, "")}/messages`, {
-    method: "POST",
-    headers: sanitizeHttpHeaders({
-      "User-Agent": INKOS_USER_AGENT,
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-      ...(client._piModel?.headers ?? {}),
-    }) ?? { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }, client.proxyUrl);
+  const response = await fetchWithProxy(
+    `${baseUrl.replace(/\/$/, "")}/messages`,
+    {
+      method: "POST",
+      headers: sanitizeHttpHeaders({
+        "User-Agent": INKOS_USER_AGENT,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        ...(client._piModel?.headers ?? {}),
+      }) ?? { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+    client.proxyUrl,
+  );
 
   if (!response.ok) {
     throw wrapLLMError(new Error(await readErrorResponse(response)), errorCtx);
   }
 
   if (!client.stream) {
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
     const content = extractAnthropicContent(json);
     if (!content) {
       throw wrapLLMError(new Error("LLM returned empty response"), errorCtx);
@@ -766,7 +812,11 @@ async function chatCompletionViaCustomAnthropicCompatible(
         if (json.type === "message_start" && json.message?.usage) {
           usage.promptTokens = json.message.usage.input_tokens ?? usage.promptTokens;
         }
-        if (json.type === "content_block_delta" && json.delta?.type === "text_delta" && typeof json.delta.text === "string") {
+        if (
+          json.type === "content_block_delta" &&
+          json.delta?.type === "text_delta" &&
+          typeof json.delta.text === "string"
+        ) {
           content += json.delta.text;
           monitor.onChunk(json.delta.text);
           onTextDelta?.(json.delta.text);
@@ -796,13 +846,24 @@ async function chatCompletionViaCustomOpenAICompatible(
   client: LLMClient,
   model: string,
   messages: ReadonlyArray<LLMMessage>,
-  resolved: { readonly temperature: number; readonly maxTokens: number; readonly extra: Record<string, unknown> },
+  resolved: {
+    readonly temperature: number;
+    readonly maxTokens: number;
+    readonly extra: Record<string, unknown>;
+  },
   onStreamProgress?: OnStreamProgress,
   onTextDelta?: (text: string) => void,
   allowSystemRoleFallback = true,
 ): Promise<LLMResponse> {
   if (client.provider === "anthropic") {
-    return chatCompletionViaCustomAnthropicCompatible(client, model, messages, resolved, onStreamProgress, onTextDelta);
+    return chatCompletionViaCustomAnthropicCompatible(
+      client,
+      model,
+      messages,
+      resolved,
+      onStreamProgress,
+      onTextDelta,
+    );
   }
   const baseUrl = client._piModel?.baseUrl ?? "";
   const headers = buildCustomHeaders(client);
@@ -822,17 +883,21 @@ async function chatCompletionViaCustomOpenAICompatible(
     const instructions = joinSystemPrompt(messages);
     if (instructions) payload.instructions = instructions;
 
-    const response = await fetchWithProxy(`${baseUrl.replace(/\/$/, "")}/responses`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    }, client.proxyUrl);
+    const response = await fetchWithProxy(
+      `${baseUrl.replace(/\/$/, "")}/responses`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      },
+      client.proxyUrl,
+    );
     if (!response.ok) {
       throw wrapLLMError(new Error(await readErrorResponse(response)), errorCtx);
     }
 
     if (!client.stream) {
-      const json = await response.json() as any;
+      const json = (await response.json()) as any;
       const content = extractResponsesContent(json);
       if (!content) {
         throw wrapLLMError(new Error("LLM returned empty response"), errorCtx);
@@ -909,14 +974,22 @@ async function chatCompletionViaCustomOpenAICompatible(
     payload.stream_options = { include_usage: true };
   }
 
-  const response = await fetchWithProxy(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  }, client.proxyUrl);
+  const response = await fetchWithProxy(
+    `${baseUrl.replace(/\/$/, "")}/chat/completions`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    },
+    client.proxyUrl,
+  );
   if (!response.ok) {
     const detail = await readErrorResponse(response);
-    if (allowSystemRoleFallback && hasSystemMessages(messages) && isSystemRoleUnsupportedErrorText(detail)) {
+    if (
+      allowSystemRoleFallback &&
+      hasSystemMessages(messages) &&
+      isSystemRoleUnsupportedErrorText(detail)
+    ) {
       return chatCompletionViaCustomOpenAICompatible(
         client,
         model,
@@ -931,7 +1004,7 @@ async function chatCompletionViaCustomOpenAICompatible(
   }
 
   if (!client.stream) {
-    const json = await response.json() as any;
+    const json = (await response.json()) as any;
     const content = extractChatContent(json);
     if (!content) {
       throw wrapLLMError(new Error("LLM returned empty response"), errorCtx);
@@ -1023,15 +1096,33 @@ export async function chatCompletion(
   };
   const onStreamProgress = options?.onStreamProgress;
   const onTextDelta = options?.onTextDelta;
-  const errorCtx = { baseUrl: client._piModel?.baseUrl ?? "(unknown)", model, service: client.service };
+  const errorCtx = {
+    baseUrl: client._piModel?.baseUrl ?? "(unknown)",
+    model,
+    service: client.service,
+  };
 
   try {
     return await withTransientLLMRetry(
       async () => {
         if (shouldUseNativeCustomTransport(client)) {
-          return chatCompletionViaCustomOpenAICompatible(client, model, messages, resolved, onStreamProgress, onTextDelta);
+          return chatCompletionViaCustomOpenAICompatible(
+            client,
+            model,
+            messages,
+            resolved,
+            onStreamProgress,
+            onTextDelta,
+          );
         }
-        return chatCompletionViaPiAi(client, model, messages, resolved, onStreamProgress, onTextDelta);
+        return chatCompletionViaPiAi(
+          client,
+          model,
+          messages,
+          resolved,
+          onStreamProgress,
+          onTextDelta,
+        );
       },
       // Retrying after UI text deltas have been emitted can duplicate visible text.
       { enabled: !onTextDelta },
@@ -1060,7 +1151,11 @@ export async function chatWithTools(
     readonly maxTokens?: number;
   },
 ): Promise<ChatWithToolsResult> {
-  const errorCtx = { baseUrl: client._piModel?.baseUrl ?? "(unknown)", model, service: client.service };
+  const errorCtx = {
+    baseUrl: client._piModel?.baseUrl ?? "(unknown)",
+    model,
+    service: client.service,
+  };
   try {
     const resolved = {
       temperature: clampTemperatureForModel(
@@ -1107,7 +1202,14 @@ function toPiContext(messages: ReadonlyArray<LLMMessage>): PiContext {
         api: "openai-completions" as PiApi,
         provider: "openai",
         model: "",
-        usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+        usage: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+          totalTokens: 0,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+        },
         stopReason: "stop" as const,
         timestamp: Date.now(),
       };
@@ -1117,7 +1219,9 @@ function toPiContext(messages: ReadonlyArray<LLMMessage>): PiContext {
 
 /** Convert inkos AgentMessage[] to pi-ai Context (with tool calls/results). */
 function agentMessagesToPiContext(messages: ReadonlyArray<AgentMessage>): PiContext {
-  const systemParts = messages.filter((m) => m.role === "system").map((m) => (m as { content: string }).content);
+  const systemParts = messages
+    .filter((m) => m.role === "system")
+    .map((m) => (m as { content: string }).content);
   const systemPrompt = systemParts.length > 0 ? systemParts.join("\n\n") : undefined;
   const piMessages: PiContext["messages"] = [];
   for (const msg of messages) {
@@ -1146,7 +1250,14 @@ function agentMessagesToPiContext(messages: ReadonlyArray<AgentMessage>): PiCont
         api: "openai-completions" as PiApi,
         provider: "openai",
         model: "",
-        usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+        usage: {
+          input: 0,
+          output: 0,
+          cacheRead: 0,
+          cacheWrite: 0,
+          totalTokens: 0,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+        },
         stopReason: "stop",
         timestamp: Date.now(),
       });
@@ -1179,7 +1290,11 @@ async function chatCompletionViaPiAi(
   client: LLMClient,
   model: string,
   messages: ReadonlyArray<LLMMessage>,
-  resolved: { readonly temperature: number; readonly maxTokens: number; readonly extra: Record<string, unknown> },
+  resolved: {
+    readonly temperature: number;
+    readonly maxTokens: number;
+    readonly extra: Record<string, unknown>;
+  },
   onStreamProgress?: OnStreamProgress,
   onTextDelta?: (text: string) => void,
 ): Promise<LLMResponse> {

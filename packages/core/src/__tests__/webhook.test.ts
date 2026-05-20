@@ -40,17 +40,12 @@ describe("sendWebhook", () => {
     await sendWebhook({ url: "https://example.com/hook", secret }, basePayload);
 
     const [, opts] = mockFetch.mock.calls[0]!;
-    const expectedSig = createHmac("sha256", secret)
-      .update(opts.body)
-      .digest("hex");
+    const expectedSig = createHmac("sha256", secret).update(opts.body).digest("hex");
     expect(opts.headers["X-InkOS-Signature"]).toBe(`sha256=${expectedSig}`);
   });
 
   it("skips event when not in subscribed events list", async () => {
-    await sendWebhook(
-      { url: "https://example.com/hook", events: ["audit-passed"] },
-      basePayload,
-    );
+    await sendWebhook({ url: "https://example.com/hook", events: ["audit-passed"] }, basePayload);
 
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -69,10 +64,7 @@ describe("sendWebhook", () => {
   it("sends all events when events list is empty", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await sendWebhook(
-      { url: "https://example.com/hook", events: [] },
-      basePayload,
-    );
+    await sendWebhook({ url: "https://example.com/hook", events: [] }, basePayload);
 
     expect(mockFetch).toHaveBeenCalledOnce();
   });
@@ -84,8 +76,8 @@ describe("sendWebhook", () => {
       text: async () => "Internal Server Error",
     });
 
-    await expect(
-      sendWebhook({ url: "https://example.com/hook" }, basePayload),
-    ).rejects.toThrow("Webhook POST to https://example.com/hook failed: 500");
+    await expect(sendWebhook({ url: "https://example.com/hook" }, basePayload)).rejects.toThrow(
+      "Webhook POST to https://example.com/hook failed: 500",
+    );
   });
 });

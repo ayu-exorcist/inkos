@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolveServicePreset, clampTemperature, getWritingTemperature } from "../llm/service-presets.js";
+import {
+  resolveServicePreset,
+  clampTemperature,
+  getWritingTemperature,
+} from "../llm/service-presets.js";
 
 describe("temperature constraints per service", () => {
   it("moonshot has range [0, 1] and writingTemperature 1.0", () => {

@@ -2,10 +2,7 @@ import type { ChapterIntent, ChapterMemo, ContextPackage } from "../models/input
 
 const HOOK_ID_PATTERN = /\bH\d+\b/gi;
 const HOOK_SLUG_PATTERN = /\b[a-z]+(?:-[a-z]+){1,3}\b/g;
-const CHAPTER_REF_PATTERNS: ReadonlyArray<RegExp> = [
-  /\bch(?:apter)?\s*\d+\b/gi,
-  /第\s*\d+\s*章/g,
-];
+const CHAPTER_REF_PATTERNS: ReadonlyArray<RegExp> = [/\bch(?:apter)?\s*\d+\b/gi, /第\s*\d+\s*章/g];
 
 const ZH_REPLACEMENTS: ReadonlyArray<[RegExp, string]> = [
   [/前几章/g, "此前"],
@@ -20,10 +17,7 @@ const EN_REPLACEMENTS: ReadonlyArray<[RegExp, string]> = [
   [/\bthis chapter needs to\b/gi, "the current move is to"],
 ];
 
-export function sanitizeNarrativeControlText(
-  text: string,
-  language: "zh" | "en" = "zh",
-): string {
+export function sanitizeNarrativeControlText(text: string, language: "zh" | "en" = "zh"): string {
   let result = text;
 
   result = result.replace(HOOK_ID_PATTERN, language === "en" ? "this thread" : "这条线索");
@@ -108,7 +102,7 @@ export function buildNarrativeIntentBrief(
       if (lines.length === 0) return null;
 
       const normalized = lines
-        .map((line) => line.startsWith("- ") ? line.slice(2) : line)
+        .map((line) => (line.startsWith("- ") ? line.slice(2) : line))
         .map((line) => sanitizeNarrativeControlText(line, language))
         .filter(Boolean)
         .map((line) => `- ${line}`)
@@ -134,7 +128,9 @@ export function renderNarrativeSelectedContext(
       const lines = [
         `### ${heading} ${index + 1}`,
         `- ${reasonLabel}: ${sanitizeNarrativeControlText(entry.reason, language)}`,
-        entry.excerpt ? `- ${detailLabel}: ${sanitizeNarrativeControlText(entry.excerpt, language)}` : "",
+        entry.excerpt
+          ? `- ${detailLabel}: ${sanitizeNarrativeControlText(entry.excerpt, language)}`
+          : "",
       ].filter(Boolean);
       return lines.join("\n");
     })

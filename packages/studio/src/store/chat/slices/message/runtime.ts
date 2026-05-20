@@ -70,7 +70,8 @@ export function extractToolError(result: unknown): string {
   if (typeof result === "string") return localizeKnownRuntimeMessage(result).slice(0, 500);
   if (result && typeof result === "object") {
     const record = result as Record<string, unknown>;
-    if (typeof record.content === "string") return localizeKnownRuntimeMessage(record.content).slice(0, 500);
+    if (typeof record.content === "string")
+      return localizeKnownRuntimeMessage(record.content).slice(0, 500);
     if (record.content && Array.isArray(record.content)) {
       const textPart = record.content.find((content: any) => content.type === "text");
       if (textPart) return localizeKnownRuntimeMessage((textPart as any).text ?? "").slice(0, 500);
@@ -110,9 +111,12 @@ export function findRunningToolPart(
   return undefined;
 }
 
-export function deriveFlat(
-  parts: MessagePart[],
-): { content: string; thinking?: string; thinkingStreaming?: boolean; toolExecutions?: ToolExecution[] } {
+export function deriveFlat(parts: MessagePart[]): {
+  content: string;
+  thinking?: string;
+  thinkingStreaming?: boolean;
+  toolExecutions?: ToolExecution[];
+} {
   let content = "";
   let thinking = "";
   let thinkingStreaming = false;
@@ -161,15 +165,14 @@ export function createSessionRuntime(input: {
   };
 }
 
-export function deserializeMessages(
-  msgs: ReadonlyArray<SessionMessage>,
-): ReadonlyArray<Message> {
+export function deserializeMessages(msgs: ReadonlyArray<SessionMessage>): ReadonlyArray<Message> {
   return msgs
     .filter((message) => message.role === "user" || message.role === "assistant")
     .map((message) => {
       const toolExecutions = (message as any).toolExecutions as ToolExecution[] | undefined;
       const parts: MessagePart[] = [];
-      if (message.thinking) parts.push({ type: "thinking", content: message.thinking, streaming: false });
+      if (message.thinking)
+        parts.push({ type: "thinking", content: message.thinking, streaming: false });
       if (toolExecutions) {
         for (const execution of toolExecutions) {
           parts.push({ type: "tool", execution });

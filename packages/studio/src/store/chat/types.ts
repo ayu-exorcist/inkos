@@ -9,7 +9,7 @@ export interface PipelineStage {
   label: string;
   status: "pending" | "active" | "completed";
   progress?: {
-    status?: string;          // "thinking" | "streaming" | ...
+    status?: string; // "thinking" | "streaming" | ...
     elapsedMs: number;
     totalChars: number;
     chineseChars: number;
@@ -47,7 +47,7 @@ export interface Message {
   readonly timestamp: number;
   readonly toolCall?: ToolCall;
   readonly toolExecutions?: ToolExecution[];
-  readonly parts?: MessagePart[];              // chronological parts for interleaved rendering
+  readonly parts?: MessagePart[]; // chronological parts for interleaved rendering
 }
 
 export interface SessionMessage {
@@ -128,8 +128,8 @@ export interface MessageState {
 export interface CreateState {
   bookDataVersion: number;
   sidebarView: "panel" | "artifact";
-  artifactFile: string | null;         // foundation file name, e.g. "story_bible.md"
-  artifactChapter: number | null;      // chapter number, e.g. 1
+  artifactFile: string | null; // foundation file name, e.g. "story_bible.md"
+  artifactChapter: number | null; // chapter number, e.g. 1
   bookSummary: BookSummary | null;
 }
 
@@ -142,7 +142,12 @@ export interface MessageActions {
   setInput: (text: string) => void;
   addUserMessage: (sessionId: string, content: string) => void;
   appendStreamChunk: (sessionId: string, text: string, streamTs: number) => void;
-  finalizeStream: (sessionId: string, streamTs: number, content: string, toolCall?: ToolCall) => void;
+  finalizeStream: (
+    sessionId: string,
+    streamTs: number,
+    content: string,
+    toolCall?: ToolCall,
+  ) => void;
   replaceStreamWithError: (sessionId: string, streamTs: number, errorMsg: string) => void;
   addErrorMessage: (sessionId: string, errorMsg: string) => void;
   loadSessionMessages: (sessionId: string, msgs: ReadonlyArray<SessionMessage>) => void;

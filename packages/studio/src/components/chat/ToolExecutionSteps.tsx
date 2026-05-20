@@ -1,17 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { ToolExecution, PipelineStage } from "../../store/chat/types";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "../ui/collapsible";
-import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  ChevronDown,
-  Wrench,
-} from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "../ui/collapsible";
+import { Loader2, CheckCircle2, XCircle, ChevronDown, Wrench } from "lucide-react";
 import { buildApiUrl } from "../../hooks/use-api";
 
 // -- Status rendering helpers --
@@ -52,7 +42,11 @@ function ExecStatusBadge({ status }: { status: ToolExecution["status"] }) {
 function StageIcon({ status }: { status: PipelineStage["status"] }) {
   switch (status) {
     case "pending":
-      return <span className="w-4 h-4 rounded-full border border-border/60 flex items-center justify-center shrink-0 text-[8px] text-muted-foreground/40">○</span>;
+      return (
+        <span className="w-4 h-4 rounded-full border border-border/60 flex items-center justify-center shrink-0 text-[8px] text-muted-foreground/40">
+          ○
+        </span>
+      );
     case "active":
       return <Loader2 size={14} className="text-primary animate-spin shrink-0" />;
     case "completed":
@@ -63,9 +57,12 @@ function StageIcon({ status }: { status: PipelineStage["status"] }) {
 function formatProgress(progress: NonNullable<PipelineStage["progress"]>): string {
   const secs = Math.round(progress.elapsedMs / 1000);
   const statusLabel = progress.status === "thinking" ? "思考中" : "";
-  const chars = progress.totalChars > 0
-    ? progress.chineseChars > 0 ? `${progress.totalChars}字` : `${progress.totalChars} chars`
-    : "";
+  const chars =
+    progress.totalChars > 0
+      ? progress.chineseChars > 0
+        ? `${progress.totalChars}字`
+        : `${progress.totalChars} chars`
+      : "";
   const parts = [statusLabel, `${secs}s`, chars].filter(Boolean);
   return parts.join(" · ");
 }
@@ -77,7 +74,10 @@ function formatDuration(startedAt: number, completedAt?: number): string {
 }
 
 function encodeProjectPath(path: string): string {
-  return path.split("/").map((part) => encodeURIComponent(part)).join("/");
+  return path
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
 }
 
 function extractResultPath(result: string | undefined, label: string): string | null {
@@ -122,7 +122,8 @@ export function getGeneratedArtifactDetails(exec: ToolExecution): GeneratedArtif
 }
 
 function ShortFictionResultPreview({ exec }: { exec: ToolExecution }) {
-  if (!["short_fiction_run", "generate_cover"].includes(exec.tool) || exec.status !== "completed") return null;
+  if (!["short_fiction_run", "generate_cover"].includes(exec.tool) || exec.status !== "completed")
+    return null;
   const details = getGeneratedArtifactDetails(exec);
   const coverPath = details?.coverImagePath ?? extractResultPath(exec.result, "Cover image");
   const coverError = details?.coverError ?? extractResultPath(exec.result, "Cover image reason");
@@ -161,7 +162,7 @@ function isPipelineTool(tool: string): boolean {
 // -- Live elapsed timer hook --
 
 function useElapsedTimer(startedAt: number, active: boolean): number {
-  const [elapsed, setElapsed] = useState(() => active ? Date.now() - startedAt : 0);
+  const [elapsed, setElapsed] = useState(() => (active ? Date.now() - startedAt : 0));
   useEffect(() => {
     if (!active) return;
     setElapsed(Date.now() - startedAt);
@@ -189,7 +190,11 @@ function PipelineExecution({ exec }: { exec: ToolExecution }) {
   const bookId = exec.args?.bookId as string | undefined;
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-xl border border-border/40 bg-card/60">
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="rounded-xl border border-border/40 bg-card/60"
+    >
       <CollapsibleTrigger className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl hover:bg-card/80 transition-colors cursor-pointer">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-foreground truncate">
@@ -201,10 +206,15 @@ function PipelineExecution({ exec }: { exec: ToolExecution }) {
           <span className="text-[10px] text-muted-foreground/60">
             {isActive
               ? formatDuration(exec.startedAt, exec.startedAt + elapsedMs)
-              : exec.completedAt ? formatDuration(exec.startedAt, exec.completedAt) : ""}
+              : exec.completedAt
+                ? formatDuration(exec.startedAt, exec.completedAt)
+                : ""}
           </span>
           <ExecStatusBadge status={exec.status} />
-          <ChevronDown size={14} className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+          <ChevronDown
+            size={14}
+            className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+          />
         </div>
       </CollapsibleTrigger>
       <ShortFictionResultPreview exec={exec} />
@@ -217,7 +227,10 @@ function PipelineExecution({ exec }: { exec: ToolExecution }) {
                 const isError = log.startsWith("[error]") || /error/i.test(log);
                 const isWarn = log.startsWith("[warning]") || /warning|警告/i.test(log);
                 return (
-                  <li key={i} className={`text-xs font-mono break-words ${isError ? "text-destructive" : isWarn ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}`}>
+                  <li
+                    key={i}
+                    className={`text-xs font-mono break-words ${isError ? "text-destructive" : isWarn ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}`}
+                  >
                     {log}
                   </li>
                 );
@@ -239,15 +252,17 @@ function PipelineExecution({ exec }: { exec: ToolExecution }) {
 
 function UtilityToolsGroup({ execs }: { execs: ToolExecution[] }) {
   const [open, setOpen] = useState(false);
-  const allDone = execs.every(e => e.status === "completed" || e.status === "error");
-  const hasError = execs.some(e => e.status === "error");
+  const allDone = execs.every((e) => e.status === "completed" || e.status === "error");
+  const hasError = execs.some((e) => e.status === "error");
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-xs text-muted-foreground">
         <Wrench size={12} />
         <span>{execs.length} 个文件操作</span>
-        {allDone && !hasError && <CheckCircle2 size={10} className="text-green-600 dark:text-green-400" />}
+        {allDone && !hasError && (
+          <CheckCircle2 size={10} className="text-green-600 dark:text-green-400" />
+        )}
         {hasError && <XCircle size={10} className="text-destructive" />}
         {!allDone && <Loader2 size={10} className="animate-spin text-primary" />}
         <ChevronDown size={10} className={`transition-transform ${open ? "rotate-180" : ""}`} />
@@ -256,10 +271,18 @@ function UtilityToolsGroup({ execs }: { execs: ToolExecution[] }) {
         <ul className="pl-6 space-y-0.5 py-1">
           {execs.map((exec) => (
             <li key={exec.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-mono truncate">{exec.tool} {String(exec.args?.path ?? exec.args?.pattern ?? "")}</span>
-              {exec.status === "completed" && <CheckCircle2 size={10} className="text-green-600 dark:text-green-400 shrink-0" />}
-              {exec.status === "error" && <XCircle size={10} className="text-destructive shrink-0" />}
-              {(exec.status === "running" || exec.status === "processing") && <Loader2 size={10} className="animate-spin text-primary shrink-0" />}
+              <span className="font-mono truncate">
+                {exec.tool} {String(exec.args?.path ?? exec.args?.pattern ?? "")}
+              </span>
+              {exec.status === "completed" && (
+                <CheckCircle2 size={10} className="text-green-600 dark:text-green-400 shrink-0" />
+              )}
+              {exec.status === "error" && (
+                <XCircle size={10} className="text-destructive shrink-0" />
+              )}
+              {(exec.status === "running" || exec.status === "processing") && (
+                <Loader2 size={10} className="animate-spin text-primary shrink-0" />
+              )}
             </li>
           ))}
         </ul>
@@ -311,9 +334,11 @@ export function ToolExecutionSteps({ executions }: ToolExecutionStepsProps) {
   return (
     <div className="space-y-2 mt-2">
       {groups.map((g, i) =>
-        g.type === "pipeline"
-          ? <PipelineExecution key={g.exec.id} exec={g.exec} />
-          : <UtilityToolsGroup key={`utils-${i}`} execs={g.execs} />
+        g.type === "pipeline" ? (
+          <PipelineExecution key={g.exec.id} exec={g.exec} />
+        ) : (
+          <UtilityToolsGroup key={`utils-${i}`} execs={g.execs} />
+        ),
       )}
     </div>
   );

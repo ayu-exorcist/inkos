@@ -4,12 +4,16 @@ import { EPub } from "epub-gen-memory";
 
 export interface ExportStateLike {
   readonly bookDir: (bookId: string) => string;
-  readonly loadBookConfig: (bookId: string) => Promise<{ readonly title: string; readonly language?: string }>;
-  readonly loadChapterIndex: (bookId: string) => Promise<ReadonlyArray<{
-    readonly number: number;
-    readonly status: string;
-    readonly wordCount: number;
-  }>>;
+  readonly loadBookConfig: (
+    bookId: string,
+  ) => Promise<{ readonly title: string; readonly language?: string }>;
+  readonly loadChapterIndex: (bookId: string) => Promise<
+    ReadonlyArray<{
+      readonly number: number;
+      readonly status: string;
+      readonly wordCount: number;
+    }>
+  >;
 }
 
 export interface ExportArtifact {
@@ -37,10 +41,7 @@ function buildChapterFileLookup(files: ReadonlyArray<string>): ReadonlyMap<numbe
 }
 
 function escapeHtml(text: string): string {
-  return text
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 function markdownToSimpleHtml(markdown: string): { title: string; html: string } {

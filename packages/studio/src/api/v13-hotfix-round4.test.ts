@@ -29,11 +29,21 @@ vi.mock("@actalk/inkos-core", async (importOriginal) => {
 
   class MockStateManager {
     constructor(private readonly root: string) {}
-    async listBooks(): Promise<string[]> { return []; }
-    async loadBookConfig(): Promise<never> { throw new Error("not implemented"); }
-    async loadChapterIndex(): Promise<[]> { return []; }
-    async getNextChapterNumber(): Promise<number> { return 1; }
-    bookDir(id: string): string { return join(this.root, "books", id); }
+    async listBooks(): Promise<string[]> {
+      return [];
+    }
+    async loadBookConfig(): Promise<never> {
+      throw new Error("not implemented");
+    }
+    async loadChapterIndex(): Promise<[]> {
+      return [];
+    }
+    async getNextChapterNumber(): Promise<number> {
+      return 1;
+    }
+    bookDir(id: string): string {
+      return join(this.root, "books", id);
+    }
   }
   class MockPipelineRunner {
     constructor(_config: unknown) {}
@@ -44,7 +54,9 @@ vi.mock("@actalk/inkos-core", async (importOriginal) => {
     constructor(_config: unknown) {}
     async start(): Promise<void> {}
     stop(): void {}
-    get isRunning(): boolean { return false; }
+    get isRunning(): boolean {
+      return false;
+    }
   }
 
   // Real isNewLayoutBook — needs filesystem access
@@ -116,7 +128,11 @@ describe("Issue 1 — Studio: old book (no outline/story_frame.md)", () => {
     await writeFile(join(root, "inkos.json"), JSON.stringify(projectConfig, null, 2), "utf-8");
     storyDir = join(root, "books", "old-book", "story");
     await mkdir(storyDir, { recursive: true });
-    await writeFile(join(storyDir, "story_bible.md"), "# Old Bible\nAuthoritative content", "utf-8");
+    await writeFile(
+      join(storyDir, "story_bible.md"),
+      "# Old Bible\nAuthoritative content",
+      "utf-8",
+    );
     await writeFile(join(storyDir, "book_rules.md"), "# Old Rules\nAuthoritative rules", "utf-8");
     loadProjectConfigMock.mockReset();
     loadProjectConfigMock.mockResolvedValue(cloneProjectConfig());
@@ -132,7 +148,7 @@ describe("Issue 1 — Studio: old book (no outline/story_frame.md)", () => {
 
     const res = await app.request("http://localhost/api/v1/books/old-book/truth/story_bible.md");
     expect(res.status).toBe(200);
-    const body = await res.json() as { file: string; content: string; legacy?: boolean };
+    const body = (await res.json()) as { file: string; content: string; legacy?: boolean };
     expect(body.content).toContain("Authoritative content");
     expect(body.legacy).toBeUndefined();
   });
@@ -157,7 +173,7 @@ describe("Issue 1 — Studio: old book (no outline/story_frame.md)", () => {
 
     const res = await app.request("http://localhost/api/v1/books/old-book/truth");
     expect(res.status).toBe(200);
-    const body = await res.json() as { files: ReadonlyArray<{ name: string; legacy?: true }> };
+    const body = (await res.json()) as { files: ReadonlyArray<{ name: string; legacy?: true }> };
     const bibleEntry = body.files.find((f) => f.name === "story_bible.md");
     expect(bibleEntry).toBeDefined();
     expect(bibleEntry!.legacy).toBeUndefined();
@@ -194,7 +210,7 @@ describe("Issue 1 — Studio: new book (has outline/story_frame.md)", () => {
 
     const res = await app.request("http://localhost/api/v1/books/new-book/truth/story_bible.md");
     expect(res.status).toBe(200);
-    const body = await res.json() as { legacy?: boolean };
+    const body = (await res.json()) as { legacy?: boolean };
     expect(body.legacy).toBe(true);
   });
 
@@ -208,7 +224,7 @@ describe("Issue 1 — Studio: new book (has outline/story_frame.md)", () => {
       body: JSON.stringify({ content: "# Attempt" }),
     });
     expect(res.status).toBe(400);
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body.error).toMatch(/Legacy compat shim/);
   });
 
@@ -218,7 +234,7 @@ describe("Issue 1 — Studio: new book (has outline/story_frame.md)", () => {
 
     const res = await app.request("http://localhost/api/v1/books/new-book/truth");
     expect(res.status).toBe(200);
-    const body = await res.json() as { files: ReadonlyArray<{ name: string; legacy?: true }> };
+    const body = (await res.json()) as { files: ReadonlyArray<{ name: string; legacy?: true }> };
     const bibleEntry = body.files.find((f) => f.name === "story_bible.md");
     expect(bibleEntry).toBeDefined();
     expect(bibleEntry!.legacy).toBe(true);

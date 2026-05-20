@@ -17,12 +17,36 @@ describe("gatherPlanningMaterials", () => {
     await mkdir(join(bookDir, "chapters"), { recursive: true });
 
     await Promise.all([
-      writeFile(join(storyDir, "author_intent.md"), "# Author Intent\n\nStay on the mentor-debt line.\n", "utf-8"),
-      writeFile(join(storyDir, "current_focus.md"), "# Current Focus\n\nReturn to the harbor ledger.\n", "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 4\nForce the warehouse confrontation.\n", "utf-8"),
-      writeFile(join(storyDir, "book_rules.md"), "---\nprohibitions:\n  - Do not reveal the mastermind\n---\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue is still injured.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "author_intent.md"),
+        "# Author Intent\n\nStay on the mentor-debt line.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# Current Focus\n\nReturn to the harbor ledger.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 4\nForce the warehouse confrontation.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "book_rules.md"),
+        "---\nprohibitions:\n  - Do not reveal the mastermind\n---\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue is still injured.\n",
+        "utf-8",
+      ),
       writeFile(
         join(storyDir, "chapter_summaries.md"),
         [
@@ -81,10 +105,12 @@ describe("gatherPlanningMaterials", () => {
         hookId: "H019",
       }),
     ]);
-    expect(result.plannerInputs).toEqual(expect.arrayContaining([
-      join(storyDir, "author_intent.md"),
-      join(storyDir, "chapter_summaries.md"),
-      join(storyDir, "pending_hooks.md"),
-    ]));
+    expect(result.plannerInputs).toEqual(
+      expect.arrayContaining([
+        join(storyDir, "author_intent.md"),
+        join(storyDir, "chapter_summaries.md"),
+        join(storyDir, "pending_hooks.md"),
+      ]),
+    );
   });
 });

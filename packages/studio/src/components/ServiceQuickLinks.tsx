@@ -41,7 +41,9 @@ export function ServiceQuickLinks({
         "flex flex-wrap items-center gap-1.5 text-muted-foreground/70",
         compact ? "text-[11px]" : "text-xs",
         className,
-      ].filter(Boolean).join(" ")}
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {!compact && <span className="mr-0.5">配置入口</span>}
       {links.map((link) => (

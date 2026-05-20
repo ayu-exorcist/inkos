@@ -16,50 +16,69 @@ describe("buildApiUrl", () => {
 
 describe("fetchJson", () => {
   it("surfaces API error payloads on non-ok responses", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify({ error: "Bad request" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: "Bad request" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }),
     );
 
     await expect(fetchJson("/books", {}, { fetchImpl })).rejects.toThrow("Bad request");
   });
 
   it("falls back to status text when the body is not JSON", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response("boom", {
-        status: 500,
-        statusText: "Internal Server Error",
-        headers: { "Content-Type": "text/plain" },
-      }),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response("boom", {
+          status: 500,
+          statusText: "Internal Server Error",
+          headers: { "Content-Type": "text/plain" },
+        }),
     );
 
-    await expect(fetchJson("/books", {}, { fetchImpl })).rejects.toThrow("500 Internal Server Error");
+    await expect(fetchJson("/books", {}, { fetchImpl })).rejects.toThrow(
+      "500 Internal Server Error",
+    );
   });
 
   it("surfaces nested api error messages from structured error payloads", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify({ error: { code: "INVALID_BOOK_ID", message: "Invalid book ID: ../bad" } }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { code: "INVALID_BOOK_ID", message: "Invalid book ID: ../bad" },
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
     );
 
-    await expect(fetchJson("/books/../bad", {}, { fetchImpl })).rejects.toThrow("Invalid book ID: ../bad");
+    await expect(fetchJson("/books/../bad", {}, { fetchImpl })).rejects.toThrow(
+      "Invalid book ID: ../bad",
+    );
   });
 
   it("localizes known runtime errors before throwing", async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify({
-        error: "Latest chapter 1 is state-degraded. Repair state or rewrite that chapter before continuing.",
-      }), {
-        status: 409,
-        headers: { "Content-Type": "application/json" },
-      }),
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error:
+              "Latest chapter 1 is state-degraded. Repair state or rewrite that chapter before continuing.",
+          }),
+          {
+            status: 409,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
     );
 
-    await expect(fetchJson("/books/demo/write-next", { method: "POST" }, { fetchImpl })).rejects.toThrow(
+    await expect(
+      fetchJson("/books/demo/write-next", { method: "POST" }, { fetchImpl }),
+    ).rejects.toThrow(
       "最新第 1 章处于状态降级（state-degraded）。继续写下一章前，请先修复状态，或重写这一章。",
     );
   });
@@ -88,6 +107,9 @@ describe("deriveInvalidationPaths", () => {
 
   it("refreshes project data after project mutations", () => {
     expect(deriveInvalidationPaths("/project")).toEqual(["/api/v1/project"]);
-    expect(deriveInvalidationPaths("/project/language")).toEqual(["/api/v1/project", "/api/v1/project/language"]);
+    expect(deriveInvalidationPaths("/project/language")).toEqual([
+      "/api/v1/project",
+      "/api/v1/project/language",
+    ]);
   });
 });

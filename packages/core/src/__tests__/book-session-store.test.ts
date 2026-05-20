@@ -50,7 +50,11 @@ describe("book-session-store", () => {
 
     it("persists messages", async () => {
       let session = createBookSession("book");
-      session = appendBookSessionMessage(session, { role: "user" as const, content: "test", timestamp: 100 });
+      session = appendBookSessionMessage(session, {
+        role: "user" as const,
+        content: "test",
+        timestamp: 100,
+      });
       await persistBookSession(tempDir, session);
       const loaded = await loadBookSession(tempDir, session.sessionId);
       expect(loaded!.messages).toHaveLength(1);
@@ -110,9 +114,9 @@ describe("book-session-store", () => {
           { role: "assistant", content: "好的", thinking: "旧思考" },
         ],
       });
-      await expect(readFile(join(tempDir, ".inkos", "sessions", "legacy-1.jsonl"), "utf-8"))
-        .resolves
-        .toContain("request_committed");
+      await expect(
+        readFile(join(tempDir, ".inkos", "sessions", "legacy-1.jsonl"), "utf-8"),
+      ).resolves.toContain("request_committed");
     });
 
     it("does not duplicate legacy messages when migration runs concurrently", async () => {
@@ -147,12 +151,12 @@ describe("book-session-store", () => {
       const session = await createAndPersistBookSession(tempDir, "book-a", "123456-abcdef");
 
       expect(session.sessionId).toBe("123456-abcdef");
-      await expect(readFile(join(tempDir, ".inkos", "sessions", "123456-abcdef.jsonl"), "utf-8"))
-        .resolves
-        .toContain("session_created");
-      await expect(readFile(join(tempDir, ".inkos", "sessions", "123456-abcdef.json"), "utf-8"))
-        .rejects
-        .toThrow();
+      await expect(
+        readFile(join(tempDir, ".inkos", "sessions", "123456-abcdef.jsonl"), "utf-8"),
+      ).resolves.toContain("session_created");
+      await expect(
+        readFile(join(tempDir, ".inkos", "sessions", "123456-abcdef.json"), "utf-8"),
+      ).rejects.toThrow();
     });
 
     it("does not duplicate session_created when explicit session creation races", async () => {
@@ -229,11 +233,13 @@ describe("book-session-store", () => {
       const session = await createAndPersistBookSession(tempDir, "book", "chat-activity");
       await new Promise((resolve) => setTimeout(resolve, 5));
 
-      await appendManualSessionMessages(tempDir, session.sessionId, [{
-        role: "user",
-        content: "继续",
-        timestamp: Date.now(),
-      } as any]);
+      await appendManualSessionMessages(tempDir, session.sessionId, [
+        {
+          role: "user",
+          content: "继续",
+          timestamp: Date.now(),
+        } as any,
+      ]);
 
       const loaded = await loadBookSession(tempDir, session.sessionId);
       expect(loaded?.updatedAt).toBeGreaterThan(session.updatedAt);
@@ -302,37 +308,41 @@ describe("book-session-store", () => {
     });
 
     it("returns null when no user message exists", () => {
-      expect(extractFirstUserMessageTitle([
-        { role: "assistant", content: "hi" },
-        { role: "system", content: "prompt" },
-      ])).toBeNull();
+      expect(
+        extractFirstUserMessageTitle([
+          { role: "assistant", content: "hi" },
+          { role: "system", content: "prompt" },
+        ]),
+      ).toBeNull();
     });
 
     it("picks the first user message content", () => {
-      expect(extractFirstUserMessageTitle([
-        { role: "system", content: "sys" },
-        { role: "user", content: "第一条提问" },
-        { role: "assistant", content: "回答" },
-        { role: "user", content: "第二条提问" },
-      ])).toBe("第一条提问");
+      expect(
+        extractFirstUserMessageTitle([
+          { role: "system", content: "sys" },
+          { role: "user", content: "第一条提问" },
+          { role: "assistant", content: "回答" },
+          { role: "user", content: "第二条提问" },
+        ]),
+      ).toBe("第一条提问");
     });
 
     it("collapses whitespace into single spaces", () => {
-      expect(extractFirstUserMessageTitle([
-        { role: "user", content: "多行\n\n内容   有空格" },
-      ])).toBe("多行 内容 有空格");
+      expect(
+        extractFirstUserMessageTitle([{ role: "user", content: "多行\n\n内容   有空格" }]),
+      ).toBe("多行 内容 有空格");
     });
 
     it("truncates content longer than 20 chars with ellipsis", () => {
-      expect(extractFirstUserMessageTitle([
-        { role: "user", content: "这是一段超过二十个字符的很长的提问内容会被截断" },
-      ])).toBe("这是一段超过二十个字符的很长的提问内容会…");
+      expect(
+        extractFirstUserMessageTitle([
+          { role: "user", content: "这是一段超过二十个字符的很长的提问内容会被截断" },
+        ]),
+      ).toBe("这是一段超过二十个字符的很长的提问内容会…");
     });
 
     it("returns null when content is only whitespace", () => {
-      expect(extractFirstUserMessageTitle([
-        { role: "user", content: "   \n\t   " },
-      ])).toBeNull();
+      expect(extractFirstUserMessageTitle([{ role: "user", content: "   \n\t   " }])).toBeNull();
     });
 
     it("returns null for non-array input", () => {
@@ -369,9 +379,7 @@ describe("book-session-store", () => {
       session = {
         ...session,
         title: "原有标题",
-        messages: [
-          { role: "user" as const, content: "后来的消息", timestamp: 100 },
-        ],
+        messages: [{ role: "user" as const, content: "后来的消息", timestamp: 100 }],
       };
       await persistBookSession(tempDir, session);
 

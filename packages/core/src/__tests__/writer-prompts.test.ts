@@ -208,15 +208,34 @@ describe("buildWriterSystemPrompt", () => {
 
   it("omits golden opening discipline for ch>=4 in both languages", () => {
     const zh = buildWriterSystemPrompt(
-      BOOK, GENRE, null, "# Book Rules", "# Genre Body", "# Style Guide",
-      undefined, 4, "creative", undefined, "zh", "governed",
+      BOOK,
+      GENRE,
+      null,
+      "# Book Rules",
+      "# Genre Body",
+      "# Style Guide",
+      undefined,
+      4,
+      "creative",
+      undefined,
+      "zh",
+      "governed",
     );
     expect(zh).not.toContain("黄金三章写作纪律");
 
     const en = buildWriterSystemPrompt(
-      BOOK, { ...GENRE, language: "en", name: "General" }, null,
-      "# Book Rules", "# Genre Body", "# Style Guide",
-      undefined, 4, "creative", undefined, "en", "governed",
+      BOOK,
+      { ...GENRE, language: "en", name: "General" },
+      null,
+      "# Book Rules",
+      "# Genre Body",
+      "# Style Guide",
+      undefined,
+      4,
+      "creative",
+      undefined,
+      "en",
+      "governed",
     );
     expect(en).not.toContain("Golden Opening Discipline");
   });

@@ -6,7 +6,13 @@ import type { ChapterMemo, ContextPackage, RuleStack } from "../models/input-gov
 import { readGenreProfile, readBookLanguage, readBookRules } from "./rules-reader.js";
 import { getFanficDimensionConfig, FANFIC_DIMENSIONS } from "./fanfic-dimensions.js";
 import { readFile, readdir } from "node:fs/promises";
-import { filterHooks, filterSummaries, filterSubplots, filterEmotionalArcs, filterCharacterMatrix } from "../utils/context-filter.js";
+import {
+  filterHooks,
+  filterSummaries,
+  filterSubplots,
+  filterEmotionalArcs,
+  filterCharacterMatrix,
+} from "../utils/context-filter.js";
 import { buildGovernedMemoryEvidenceBlocks } from "../utils/governed-context.js";
 import {
   readVolumeMap,
@@ -131,9 +137,10 @@ function buildDimensionNote(
   fanficMode: FanficMode | undefined,
   fanficConfig: ReturnType<typeof getFanficDimensionConfig> | undefined,
 ): string {
-  const words = bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
-    ? bookRules.fatigueWordsOverride
-    : gp.fatigueWords;
+  const words =
+    bookRules?.fatigueWordsOverride && bookRules.fatigueWordsOverride.length > 0
+      ? bookRules.fatigueWordsOverride
+      : gp.fatigueWords;
 
   if (fanficConfig?.notes.has(id) && language === "zh") {
     return fanficConfig.notes.get(id)!;
@@ -167,9 +174,7 @@ function buildDimensionNote(
     const era = bookRules.eraConstraints;
     const parts = [era.period, era.region].filter(Boolean);
     if (parts.length > 0) {
-      return language === "en"
-        ? `Era: ${parts.join(", ")}`
-        : `年代：${parts.join("，")}`;
+      return language === "en" ? `Era: ${parts.join(", ")}` : `年代：${parts.join("，")}`;
     }
   }
 
@@ -181,9 +186,12 @@ function buildDimensionNote(
   }
 
   if (id === 15) {
-    const base = gp.satisfactionTypes.length > 0
-      ? (language === "en" ? `Payoff types: ${gp.satisfactionTypes.join(", ")}. ` : `爽点类型：${gp.satisfactionTypes.join("、")}。`)
-      : "";
+    const base =
+      gp.satisfactionTypes.length > 0
+        ? language === "en"
+          ? `Payoff types: ${gp.satisfactionTypes.join(", ")}. `
+          : `爽点类型：${gp.satisfactionTypes.join("、")}。`
+        : "";
     return language === "en"
       ? `${base}Check desire engine: Has the chapter created an emotional gap (reader wants release) OR delivered a payoff that exceeds expectations? A payoff that only satisfies 70% of built-up anticipation counts as diluted. If this chapter is in the aftermath phase of a mini-goal cycle, verify that consequences are shown — not just emotional reactions, but concrete changes to status, relationships, or resources.`
       : `${base}检查欲望驱动：本章是否制造了情绪缺口（读者渴望释放）或完成了超出预期的兑现？只满足读者70%期待的兑现等于爽点虚化。如果本章处于小目标周期的后效阶段，检查是否展示了具体改变——不只是情绪反应，而是地位、关系或资源的实际变化。`;
@@ -267,18 +275,17 @@ description 中要明确引用 hook_id，并把状态列中 stale / blocked 的�
     case 37: {
       if (!fanficConfig) return "";
       const severity = fanficConfig.severityOverrides.get(id) ?? "warning";
-      const baseNote = language === "en"
-        ? {
-            34: "Check whether dialogue tics, speaking style, and behavior remain consistent with the character dossiers in fanfic_canon.md. Deviations need clear situational motivation.",
-            35: "Check whether the chapter violates world rules documented in fanfic_canon.md (geography, power system, faction relations).",
-            36: "Check whether relationship beats remain plausible and aligned with, or meaningfully develop from, the key relationships documented in fanfic_canon.md.",
-            37: "Check whether the chapter contradicts the key event timeline in fanfic_canon.md.",
-          }[id]
-        : FANFIC_DIMENSIONS.find((dimension) => dimension.id === id)?.baseNote;
+      const baseNote =
+        language === "en"
+          ? {
+              34: "Check whether dialogue tics, speaking style, and behavior remain consistent with the character dossiers in fanfic_canon.md. Deviations need clear situational motivation.",
+              35: "Check whether the chapter violates world rules documented in fanfic_canon.md (geography, power system, faction relations).",
+              36: "Check whether relationship beats remain plausible and aligned with, or meaningfully develop from, the key relationships documented in fanfic_canon.md.",
+              37: "Check whether the chapter contradicts the key event timeline in fanfic_canon.md.",
+            }[id]
+          : FANFIC_DIMENSIONS.find((dimension) => dimension.id === id)?.baseNote;
 
-      return baseNote
-        ? `${baseNote} ${formatFanficSeverityNote(severity, language)}`
-        : "";
+      return baseNote ? `${baseNote} ${formatFanficSeverityNote(severity, language)}` : "";
     }
     case 38:
       return language === "en"
@@ -287,7 +294,7 @@ description 中要明确引用 hook_id，并把状态列中 stale / blocked 的�
     case 39:
       return language === "en"
         ? "Originality check: Cross-check against used_elements.md (if present) and the chapter_summaries of the last 15 chapters. Flag: (1) plot beats, hook types, or satisfaction patterns that repeat within the last 10 chapters; (2) scene archetypes (e.g. 'tournament arc', 'auction house', 'secret realm exploration') that appear too close to a previous instance; (3) dialogue tropes or reaction patterns reused within 5 chapters. This is NOT a plagiarism check against external works — it checks internal repetition and element fatigue within this book."
-        : "原创性检查：对照 used_elements.md（如存在）和最近 15 章的 chapter_summaries。标记：(1) 在过去 10 章内重复出现的情节节拍、钩子类型或爽点模式；(2) 与此前实例过于接近的场景原型（如\"比赛 arc\"\"拍卖会\"\"秘境探索\"等）；(3) 在 5 章内重复使用的对话套路或反应模式。**注意：这不是对外部作品的查重，而是检查本书内部的元素复用和疲劳。**";
+        : '原创性检查：对照 used_elements.md（如存在）和最近 15 章的 chapter_summaries。标记：(1) 在过去 10 章内重复出现的情节节拍、钩子类型或爽点模式；(2) 与此前实例过于接近的场景原型（如"比赛 arc""拍卖会""秘境探索"等）；(3) 在 5 章内重复使用的对话套路或反应模式。**注意：这不是对外部作品的查重，而是检查本书内部的元素复用和疲劳。**';
     case 40:
       return language === "en"
         ? "Information release rhythm (Six Iron Rules): (1) Mystery before solution — does the chapter establish suspense before delivering the answer? (2) Sensation before knowledge — are world rules revealed through character experience rather than narrator exposition? (3) Deepen before introduce — are existing concepts deepened before new ones appear? (4) New concept cap: ≤3 in chapter 1, ≤2 in subsequent chapters. (5) Worldbuilding through action/dialogue only — no narrator info-dumps. (6) Reveal only what serves the current conflict. Flag any violation as warning; flag repeated violations across 3+ chapters as critical."
@@ -402,22 +409,33 @@ export class ContinuityAuditor extends BaseAgent {
       };
     },
   ): Promise<AuditResult> {
-    const [diskCurrentState, diskLedger, diskHooks, styleGuideRaw, subplotBoard, emotionalArcs, characterMatrix, chapterSummaries, parentCanon, fanficCanon, volumeOutline] =
-      await Promise.all([
-        // Phase 5 consolidation: derive initial state from roles + seed hooks
-        // when current_state.md is still the architect seed placeholder.
-        readCurrentStateWithFallback(bookDir, "(文件不存在)"),
-        this.readFileSafe(join(bookDir, "story/particle_ledger.md")),
-        this.readFileSafe(join(bookDir, "story/pending_hooks.md")),
-        this.readFileSafe(join(bookDir, "story/style_guide.md")),
-        this.readFileSafe(join(bookDir, "story/subplot_board.md")),
-        this.readFileSafe(join(bookDir, "story/emotional_arcs.md")),
-        readCharacterContext(bookDir, "(文件不存在)"),
-        this.readFileSafe(join(bookDir, "story/chapter_summaries.md")),
-        this.readFileSafe(join(bookDir, "story/parent_canon.md")),
-        this.readFileSafe(join(bookDir, "story/fanfic_canon.md")),
-        readVolumeMap(bookDir, "(文件不存在)"),
-      ]);
+    const [
+      diskCurrentState,
+      diskLedger,
+      diskHooks,
+      styleGuideRaw,
+      subplotBoard,
+      emotionalArcs,
+      characterMatrix,
+      chapterSummaries,
+      parentCanon,
+      fanficCanon,
+      volumeOutline,
+    ] = await Promise.all([
+      // Phase 5 consolidation: derive initial state from roles + seed hooks
+      // when current_state.md is still the architect seed placeholder.
+      readCurrentStateWithFallback(bookDir, "(文件不存在)"),
+      this.readFileSafe(join(bookDir, "story/particle_ledger.md")),
+      this.readFileSafe(join(bookDir, "story/pending_hooks.md")),
+      this.readFileSafe(join(bookDir, "story/style_guide.md")),
+      this.readFileSafe(join(bookDir, "story/subplot_board.md")),
+      this.readFileSafe(join(bookDir, "story/emotional_arcs.md")),
+      readCharacterContext(bookDir, "(文件不存在)"),
+      this.readFileSafe(join(bookDir, "story/chapter_summaries.md")),
+      this.readFileSafe(join(bookDir, "story/parent_canon.md")),
+      this.readFileSafe(join(bookDir, "story/fanfic_canon.md")),
+      readVolumeMap(bookDir, "(文件不存在)"),
+    ]);
     const currentState = options?.truthFileOverrides?.currentState ?? diskCurrentState;
     const ledger = options?.truthFileOverrides?.ledger ?? diskLedger;
     const hooks = options?.truthFileOverrides?.hooks ?? diskHooks;
@@ -443,16 +461,25 @@ export class ContinuityAuditor extends BaseAgent {
     // body, and an empty string is NOT a usable style guide. Treat
     // missing/empty body as "no fallback available".
     const legacyRulesBody = parsedRules?.body?.trim();
-    const styleGuide = styleGuideRaw !== "(文件不存在)"
-      ? styleGuideRaw
-      : (legacyRulesBody || "(无文风指南)");
+    const styleGuide =
+      styleGuideRaw !== "(文件不存在)" ? styleGuideRaw : legacyRulesBody || "(无文风指南)";
 
     const resolvedLanguage = bookLanguage ?? gp.language;
     const isEnglish = resolvedLanguage === "en";
-    const fanficMode = hasFanficCanon ? (bookRules?.fanficMode as FanficMode | undefined) : undefined;
-    const dimensions = buildDimensionList(gp, bookRules, resolvedLanguage, hasParentCanon, fanficMode);
+    const fanficMode = hasFanficCanon
+      ? (bookRules?.fanficMode as FanficMode | undefined)
+      : undefined;
+    const dimensions = buildDimensionList(
+      gp,
+      bookRules,
+      resolvedLanguage,
+      hasParentCanon,
+      fanficMode,
+    );
     const dimList = dimensions
-      .map((d) => `${d.id}. ${d.name}${d.note ? (isEnglish ? ` (${d.note})` : `（${d.note}）`) : ""}`)
+      .map(
+        (d) => `${d.id}. ${d.name}${d.note ? (isEnglish ? ` (${d.note})` : `（${d.note}）`) : ""}`,
+      )
       .join("\n");
     const genreLabel = resolveGenreLabel(genreId, gp.name, resolvedLanguage);
 
@@ -558,7 +585,11 @@ overall_score 评分校准：
     const bookRulesForFilter = parsedRules?.rules ?? null;
     const filteredSubplots = filterSubplots(subplotBoard);
     const filteredArcs = filterEmotionalArcs(emotionalArcs, chapterNumber);
-    const filteredMatrix = filterCharacterMatrix(characterMatrix, volumeOutline, bookRulesForFilter?.protagonist?.name);
+    const filteredMatrix = filterCharacterMatrix(
+      characterMatrix,
+      volumeOutline,
+      bookRulesForFilter?.protagonist?.name,
+    );
     const filteredSummaries = filterSummaries(chapterSummaries, chapterNumber);
     const filteredHooks = filterHooks(hooks);
 
@@ -566,29 +597,34 @@ overall_score 评分校准：
       ? buildGovernedMemoryEvidenceBlocks(options.contextPackage, resolvedLanguage)
       : undefined;
 
-    const hooksBlock = governedMemoryBlocks?.hooksBlock
-      ?? (filteredHooks !== "(文件不存在)"
+    const hooksBlock =
+      governedMemoryBlocks?.hooksBlock ??
+      (filteredHooks !== "(文件不存在)"
         ? isEnglish
           ? `\n## Pending Hooks\n${filteredHooks}\n`
           : `\n## 伏笔池\n${filteredHooks}\n`
         : "");
-    const subplotBlock = filteredSubplots !== "(文件不存在)"
-      ? isEnglish
-        ? `\n## Subplot Board\n${filteredSubplots}\n`
-        : `\n## 支线进度板\n${filteredSubplots}\n`
-      : "";
-    const emotionalBlock = filteredArcs !== "(文件不存在)"
-      ? isEnglish
-        ? `\n## Emotional Arcs\n${filteredArcs}\n`
-        : `\n## 情感弧线\n${filteredArcs}\n`
-      : "";
-    const matrixBlock = filteredMatrix !== "(文件不存在)"
-      ? isEnglish
-        ? `\n## Character Interaction Matrix\n${filteredMatrix}\n`
-        : `\n## 角色交互矩阵\n${filteredMatrix}\n`
-      : "";
-    const summariesBlock = governedMemoryBlocks?.summariesBlock
-      ?? (filteredSummaries !== "(文件不存在)"
+    const subplotBlock =
+      filteredSubplots !== "(文件不存在)"
+        ? isEnglish
+          ? `\n## Subplot Board\n${filteredSubplots}\n`
+          : `\n## 支线进度板\n${filteredSubplots}\n`
+        : "";
+    const emotionalBlock =
+      filteredArcs !== "(文件不存在)"
+        ? isEnglish
+          ? `\n## Emotional Arcs\n${filteredArcs}\n`
+          : `\n## 情感弧线\n${filteredArcs}\n`
+        : "";
+    const matrixBlock =
+      filteredMatrix !== "(文件不存在)"
+        ? isEnglish
+          ? `\n## Character Interaction Matrix\n${filteredMatrix}\n`
+          : `\n## 角色交互矩阵\n${filteredMatrix}\n`
+        : "";
+    const summariesBlock =
+      governedMemoryBlocks?.summariesBlock ??
+      (filteredSummaries !== "(文件不存在)"
         ? isEnglish
           ? `\n## Chapter Summaries (for pacing checks)\n${filteredSummaries}\n`
           : `\n## 章节摘要（用于节奏检查）\n${filteredSummaries}\n`
@@ -612,14 +648,21 @@ overall_score 评分校准：
         ? `\n## Chapter Memo (for memo drift checks)\nGoal: ${options.chapterMemo.goal}\n\n${options.chapterMemo.body}\n`
         : `\n## 章节备忘（用于 memo 偏离检测）\ngoal：${options.chapterMemo.goal}\n\n${options.chapterMemo.body}\n`
       : "";
-    const reducedControlBlock = options?.chapterIntent && options.contextPackage && options.ruleStack
-      ? this.buildReducedControlBlock(options.chapterIntent, options.contextPackage, options.ruleStack, resolvedLanguage)
-      : "";
-    const styleGuideBlock = reducedControlBlock.length === 0
-      ? isEnglish
-        ? `\n## Style Guide\n${styleGuide}`
-        : `\n## 文风指南\n${styleGuide}`
-      : "";
+    const reducedControlBlock =
+      options?.chapterIntent && options.contextPackage && options.ruleStack
+        ? this.buildReducedControlBlock(
+            options.chapterIntent,
+            options.contextPackage,
+            options.ruleStack,
+            resolvedLanguage,
+          )
+        : "";
+    const styleGuideBlock =
+      reducedControlBlock.length === 0
+        ? isEnglish
+          ? `\n## Style Guide\n${styleGuide}`
+          : `\n## 文风指南\n${styleGuide}`
+        : "";
 
     const prevChapterBlock = previousChapter
       ? isEnglish
@@ -719,16 +762,20 @@ ${chapterContent}`;
 
     return {
       passed: false,
-      issues: [{
-        severity: "critical",
-        category: language === "en" ? "System Error" : "系统错误",
-        description: language === "en"
-          ? "Audit output format was invalid and could not be parsed as JSON."
-          : "审稿输出格式异常，无法解析为 JSON",
-        suggestion: language === "en"
-          ? "The model may not support reliable structured output. Try a stronger model or inspect the API response format."
-          : "可能是模型不支持结构化输出。尝试换一个更大的模型，或检查 API 返回格式。",
-      }],
+      issues: [
+        {
+          severity: "critical",
+          category: language === "en" ? "System Error" : "系统错误",
+          description:
+            language === "en"
+              ? "Audit output format was invalid and could not be parsed as JSON."
+              : "审稿输出格式异常，无法解析为 JSON",
+          suggestion:
+            language === "en"
+              ? "The model may not support reliable structured output. Try a stronger model or inspect the API response format."
+              : "可能是模型不支持结构化输出。尝试换一个更大的模型，或检查 API 返回格式。",
+        },
+      ],
       summary: language === "en" ? "Audit output parsing failed" : "审稿输出解析失败",
     };
   }
@@ -740,13 +787,20 @@ ${chapterContent}`;
     language: PromptLanguage,
   ): string {
     const selectedContext = contextPackage.selectedContext
-      .map((entry) => `- ${entry.source}: ${entry.reason}${entry.excerpt ? ` | ${entry.excerpt}` : ""}`)
+      .map(
+        (entry) =>
+          `- ${entry.source}: ${entry.reason}${entry.excerpt ? ` | ${entry.excerpt}` : ""}`,
+      )
       .join("\n");
-    const overrides = ruleStack.activeOverrides.length > 0
-      ? ruleStack.activeOverrides
-        .map((override) => `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`)
-        .join("\n")
-      : "- none";
+    const overrides =
+      ruleStack.activeOverrides.length > 0
+        ? ruleStack.activeOverrides
+            .map(
+              (override) =>
+                `- ${override.from} -> ${override.to}: ${override.reason} (${override.target})`,
+            )
+            .join("\n")
+        : "- none";
 
     return language === "en"
       ? `\n## Chapter Control Inputs (compiled by Planner/Composer)
@@ -794,9 +848,10 @@ ${overrides}\n`;
       const parsed = JSON.parse(json);
       if (typeof parsed.passed !== "boolean" && parsed.passed !== undefined) return null;
       const rawScore = parsed.overall_score ?? parsed.overallScore;
-      const overallScore = typeof rawScore === "number" && Number.isFinite(rawScore)
-        ? Math.round(Math.max(0, Math.min(100, rawScore)))
-        : undefined;
+      const overallScore =
+        typeof rawScore === "number" && Number.isFinite(rawScore)
+          ? Math.round(Math.max(0, Math.min(100, rawScore)))
+          : undefined;
       return {
         passed: Boolean(parsed.passed ?? false),
         issues: Array.isArray(parsed.issues)
@@ -811,6 +866,7 @@ ${overrides}\n`;
         overallScore,
       };
     } catch {
+      // failure expected, safe to ignore
       return null;
     }
   }
@@ -825,6 +881,7 @@ ${overrides}\n`;
       if (!prevFile) return "";
       return await readFile(join(chaptersDir, prevFile), "utf-8");
     } catch {
+      // failure expected, safe to ignore
       return "";
     }
   }
@@ -833,6 +890,7 @@ ${overrides}\n`;
     try {
       return await readFile(path, "utf-8");
     } catch {
+      // failure expected, safe to ignore
       return "(文件不存在)";
     }
   }

@@ -24,6 +24,7 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
       const data = await fetchJson<{ services: ReadonlyArray<ServiceInfo> }>("/services");
       set({ services: data.services ?? [], servicesLoading: false });
     } catch {
+      // failure expected, safe to ignore
       set({ servicesLoading: false });
     }
   },
@@ -46,6 +47,7 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
         return { modelsByService: next, bankModelsLoading: false };
       });
     } catch {
+      // failure expected, safe to ignore
       set({ bankModelsLoading: false });
     }
   },
@@ -54,7 +56,9 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
     if (get().customModelsLoading) return;
     set({ customModelsLoading: true });
     try {
-      const data = await fetchJson<{ groups: ReadonlyArray<GroupPayload> }>("/services/models/custom");
+      const data = await fetchJson<{ groups: ReadonlyArray<GroupPayload> }>(
+        "/services/models/custom",
+      );
       set((s) => {
         const next = { ...s.modelsByService };
         for (const group of data.groups ?? []) {
@@ -63,6 +67,7 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
         return { modelsByService: next, customModelsLoading: false };
       });
     } catch {
+      // failure expected, safe to ignore
       set({ customModelsLoading: false });
     }
   },
@@ -79,6 +84,7 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
         liveModelsLoading: { ...s.liveModelsLoading, [service]: false },
       }));
     } catch {
+      // failure expected, safe to ignore
       set((s) => ({ liveModelsLoading: { ...s.liveModelsLoading, [service]: false } }));
     }
   },
@@ -96,7 +102,8 @@ export const useServiceStore = create<ServiceStore>()((set, get) => ({
   },
 
   getModelPickerStatus: () => {
-    const { services, servicesLoading, bankModelsLoading, customModelsLoading, modelsByService } = get();
+    const { services, servicesLoading, bankModelsLoading, customModelsLoading, modelsByService } =
+      get();
     if (servicesLoading) return "loading";
     const connected = services.filter((s) => s.connected);
     if (connected.length === 0) return "no-models";

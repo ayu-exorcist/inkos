@@ -75,9 +75,7 @@ export function computeHookDiagnostics(params: {
 
     // Stale: past half-life AND not resolved AND actually planted
     // (startChapter > 0 — a seed with startChapter 0 is a pre-planting seed).
-    const stale = !isResolved(hook)
-      && plantedChapter > 0
-      && distance > halfLife;
+    const stale = !isResolved(hook) && plantedChapter > 0 && distance > halfLife;
 
     // Blocked: depends_on references a hook that is unplanted or unresolved.
     // Hotfix 3: also track per-upstream reference chapter so we can compute
@@ -97,8 +95,7 @@ export function computeHookDiagnostics(params: {
       // AND it's not resolved. An upstream that is still a seed (startChapter
       // 0) counts as unplanted.
       const upstreamResolved = isResolved(upstream);
-      const upstreamPlanted = upstream.startChapter > 0
-        && upstream.startChapter <= currentChapter;
+      const upstreamPlanted = upstream.startChapter > 0 && upstream.startChapter <= currentChapter;
       if (!upstreamPlanted || !upstreamResolved) {
         // We only block when the upstream genuinely has not cleared its gate.
         // For a pure "must be planted first" relationship, "planted but not
@@ -106,9 +103,7 @@ export function computeHookDiagnostics(params: {
         missingUpstream.push(upstreamId);
         // Blocked since upstream planting (if planted) or since our own
         // planting (if upstream still unplanted).
-        const referenceChapter = upstreamPlanted
-          ? upstream.startChapter
-          : plantedChapter;
+        const referenceChapter = upstreamPlanted ? upstream.startChapter : plantedChapter;
         upstreamReferenceChapters.push(referenceChapter);
       }
     }
@@ -146,23 +141,28 @@ export function renderHookDiagnosticMarker(
 ): string {
   const tokens: string[] = [];
   if (diagnostics.stale) {
-    tokens.push(language === "en"
-      ? `stale (d=${diagnostics.distance}/half=${diagnostics.halfLife})`
-      : `过期 (距=${diagnostics.distance}/半衰=${diagnostics.halfLife})`);
+    tokens.push(
+      language === "en"
+        ? `stale (d=${diagnostics.distance}/half=${diagnostics.halfLife})`
+        : `过期 (距=${diagnostics.distance}/半衰=${diagnostics.halfLife})`,
+    );
   }
   if (diagnostics.blocked) {
     const missing = diagnostics.missingUpstream.join(", ");
     // Hotfix 3: embed the blocked distance so reviewer can apply its 5/6-chapter
     // threshold without guessing. Token format is load-bearing — it's read by
     // the reviewer prompt verbatim.
-    const distanceToken = diagnostics.blockedDistance > 0
-      ? (language === "en"
-        ? ` (blocked ${diagnostics.blockedDistance} chapters)`
-        : ` (已阻 ${diagnostics.blockedDistance} 章)`)
-      : "";
-    tokens.push(language === "en"
-      ? `blocked on ${missing}${distanceToken}`
-      : `受阻于 ${missing}${distanceToken}`);
+    const distanceToken =
+      diagnostics.blockedDistance > 0
+        ? language === "en"
+          ? ` (blocked ${diagnostics.blockedDistance} chapters)`
+          : ` (已阻 ${diagnostics.blockedDistance} 章)`
+        : "";
+    tokens.push(
+      language === "en"
+        ? `blocked on ${missing}${distanceToken}`
+        : `受阻于 ${missing}${distanceToken}`,
+    );
   }
   return tokens.join("; ");
 }

@@ -1,7 +1,12 @@
 import type { AuditIssue, AuditResult } from "../agents/continuity.js";
 import type { ReviseMode, ReviseOutput } from "../agents/reviser.js";
 import type { WriteChapterOutput } from "../agents/writer.js";
-import type { ChapterIntent, ChapterMemo, ContextPackage, RuleStack } from "../models/input-governance.js";
+import type {
+  ChapterIntent,
+  ChapterMemo,
+  ContextPackage,
+  RuleStack,
+} from "../models/input-governance.js";
 import type { LengthSpec } from "../models/length-governance.js";
 import { countChapterLength, isOutsideHardRange } from "../utils/length-metrics.js";
 
@@ -111,18 +116,21 @@ export async function runChapterReviewCycle(params: {
   let finalWordCount = params.initialOutput.wordCount;
 
   // Convert initial postWriteErrors into AuditIssues as fallback when runPostWriteChecks isn't provided.
-  const initialPostWriteIssues: ReadonlyArray<AuditIssue> = params.initialOutput.postWriteErrors.map((violation) => ({
-    severity: "critical" as const,
-    category: violation.rule,
-    description: violation.description,
-    suggestion: violation.suggestion,
-  }));
+  const initialPostWriteIssues: ReadonlyArray<AuditIssue> =
+    params.initialOutput.postWriteErrors.map((violation) => ({
+      severity: "critical" as const,
+      category: violation.rule,
+      description: violation.description,
+      suggestion: violation.suggestion,
+    }));
 
   // ---------------------------------------------------------------------------
   // Length normalization: dedicated step, only runs for clear hard-range drift.
   // Length is NOT mixed into the reviser's issues — normalize handles it.
   // ---------------------------------------------------------------------------
-  const normalizeIfHardDrift = async (content: string): Promise<{
+  const normalizeIfHardDrift = async (
+    content: string,
+  ): Promise<{
     content: string;
     wordCount: number;
     applied: boolean;
@@ -137,7 +145,9 @@ export async function runChapterReviewCycle(params: {
   };
 
   const normalizedBeforeAudit = await normalizeIfHardDrift(finalContent);
-  finalContent = params.normalizePostWriteSurface?.(normalizedBeforeAudit.content) ?? normalizedBeforeAudit.content;
+  finalContent =
+    params.normalizePostWriteSurface?.(normalizedBeforeAudit.content) ??
+    normalizedBeforeAudit.content;
   finalWordCount = countChapterLength(finalContent, params.lengthSpec.countingMode);
   normalizeApplied = normalizeApplied || normalizedBeforeAudit.applied;
   params.assertChapterContentNotEmpty(finalContent, "draft generation");
@@ -154,9 +164,7 @@ export async function runChapterReviewCycle(params: {
       content,
       params.chapterNumber,
       params.book.genre,
-      params.reducedControlInput
-        ? { ...params.reducedControlInput, ...(options ?? {}) }
-        : options,
+      params.reducedControlInput ? { ...params.reducedControlInput, ...(options ?? {}) } : options,
     );
     totalUsage = params.addUsage(totalUsage, llmAudit.tokenUsage);
     const aiTellsResult = params.analyzeAITells(content);
@@ -183,7 +191,7 @@ export async function runChapterReviewCycle(params: {
 
     const hasPostWriteCritical = postWriteIssues.some((i) => i.severity === "critical");
     const auditResult: AuditResult = {
-      passed: (hasBlockedWords || hasPostWriteCritical) ? false : llmAudit.passed,
+      passed: hasBlockedWords || hasPostWriteCritical ? false : llmAudit.passed,
       issues: allIssues,
       summary: llmAudit.summary,
       overallScore: llmAudit.overallScore,
@@ -194,23 +202,34 @@ export async function runChapterReviewCycle(params: {
     return { auditResult, score, lengthInRange };
   };
 
-  const isPassed = (assessment: { auditResult: AuditResult; score: number; lengthInRange: boolean }): boolean =>
-    assessment.auditResult.passed && assessment.score >= PASS_SCORE_THRESHOLD && assessment.lengthInRange;
+  const isPassed = (assessment: {
+    auditResult: AuditResult;
+    score: number;
+    lengthInRange: boolean;
+  }): boolean =>
+    assessment.auditResult.passed &&
+    assessment.score >= PASS_SCORE_THRESHOLD &&
+    assessment.lengthInRange;
 
   // ---------------------------------------------------------------------------
   // Scoring loop: assess → revise → assess. Default is one automatic repair pass;
   // projects can raise it when they accept slower but more persistent repair.
   // ---------------------------------------------------------------------------
-  const maxReviewIterations = Math.max(0, Math.floor(params.maxReviewIterations ?? DEFAULT_MAX_REVIEW_ITERATIONS));
+  const maxReviewIterations = Math.max(
+    0,
+    Math.floor(params.maxReviewIterations ?? DEFAULT_MAX_REVIEW_ITERATIONS),
+  );
   params.logStage({ zh: "审计草稿", en: "auditing draft" });
   const initial = await assess(finalContent);
 
-  const snapshots: ReviewSnapshot[] = [{
-    content: finalContent,
-    wordCount: finalWordCount,
-    auditResult: initial.auditResult,
-    score: initial.score,
-  }];
+  const snapshots: ReviewSnapshot[] = [
+    {
+      content: finalContent,
+      wordCount: finalWordCount,
+      auditResult: initial.auditResult,
+      score: initial.score,
+    },
+  ];
 
   let currentAudit = initial;
   let postReviseCount = 0;
@@ -234,7 +253,10 @@ export async function runChapterReviewCycle(params: {
       );
       totalUsage = params.addUsage(totalUsage, reviseOutput.tokenUsage);
 
-      if (reviseOutput.revisedContent.length === 0 || reviseOutput.revisedContent === finalContent) {
+      if (
+        reviseOutput.revisedContent.length === 0 ||
+        reviseOutput.revisedContent === finalContent
+      ) {
         params.logWarn({
           zh: `修复轮次 ${iteration + 1} 未产出新内容，退出循环`,
           en: `repair iteration ${iteration + 1} produced no new content, exiting loop`,
@@ -242,8 +264,13 @@ export async function runChapterReviewCycle(params: {
         break;
       }
 
-      params.assertChapterContentNotEmpty(reviseOutput.revisedContent, `repair iteration ${iteration + 1}`);
-      const revisedContent = params.normalizePostWriteSurface?.(reviseOutput.revisedContent) ?? reviseOutput.revisedContent;
+      params.assertChapterContentNotEmpty(
+        reviseOutput.revisedContent,
+        `repair iteration ${iteration + 1}`,
+      );
+      const revisedContent =
+        params.normalizePostWriteSurface?.(reviseOutput.revisedContent) ??
+        reviseOutput.revisedContent;
       const revisedWordCount = countChapterLength(revisedContent, params.lengthSpec.countingMode);
 
       // Re-assess revised content. If REVISED_CONTENT drifted on length,
@@ -297,7 +324,10 @@ export async function runChapterReviewCycle(params: {
 
   // If best snapshot differs from current content (repair made things worse
   // but an earlier version was better), roll back to the best version.
-  if (bestSnapshot.content !== finalContent && bestSnapshot.score >= currentAudit.score + NET_IMPROVEMENT_EPSILON) {
+  if (
+    bestSnapshot.content !== finalContent &&
+    bestSnapshot.score >= currentAudit.score + NET_IMPROVEMENT_EPSILON
+  ) {
     params.logWarn({
       zh: `回退到最高分版本（${bestSnapshot.score} 分 vs 当前 ${currentAudit.score} 分）`,
       en: `rolling back to highest-scoring version (${bestSnapshot.score} vs current ${currentAudit.score})`,

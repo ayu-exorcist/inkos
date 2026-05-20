@@ -16,7 +16,8 @@ export const FANFIC_DIMENSIONS: ReadonlyArray<{
   {
     id: 34,
     name: "角色还原度",
-    baseNote: "检查角色的语癖、说话风格、行为模式是否与 fanfic_canon.md 角色档案一致。偏离必须有情境驱动。",
+    baseNote:
+      "检查角色的语癖、说话风格、行为模式是否与 fanfic_canon.md 角色档案一致。偏离必须有情境驱动。",
   },
   {
     id: 35,
@@ -26,7 +27,8 @@ export const FANFIC_DIMENSIONS: ReadonlyArray<{
   {
     id: 36,
     name: "关系动态",
-    baseNote: "检查角色之间的关系互动是否合理，是否与 fanfic_canon.md 中标注的关键关系一致或有合理发展。",
+    baseNote:
+      "检查角色之间的关系互动是否合理，是否与 fanfic_canon.md 中标注的关键关系一致或有合理发展。",
   },
   {
     id: 37,
@@ -38,9 +40,9 @@ export const FANFIC_DIMENSIONS: ReadonlyArray<{
 // Mode → dimension severity mapping
 const SEVERITY_MAP: Record<FanficMode, Record<number, "critical" | "warning" | "info">> = {
   canon: { 34: "critical", 35: "critical", 36: "warning", 37: "critical" },
-  au:    { 34: "critical", 35: "info",     36: "warning", 37: "info" },
-  ooc:   { 34: "info",     35: "warning",  36: "warning", 37: "info" },
-  cp:    { 34: "warning",  35: "warning",  36: "critical", 37: "info" },
+  au: { 34: "critical", 35: "info", 36: "warning", 37: "info" },
+  ooc: { 34: "info", 35: "warning", 36: "warning", 37: "info" },
+  cp: { 34: "warning", 35: "warning", 36: "critical", 37: "info" },
 };
 
 // Spinoff dims (28-31) are deactivated in fanfic mode — they're for same-author spinoffs
@@ -61,21 +63,30 @@ export function getFanficDimensionConfig(
     severityOverrides.set(dim.id, severityMap[dim.id]!);
 
     const severity = severityMap[dim.id]!;
-    const severityLabel = severity === "critical" ? "（严格检查）"
-      : severity === "info" ? "（仅记录，不判定失败）"
-      : "（警告级别）";
+    const severityLabel =
+      severity === "critical"
+        ? "（严格检查）"
+        : severity === "info"
+          ? "（仅记录，不判定失败）"
+          : "（警告级别）";
     notes.set(dim.id, `${dim.baseNote} ${severityLabel}`);
   }
 
   // OOC mode relaxes the built-in OOC check
   if (mode === "ooc") {
     severityOverrides.set(OOC_DIM, "info");
-    notes.set(OOC_DIM, "OOC模式下角色可偏离性格底色，此维度仅记录不判定失败。参照 fanfic_canon.md 角色档案评估偏离程度。");
+    notes.set(
+      OOC_DIM,
+      "OOC模式下角色可偏离性格底色，此维度仅记录不判定失败。参照 fanfic_canon.md 角色档案评估偏离程度。",
+    );
   }
 
   // Canon mode strengthens the built-in OOC check
   if (mode === "canon") {
-    notes.set(OOC_DIM, "原作向同人：角色必须严格遵守性格底色。参照 fanfic_canon.md 角色档案中的性格底色和行为模式。");
+    notes.set(
+      OOC_DIM,
+      "原作向同人：角色必须严格遵守性格底色。参照 fanfic_canon.md 角色档案中的性格底色和行为模式。",
+    );
   }
 
   return {

@@ -1,4 +1,4 @@
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { readTranscriptEvents } from "./session-transcript.js";
 import {
   BookSessionSchema,
@@ -112,13 +112,15 @@ export function cleanRestoredAgentMessages(messages: AgentMessage[]): AgentMessa
 
   const cleaned = messages.filter((message) => {
     if (!isObject(message)) return false;
-    if (message.role === "toolResult") {
+    const rawRole = (message as { role?: unknown }).role;
+    const role = typeof rawRole === "string" ? rawRole : "";
+    if (role === "toolResult") {
       return typeof message.toolCallId === "string" && availableToolCalls.has(message.toolCallId);
     }
-    if (message.role === "assistant") {
+    if (role === "assistant") {
       return hasTextContent(message) || hasToolCallContent(message);
     }
-    return message.role === "user" || message.role === "system";
+    return role === "user" || role === "system";
   });
 
   if (cleaned.length === 0) return cleaned;
@@ -141,11 +143,15 @@ function requiresAssistantAfterToolResult(target: TargetModelIdentity): boolean 
   return !!(
     target.compat &&
     typeof target.compat === "object" &&
-    (target.compat as { requiresAssistantAfterToolResult?: unknown }).requiresAssistantAfterToolResult === true
+    (target.compat as { requiresAssistantAfterToolResult?: unknown })
+      .requiresAssistantAfterToolResult === true
   );
 }
 
-function isSameAssistantModel(message: Record<string, unknown>, target: TargetModelIdentity): boolean {
+function isSameAssistantModel(
+  message: Record<string, unknown>,
+  target: TargetModelIdentity,
+): boolean {
   return (
     typeof message.api === "string" &&
     typeof message.provider === "string" &&
@@ -168,24 +174,26 @@ export function adaptRestoredAgentMessagesForModel(
       const raw: Record<string, unknown> = isObject(message) ? message : {};
       const toolName = typeof raw.toolName === "string" ? raw.toolName : "tool";
       const toolCallId = typeof raw.toolCallId === "string" ? raw.toolCallId : "unknown";
-      const text = contentBlocks(raw)
-        .map((block) => {
-          if (isObject(block) && block.type === "text" && typeof block.text === "string") {
-            return block.text;
-          }
-          return "";
-        })
-        .filter(Boolean)
-        .join("\n")
-        .trim() || "(empty tool result)";
+      const text =
+        contentBlocks(raw)
+          .map((block) => {
+            if (isObject(block) && block.type === "text" && typeof block.text === "string") {
+              return block.text;
+            }
+            return "";
+          })
+          .filter(Boolean)
+          .join("\n")
+          .trim() || "(empty tool result)";
       return [`- ${toolName} (${toolCallId}):`, text];
     });
-    const timestamp = toolResults.reduce((max, message) => {
-      if (isObject(message) && typeof message.timestamp === "number") {
-        return Math.max(max, message.timestamp);
-      }
-      return max;
-    }, 0) || Date.now();
+    const timestamp =
+      toolResults.reduce((max, message) => {
+        if (isObject(message) && typeof message.timestamp === "number") {
+          return Math.max(max, message.timestamp);
+        }
+        return max;
+      }, 0) || Date.now();
     adapted.push({
       role: "user",
       content: [
@@ -203,7 +211,8 @@ export function adaptRestoredAgentMessagesForModel(
 
     if (message.role === "assistant") {
       const content = contentBlocks(message);
-      const isBridge = content.length === 1 &&
+      const isBridge =
+        content.length === 1 &&
         isObject(content[0]) &&
         content[0].type === "text" &&
         typeof content[0].text === "string" &&
@@ -236,9 +245,10 @@ export function adaptRestoredAgentMessagesForModel(
       );
 
       if (foreignToolCallIds.size === 0) {
-        const rewritten = contentWithoutThinking.length === content.length
-          ? message
-          : ({ ...message, content: contentWithoutThinking } as AgentMessage);
+        const rewritten =
+          contentWithoutThinking.length === content.length
+            ? message
+            : ({ ...message, content: contentWithoutThinking } as AgentMessage);
         if (
           contentWithoutThinking.some(
             (block) =>
@@ -304,20 +314,18 @@ export function adaptRestoredAgentMessagesForModel(
     return hasTextContent(message) || hasToolCallContent(message);
   });
 
-  return requiresAssistantAfterToolResult(target)
-    ? addToolResultBridges(filtered)
-    : filtered;
+  return requiresAssistantAfterToolResult(target) ? addToolResultBridges(filtered) : filtered;
 }
 
 export function committedMessageEvents(events: TranscriptEvent[]): MessageEvent[] {
   const committed = new Set(
-    events
-      .filter((event) => event.type === "request_committed")
-      .map((event) => event.requestId),
+    events.filter((event) => event.type === "request_committed").map((event) => event.requestId),
   );
 
   return events
-    .filter((event): event is MessageEvent => event.type === "message" && committed.has(event.requestId))
+    .filter(
+      (event): event is MessageEvent => event.type === "message" && committed.has(event.requestId),
+    )
     .sort((a, b) => a.seq - b.seq);
 }
 
@@ -346,16 +354,16 @@ function textFromContent(content: unknown): string {
 function thinkingFromContent(content: unknown): string | undefined {
   if (!Array.isArray(content)) return undefined;
   const value = content
-    .filter((block): block is Record<string, unknown> => isObject(block) && block.type === "thinking")
-    .map((block) => typeof block.thinking === "string" ? block.thinking : "")
+    .filter(
+      (block): block is Record<string, unknown> => isObject(block) && block.type === "thinking",
+    )
+    .map((block) => (typeof block.thinking === "string" ? block.thinking : ""))
     .join("");
   return value || undefined;
 }
 
 function joinThinking(parts: ReadonlyArray<string | undefined>): string | undefined {
-  const values = parts
-    .map((part) => part?.trim() ?? "")
-    .filter((part) => part.length > 0);
+  const values = parts.map((part) => part?.trim() ?? "").filter((part) => part.length > 0);
   return values.length > 0 ? values.join("\n\n---\n\n") : undefined;
 }
 
@@ -392,7 +400,7 @@ function messageEventToInteractionMessage(
     ]);
     const toolExecutions = restoredToolExecutions?.length
       ? restoredToolExecutions
-      : event.legacyDisplay?.toolExecutions as ToolExecution[] | undefined;
+      : (event.legacyDisplay?.toolExecutions as ToolExecution[] | undefined);
     if (!content) return null;
     return {
       role: "assistant",
@@ -455,6 +463,7 @@ function messageEventsToInteractionMessages(events: MessageEvent[]): Interaction
       const parsed: unknown = JSON.parse(value);
       return isObject(parsed) ? parsed : undefined;
     } catch {
+      // failure expected, safe to ignore
       return undefined;
     }
   };
@@ -482,21 +491,19 @@ function messageEventsToInteractionMessages(events: MessageEvent[]): Interaction
   const toolExecutionFromResult = (event: MessageEvent): ToolExecution | null => {
     const raw = event.message as Record<string, unknown>;
     if (!isObject(raw)) return null;
-    const toolCallId = typeof raw.toolCallId === "string"
-      ? raw.toolCallId
-      : typeof event.toolCallId === "string"
-        ? event.toolCallId
-        : "";
+    const toolCallId =
+      typeof raw.toolCallId === "string"
+        ? raw.toolCallId
+        : typeof event.toolCallId === "string"
+          ? event.toolCallId
+          : "";
     if (!toolCallId) return null;
 
     const call = toolCalls.get(toolCallKey(event.requestId, toolCallId));
-    const tool = typeof raw.toolName === "string" && raw.toolName
-      ? raw.toolName
-      : call?.tool ?? "tool";
+    const tool =
+      typeof raw.toolName === "string" && raw.toolName ? raw.toolName : (call?.tool ?? "tool");
     const args = call?.args;
-    const agent = tool === "sub_agent" && typeof args?.agent === "string"
-      ? args.agent
-      : undefined;
+    const agent = tool === "sub_agent" && typeof args?.agent === "string" ? args.agent : undefined;
     const text = textFromContent(raw.content).trim();
     const isError = raw.isError === true;
     const details = raw.details;
@@ -567,18 +574,18 @@ export async function deriveBookSessionFromTranscript(
   const created = events.find((event) => event.type === "session_created");
   let bookId = created?.type === "session_created" ? created.bookId : null;
   let title = created?.type === "session_created" ? created.title : null;
-  const createdAt = created?.type === "session_created"
-    ? created.createdAt
-    : events[0]?.timestamp ?? Date.now();
+  const createdAt =
+    created?.type === "session_created" ? created.createdAt : (events[0]?.timestamp ?? Date.now());
   const latestActivityTimestamp = events.reduce((max, event) => {
     if (event.type === "session_created" || event.type === "session_metadata_updated") {
       return Math.max(max, event.updatedAt);
     }
     return Math.max(max, event.timestamp);
   }, 0);
-  let updatedAt = created?.type === "session_created"
-    ? created.updatedAt
-    : events[events.length - 1]?.timestamp ?? createdAt;
+  let updatedAt =
+    created?.type === "session_created"
+      ? created.updatedAt
+      : (events[events.length - 1]?.timestamp ?? createdAt);
   updatedAt = Math.max(updatedAt, latestActivityTimestamp);
 
   for (const event of events) {

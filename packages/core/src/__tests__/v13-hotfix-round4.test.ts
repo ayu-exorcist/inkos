@@ -11,18 +11,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  isNewLayoutBook,
-} from "../utils/outline-paths.js";
+import { isNewLayoutBook } from "../utils/outline-paths.js";
 import {
   deriveAdvancedCountsFromSummaries,
   escapeRegex,
   rerunPromotionPass,
 } from "../utils/hook-promotion.js";
-import {
-  parsePendingHooksMarkdown,
-  renderHookSnapshot,
-} from "../utils/story-markdown.js";
+import { parsePendingHooksMarkdown, renderHookSnapshot } from "../utils/story-markdown.js";
 import type { StoredHook } from "../state/memory-db.js";
 
 // ---------------------------------------------------------------------------
@@ -205,12 +200,16 @@ describe("Issue 2 — per-chapter promotion persists to pending_hooks.md", () =>
     await writeFile(ledgerPath, renderHookSnapshot(hooks, "zh"), "utf-8");
 
     // Simulate chapter_summaries with H05 mentioned in 2 chapters
-    await writeFile(join(storyDir, "chapter_summaries.md"), [
-      "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-      "| 4 | 旧信 | 林辞 | 收到家书 | 回忆 | H05 推进 | 压抑 | 铺垫 |",
-      "| 7 | 码头 | 林辞 | 查账 | 汇合 | H05 推进 | 紧绷 | 推进 |",
-    ].join("\n"), "utf-8");
+    await writeFile(
+      join(storyDir, "chapter_summaries.md"),
+      [
+        "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| 4 | 旧信 | 林辞 | 收到家书 | 回忆 | H05 推进 | 压抑 | 铺垫 |",
+        "| 7 | 码头 | 林辞 | 查账 | 汇合 | H05 推进 | 紧绷 | 推进 |",
+      ].join("\n"),
+      "utf-8",
+    );
 
     // Run the promotion pass (same logic as runner.ts step 3c)
     const ledgerRaw = await readFile(ledgerPath, "utf-8");

@@ -18,8 +18,19 @@ export const WENXIN: InkosEndpoint = {
   defaultTemperature: 0.95,
   writingTemperature: 0.95,
   models: [
-    { id: "ernie-5.0-thinking-latest", maxOutput: 65536, contextWindowTokens: 131072, enabled: true, releasedAt: "2025-11-12" },
-    { id: "ernie-5.0-thinking-preview", maxOutput: 65536, contextWindowTokens: 131072, releasedAt: "2025-11-12" },
+    {
+      id: "ernie-5.0-thinking-latest",
+      maxOutput: 65536,
+      contextWindowTokens: 131072,
+      enabled: true,
+      releasedAt: "2025-11-12",
+    },
+    {
+      id: "ernie-5.0-thinking-preview",
+      maxOutput: 65536,
+      contextWindowTokens: 131072,
+      releasedAt: "2025-11-12",
+    },
     { id: "ernie-4.5-turbo-128k", maxOutput: 12288, contextWindowTokens: 131072, enabled: true },
     { id: "ernie-4.5-turbo-128k-preview", maxOutput: 12288, contextWindowTokens: 131072 },
     { id: "ernie-4.5-turbo-32k", maxOutput: 12288, contextWindowTokens: 32768 },

@@ -19,6 +19,7 @@ if (!existsSync(join(distDir, "index.html"))) {
   try {
     execSync("npx vite build", { cwd: studioRoot, stdio: "inherit" });
   } catch {
+    // failure expected, safe to ignore
     console.error("Failed to build frontend. Run 'cd packages/studio && pnpm build' manually.");
     process.exit(1);
   }

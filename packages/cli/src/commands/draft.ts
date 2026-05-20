@@ -1,6 +1,14 @@
 import { Command } from "commander";
 import { PipelineRunner } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveContext, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveContext,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 
 export const draftCommand = new Command("draft")
   .description("Write a draft chapter (no audit/revise)")

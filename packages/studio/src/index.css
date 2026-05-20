@@ -2,7 +2,7 @@
   InkOS Studio — Atmospheric Literary Workbench
   Fonts: Instrument Serif (Headings/Literary), DM Sans (UI), JetBrains Mono (Data)
 */
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @import "tailwindcss";
 
@@ -37,9 +37,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -55,7 +55,11 @@
 
   /* Background: Warm, aged paper with subtle radial light */
   --background: oklch(0.985 0.005 80);
-  --background-radial: radial-gradient(circle at 50% 0%, oklch(0.995 0.002 85) 0%, oklch(0.985 0.005 80) 100%);
+  --background-radial: radial-gradient(
+    circle at 50% 0%,
+    oklch(0.995 0.002 85) 0%,
+    oklch(0.985 0.005 80) 100%
+  );
   --foreground: oklch(0.13 0.02 60);
 
   /* Cards: Crisp sheets on paper */
@@ -93,7 +97,11 @@
 .dark {
   /* Background: Deep obsidian with soft top glow */
   --background: oklch(0.12 0.01 250);
-  --background-radial: radial-gradient(circle at 50% 0%, oklch(0.16 0.015 250) 0%, oklch(0.12 0.01 250) 100%);
+  --background-radial: radial-gradient(
+    circle at 50% 0%,
+    oklch(0.16 0.015 250) 0%,
+    oklch(0.12 0.01 250) 100%
+  );
   --foreground: oklch(0.97 0.005 250);
 
   /* Cards: Floating graphite */
@@ -122,7 +130,7 @@
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.30 0.02 250);
+  --border: oklch(0.3 0.02 250);
   --input: oklch(0.25 0.02 250);
   --ring: oklch(0.78 0.14 85);
 }
@@ -137,14 +145,35 @@ body {
   background: var(--background-radial);
   background-attachment: fixed;
   color: var(--foreground);
-  transition: background 0.5s ease, color 0.5s ease;
+  transition:
+    background 0.5s ease,
+    color 0.5s ease;
 }
 
 /* ── Cursor interaction rules ── */
-button, [role="button"], a, select, label[for], summary { cursor: pointer; }
-button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
-input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea { cursor: text; }
-input[type="checkbox"], input[type="radio"] { cursor: pointer; }
+button,
+[role="button"],
+a,
+select,
+label[for],
+summary {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+textarea {
+  cursor: text;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
 
 /* Button hover micro-feedback */
 button:not(:disabled):active {
@@ -154,7 +183,7 @@ button:not(:disabled):active {
 
 /* Subtle grain texture for physical feel */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -165,15 +194,25 @@ body::before {
 }
 
 /* Serif headings with literary character */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-serif);
   letter-spacing: -0.02em;
   font-weight: 500;
 }
 
-h1 { font-size: 2.25rem; font-style: italic; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.25rem; }
+h1 {
+  font-size: 2.25rem;
+  font-style: italic;
+}
+h2 {
+  font-size: 1.75rem;
+}
+h3 {
+  font-size: 1.25rem;
+}
 
 /* Focus indicator */
 :focus-visible {
@@ -205,15 +244,36 @@ h3 { font-size: 1.25rem; }
   animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.stagger-1 { animation-delay: 0.05s; opacity: 0; }
-.stagger-2 { animation-delay: 0.1s; opacity: 0; }
-.stagger-3 { animation-delay: 0.15s; opacity: 0; }
-.stagger-4 { animation-delay: 0.2s; opacity: 0; }
-.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+.stagger-1 {
+  animation-delay: 0.05s;
+  opacity: 0;
+}
+.stagger-2 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+.stagger-3 {
+  animation-delay: 0.15s;
+  opacity: 0;
+}
+.stagger-4 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+.stagger-5 {
+  animation-delay: 0.25s;
+  opacity: 0;
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Premium Layout Utilities ── */
@@ -228,8 +288,9 @@ h3 { font-size: 1.25rem; }
   background-color: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
-  transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .paper-sheet:hover {
@@ -241,75 +302,150 @@ h3 { font-size: 1.25rem; }
 
 /* Header sparkle glow pulse */
 @keyframes iconGlow {
-  0%, 100% { filter: drop-shadow(0 0 0px transparent); }
-  50% { filter: drop-shadow(0 0 6px oklch(0.78 0.14 85 / 0.4)); }
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px oklch(0.78 0.14 85 / 0.4));
+  }
 }
-.chat-icon-glow { animation: iconGlow 2s ease-in-out infinite; }
+.chat-icon-glow {
+  animation: iconGlow 2s ease-in-out infinite;
+}
 
 /* Writing pen gentle bobbing */
 @keyframes iconWrite {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-1px) rotate(-3deg); }
-  75% { transform: translateY(1px) rotate(3deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-1px) rotate(-3deg);
+  }
+  75% {
+    transform: translateY(1px) rotate(3deg);
+  }
 }
-.chat-icon-write { animation: iconWrite 1.2s ease-in-out infinite; }
+.chat-icon-write {
+  animation: iconWrite 1.2s ease-in-out infinite;
+}
 
 /* Slow spin for revision/wrench */
 @keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
-.chat-icon-spin-slow { animation: spinSlow 3s linear infinite; }
+.chat-icon-spin-slow {
+  animation: spinSlow 3s linear infinite;
+}
 
 /* Pop-in for success checkmark */
 @keyframes iconPop {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-.chat-icon-pop { animation: iconPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.chat-icon-pop {
+  animation: iconPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 /* Shake for trash icon hover */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px) rotate(-5deg); }
-  75% { transform: translateX(2px) rotate(5deg); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px) rotate(-5deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(5deg);
+  }
 }
 
 /* Message slide-in from right (user) */
 @keyframes msgSlideRight {
-  from { opacity: 0; transform: translateX(12px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
-.chat-msg-user { animation: msgSlideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.chat-msg-user {
+  animation: msgSlideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 /* Message slide-in from left (assistant) */
 @keyframes msgSlideLeft {
-  from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
-.chat-msg-assistant { animation: msgSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.chat-msg-assistant {
+  animation: msgSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 /* Thinking breathing glow */
 @keyframes thinkGlow {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.78 0.14 85 / 0); }
-  50% { box-shadow: 0 0 12px 2px oklch(0.78 0.14 85 / 0.15); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.78 0.14 85 / 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px oklch(0.78 0.14 85 / 0.15);
+  }
 }
-.chat-thinking-glow { animation: thinkGlow 2s ease-in-out infinite; }
+.chat-thinking-glow {
+  animation: thinkGlow 2s ease-in-out infinite;
+}
 
 /* Typing wave for dots */
 @keyframes typingWave {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
 }
-.chat-typing-dot { animation: typingWave 1.4s ease-in-out infinite; }
-.chat-typing-dot:nth-child(2) { animation-delay: 0.15s; }
-.chat-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+.chat-typing-dot {
+  animation: typingWave 1.4s ease-in-out infinite;
+}
+.chat-typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
 
 /* Panel slide transition */
 .chat-panel-enter {
-  transition: width 300ms cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 200ms ease-out;
+  transition:
+    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease-out;
 }
 
 /* ── Streamdown overrides ── */

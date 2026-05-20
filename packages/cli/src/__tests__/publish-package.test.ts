@@ -14,8 +14,8 @@ const STUDIO_PACK_TEST_TIMEOUT_MS = 120_000;
 const sourceCliPackageJsonPromise = readFile(resolve(cliDir, "package.json"), "utf-8").then((raw) =>
   JSON.parse(raw),
 );
-const sourceStudioPackageJsonPromise = readFile(resolve(studioDir, "package.json"), "utf-8").then((raw) =>
-  JSON.parse(raw),
+const sourceStudioPackageJsonPromise = readFile(resolve(studioDir, "package.json"), "utf-8").then(
+  (raw) => JSON.parse(raw),
 );
 
 function tarForceLocalArgs(): string[] {
@@ -94,7 +94,12 @@ describe.sequential("publish packaging", () => {
 
       execFileSync(
         "node",
-        [resolve(workspaceRoot, "scripts/set-package-versions.mjs"), "0.4.8-canary.7", "--root", tempRoot],
+        [
+          resolve(workspaceRoot, "scripts/set-package-versions.mjs"),
+          "0.4.8-canary.7",
+          "--root",
+          tempRoot,
+        ],
         {
           cwd: workspaceRoot,
           env: process.env,
@@ -103,7 +108,9 @@ describe.sequential("publish packaging", () => {
       );
 
       const rootPackageJson = JSON.parse(await readFile(join(tempRoot, "package.json"), "utf-8"));
-      const corePackageJson = JSON.parse(await readFile(join(tempCoreDir, "package.json"), "utf-8"));
+      const corePackageJson = JSON.parse(
+        await readFile(join(tempCoreDir, "package.json"), "utf-8"),
+      );
       const cliPackageJson = JSON.parse(await readFile(join(tempCliDir, "package.json"), "utf-8"));
 
       expect(rootPackageJson.version).toBe("0.4.8-canary.7");
@@ -173,14 +180,19 @@ describe.sequential("publish packaging", () => {
       expect(() =>
         execFileSync(
           "node",
-          [resolve(workspaceRoot, "scripts/verify-no-workspace-protocol.mjs"), "packages/core", "packages/cli"],
+          [
+            resolve(workspaceRoot, "scripts/verify-no-workspace-protocol.mjs"),
+            "packages/core",
+            "packages/cli",
+          ],
           {
             cwd: tempRoot,
             env: process.env,
             encoding: "utf-8",
             stdio: "pipe",
           },
-        )).not.toThrow();
+        ),
+      ).not.toThrow();
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }
@@ -229,44 +241,55 @@ describe.sequential("publish packaging", () => {
             encoding: "utf-8",
             stdio: "pipe",
           },
-        )).toThrow(/normalizes to 0\.5\.0, expected 0\.5\.1/);
+        ),
+      ).toThrow(/normalizes to 0\.5\.0, expected 0\.5\.1/);
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }
   });
 
-  it("replaces workspace dependencies before npm pack", { timeout: CLI_PACK_TEST_TIMEOUT_MS }, async () => {
-    const packDir = await mkdtemp(join(tmpdir(), "inkos-cli-pack-"));
+  it(
+    "replaces workspace dependencies before npm pack",
+    { timeout: CLI_PACK_TEST_TIMEOUT_MS },
+    async () => {
+      const packDir = await mkdtemp(join(tmpdir(), "inkos-cli-pack-"));
 
-    try {
-      const packedPackageJson = JSON.parse(await extractPackedPackageJson(cliDir, packDir));
-      const corePackageJson = JSON.parse(
-        await readFile(resolve(workspaceRoot, "packages/core/package.json"), "utf-8"),
-      );
-      const studioPackageJson = await sourceStudioPackageJsonPromise;
+      try {
+        const packedPackageJson = JSON.parse(await extractPackedPackageJson(cliDir, packDir));
+        const corePackageJson = JSON.parse(
+          await readFile(resolve(workspaceRoot, "packages/core/package.json"), "utf-8"),
+        );
+        const studioPackageJson = await sourceStudioPackageJsonPromise;
 
-      expect(packedPackageJson.dependencies["@actalk/inkos-core"]).toBe(corePackageJson.version);
-      expect(packedPackageJson.dependencies["@actalk/inkos-studio"]).toBe(studioPackageJson.version);
-    } finally {
-      await rm(packDir, { recursive: true, force: true });
-    }
-  });
+        expect(packedPackageJson.dependencies["@actalk/inkos-core"]).toBe(corePackageJson.version);
+        expect(packedPackageJson.dependencies["@actalk/inkos-studio"]).toBe(
+          studioPackageJson.version,
+        );
+      } finally {
+        await rm(packDir, { recursive: true, force: true });
+      }
+    },
+  );
 
-  it("packs the studio runtime entry alongside the built frontend", { timeout: STUDIO_PACK_TEST_TIMEOUT_MS }, async () => {
-    const packDir = await mkdtemp(join(tmpdir(), "inkos-studio-pack-"));
+  it(
+    "packs the studio runtime entry alongside the built frontend",
+    { timeout: STUDIO_PACK_TEST_TIMEOUT_MS },
+    async () => {
+      const packDir = await mkdtemp(join(tmpdir(), "inkos-studio-pack-"));
 
-    try {
-      const tarballPath = await packPackage(studioDir, packDir);
-      const tarArgs = [...tarForceLocalArgs(), "-tf"];
-      const archiveListing = execFileSync("tar", [...tarArgs, tarballPath], {
-        cwd: workspaceRoot,
-        encoding: "utf-8",
-      });
+      try {
+        const tarballPath = await packPackage(studioDir, packDir);
+        const tarArgs = [...tarForceLocalArgs(), "-tf"];
+        const archiveListing = execFileSync("tar", [...tarArgs, tarballPath], {
+          cwd: workspaceRoot,
+          encoding: "utf-8",
+        });
 
-      expect(archiveListing).toContain("package/dist/index.html");
-      expect(archiveListing).toContain("package/dist/api/index.js");
-    } finally {
-      await rm(packDir, { recursive: true, force: true });
-    }
-  });
+        expect(archiveListing).toContain("package/dist/index.html");
+        expect(archiveListing).toContain("package/dist/api/index.js");
+      } finally {
+        await rm(packDir, { recursive: true, force: true });
+      }
+    },
+  );
 });

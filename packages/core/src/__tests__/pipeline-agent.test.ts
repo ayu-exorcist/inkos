@@ -60,12 +60,17 @@ describe("agent pipeline tools", () => {
       let goal = input.externalContext ?? "test goal";
       try {
         const { readFile: readFs } = await import("node:fs/promises");
-        const focusContent = await readFs(join(input.bookDir, "story", "current_focus.md"), "utf-8");
+        const focusContent = await readFs(
+          join(input.bookDir, "story", "current_focus.md"),
+          "utf-8",
+        );
         const overrideMatch = focusContent.match(/## Local Override\s*\n+([^\n#]+)/);
         if (overrideMatch?.[1]?.trim()) {
           goal = overrideMatch[1].trim();
         }
-      } catch { /* ignore missing file */ }
+      } catch {
+        /* ignore missing file */
+      }
       const memo = {
         chapter: chapterNumber,
         goal,
@@ -73,16 +78,14 @@ describe("agent pipeline tools", () => {
         body: "",
         threadRefs: [] as string[],
       };
-      const intentMarkdown = [
-        "# Chapter Intent",
-        "",
-        "## Goal",
-        goal,
-      ].join("\n");
+      const intentMarkdown = ["# Chapter Intent", "", "## Goal", goal].join("\n");
       const { mkdir: mkdirFs, writeFile: writeFileFs } = await import("node:fs/promises");
       const runtimeDir = join(input.bookDir, "story", "runtime");
       await mkdirFs(runtimeDir, { recursive: true });
-      const runtimePath = join(runtimeDir, `chapter-${String(chapterNumber).padStart(4, "0")}.intent.md`);
+      const runtimePath = join(
+        runtimeDir,
+        `chapter-${String(chapterNumber).padStart(4, "0")}.intent.md`,
+      );
       await writeFileFs(runtimePath, intentMarkdown, "utf-8");
       return {
         intent: {
@@ -100,13 +103,41 @@ describe("agent pipeline tools", () => {
     });
 
     await Promise.all([
-      writeFile(join(storyDir, "author_intent.md"), "# Author Intent\n\nKeep the story centered on the mentor conflict.\n", "utf-8"),
-      writeFile(join(storyDir, "current_focus.md"), "# Current Focus\n\nBring focus back to the mentor conflict.\n", "utf-8"),
-      writeFile(join(storyDir, "story_bible.md"), "# Story Bible\n\n- The jade seal cannot be destroyed.\n", "utf-8"),
-      writeFile(join(storyDir, "volume_outline.md"), "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n", "utf-8"),
-      writeFile(join(storyDir, "book_rules.md"), "---\nprohibitions:\n  - Do not reveal the mastermind\n---\n\n# Book Rules\n", "utf-8"),
-      writeFile(join(storyDir, "current_state.md"), "# Current State\n\n- Lin Yue still hides the broken oath token.\n", "utf-8"),
-      writeFile(join(storyDir, "pending_hooks.md"), "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n", "utf-8"),
+      writeFile(
+        join(storyDir, "author_intent.md"),
+        "# Author Intent\n\nKeep the story centered on the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_focus.md"),
+        "# Current Focus\n\nBring focus back to the mentor conflict.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "story_bible.md"),
+        "# Story Bible\n\n- The jade seal cannot be destroyed.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "volume_outline.md"),
+        "# Volume Outline\n\n## Chapter 1\nTrack the merchant guild trail.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "book_rules.md"),
+        "---\nprohibitions:\n  - Do not reveal the mastermind\n---\n\n# Book Rules\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "current_state.md"),
+        "# Current State\n\n- Lin Yue still hides the broken oath token.\n",
+        "utf-8",
+      ),
+      writeFile(
+        join(storyDir, "pending_hooks.md"),
+        "# Pending Hooks\n\n- Why the mentor vanished after the trial.\n",
+        "utf-8",
+      ),
     ]);
   });
 
@@ -125,23 +156,21 @@ describe("agent pipeline tools", () => {
   });
 
   it("plans and composes chapters through the agent tool surface", async () => {
-    const planResult = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "plan_chapter",
-      { bookId, guidance: "Ignore the guild chase and focus on the mentor conflict." },
-    ));
+    const planResult = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "plan_chapter", {
+        bookId,
+        guidance: "Ignore the guild chase and focus on the mentor conflict.",
+      }),
+    );
 
     expect(planResult.intentPath).toBe("story/runtime/chapter-0001.intent.md");
 
-    const composeResult = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "compose_chapter",
-      { bookId, guidance: "Ignore the guild chase and focus on the mentor conflict." },
-    ));
+    const composeResult = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "compose_chapter", {
+        bookId,
+        guidance: "Ignore the guild chase and focus on the mentor conflict.",
+      }),
+    );
 
     expect(composeResult.contextPath).toBe("story/runtime/chapter-0001.context.json");
     expect(composeResult.ruleStackPath).toBe("story/runtime/chapter-0001.rule-stack.yaml");
@@ -158,33 +187,33 @@ describe("agent pipeline tools", () => {
       content: "# Current Focus\n\nSpend the next two chapters on mentor fallout.\n",
     });
 
-    await expect(readFile(join(state.bookDir(bookId), "story", "author_intent.md"), "utf-8"))
-      .resolves.toContain("colder revenge story");
-    await expect(readFile(join(state.bookDir(bookId), "story", "current_focus.md"), "utf-8"))
-      .resolves.toContain("mentor fallout");
+    await expect(
+      readFile(join(state.bookDir(bookId), "story", "author_intent.md"), "utf-8"),
+    ).resolves.toContain("colder revenge story");
+    await expect(
+      readFile(join(state.bookDir(bookId), "story", "current_focus.md"), "utf-8"),
+    ).resolves.toContain("mentor fallout");
   });
 
   it("normalizes human-facing platform aliases before create_book persists config", async () => {
     const initBook = vi.spyOn(PipelineRunner.prototype, "initBook").mockResolvedValue(undefined);
 
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "create_book",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "create_book", {
         title: "测试书",
         genre: "urban",
         platform: "番茄小说",
         brief: "一本文娱爽文。",
-      },
-    ));
+      }),
+    );
 
     expect(result).toMatchObject({ bookId: "测试书", title: "测试书", status: "created" });
-    expect(initBook).toHaveBeenCalledWith(expect.objectContaining({
-      id: "测试书",
-      platform: "tomato",
-    }));
+    expect(initBook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "测试书",
+        platform: "tomato",
+      }),
+    );
   });
 
   it("keeps update_current_focus usable for explicit local overrides through the tool surface", async () => {
@@ -204,20 +233,18 @@ describe("agent pipeline tools", () => {
       ].join("\n"),
     });
 
-    const planResult = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "plan_chapter",
-      { bookId },
-    ));
+    const planResult = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "plan_chapter", { bookId }),
+    );
 
     const runtimePath = join(state.bookDir(bookId), planResult.intentPath);
     const intentMarkdown = await readFile(runtimePath, "utf-8");
-    expect(intentMarkdown).toContain([
-      "## Goal",
-      "Stay inside the mentor debt confrontation first and delay the guild chase by one chapter.",
-    ].join("\n"));
+    expect(intentMarkdown).toContain(
+      [
+        "## Goal",
+        "Stay inside the mentor debt confrontation first and delay the guild chase by one chapter.",
+      ].join("\n"),
+    );
   });
 
   it("blocks write_full_pipeline when runtime progress is ahead of the chapter index", async () => {
@@ -225,16 +252,18 @@ describe("agent pipeline tools", () => {
     // Create durable chapter files for 1-3 but only index chapter 1.
     // This produces durableChapter=3, nextNum=4 while lastIndexedChapter=1,
     // triggering the sequential write guard.
-    await state.saveChapterIndex(bookId, [{
-      number: 1,
-      title: "Existing Chapter",
-      status: "approved",
-      wordCount: 120,
-      createdAt: "2026-03-22T00:00:00.000Z",
-      updatedAt: "2026-03-22T00:00:00.000Z",
-      auditIssues: [],
-      lengthWarnings: [],
-    }]);
+    await state.saveChapterIndex(bookId, [
+      {
+        number: 1,
+        title: "Existing Chapter",
+        status: "approved",
+        wordCount: 120,
+        createdAt: "2026-03-22T00:00:00.000Z",
+        updatedAt: "2026-03-22T00:00:00.000Z",
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ]);
     await Promise.all([
       writeFile(join(chaptersDir, "0001_Existing.md"), "# Chapter 1\n", "utf-8"),
       writeFile(join(chaptersDir, "0002_Second.md"), "# Chapter 2\n", "utf-8"),
@@ -252,30 +281,22 @@ describe("agent pipeline tools", () => {
       status: "ready-for-review",
     } as Awaited<ReturnType<typeof pipeline.writeNextChapter>>);
 
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_full_pipeline",
-      { bookId, count: 1 },
-    ));
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_full_pipeline", { bookId, count: 1 }),
+    );
 
     expect(result.error).toContain("write_full_pipeline");
     expect(writeNextChapter).not.toHaveBeenCalled();
   });
 
   it("blocks write_truth_file from hacking chapter progress inside current_state.md", async () => {
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_truth_file",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_truth_file", {
         bookId,
         fileName: "current_state.md",
         content: "# Current State\n\n| Current Chapter | 999 |\n",
-      },
-    ));
+      }),
+    );
 
     expect(result.error).toContain("章节进度");
   });
@@ -283,17 +304,13 @@ describe("agent pipeline tools", () => {
   // Phase hotfix 3: write_truth_file must accept both Chinese and English
   // role-dir paths so English-layout books are writable, not just readable.
   it("accepts roles/主要角色/<name>.md (zh locale)", async () => {
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_truth_file",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_truth_file", {
         bookId,
         fileName: "roles/主要角色/林辞.md",
         content: "# 林辞\n核心标签：沉默",
-      },
-    ));
+      }),
+    );
     expect(result.error).toBeUndefined();
     const written = await readFile(
       join(state.bookDir(bookId), "story", "roles/主要角色/林辞.md"),
@@ -303,17 +320,13 @@ describe("agent pipeline tools", () => {
   });
 
   it("accepts roles/major/<name>.md (en locale)", async () => {
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_truth_file",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_truth_file", {
         bookId,
         fileName: "roles/major/Mara.md",
         content: "# Mara\nCore tag: stoic",
-      },
-    ));
+      }),
+    );
     expect(result.error).toBeUndefined();
     const written = await readFile(
       join(state.bookDir(bookId), "story", "roles/major/Mara.md"),
@@ -323,32 +336,24 @@ describe("agent pipeline tools", () => {
   });
 
   it("accepts roles/minor/<name>.md (en locale)", async () => {
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_truth_file",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_truth_file", {
         bookId,
         fileName: "roles/minor/Kit.md",
         content: "# Kit\nMinor ally",
-      },
-    ));
+      }),
+    );
     expect(result.error).toBeUndefined();
   });
 
   it("rejects unknown role tier dirs (path-traversal safety preserved)", async () => {
-    const result = JSON.parse(await executeAgentTool(
-      pipeline,
-      state,
-      config,
-      "write_truth_file",
-      {
+    const result = JSON.parse(
+      await executeAgentTool(pipeline, state, config, "write_truth_file", {
         bookId,
         fileName: "roles/其他/X.md",
         content: "# X",
-      },
-    ));
+      }),
+    );
     expect(result.error).toBeDefined();
   });
 });

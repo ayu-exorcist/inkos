@@ -13,7 +13,9 @@ interface DoctorChecks {
   readonly bookCount: number;
 }
 
-interface Nav { toDashboard: () => void }
+interface Nav {
+  toDashboard: () => void;
+}
 
 function CheckRow({ label, ok, detail }: { label: string; ok: boolean; detail?: string }) {
   return (
@@ -36,7 +38,9 @@ export function DoctorView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span>{t("nav.doctor")}</span>
       </div>
@@ -46,7 +50,10 @@ export function DoctorView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
           <Stethoscope size={28} className="text-primary" />
           {t("doctor.title")}
         </h1>
-        <button onClick={() => refetch()} className={`px-4 py-2 text-sm rounded-lg ${c.btnSecondary}`}>
+        <button
+          onClick={() => refetch()}
+          className={`px-4 py-2 text-sm rounded-lg ${c.btnSecondary}`}
+        >
           {t("doctor.recheck")}
         </button>
       </div>
@@ -60,21 +67,30 @@ export function DoctorView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunc
           <CheckRow label={t("doctor.inkosJson")} ok={data.inkosJson} />
           <CheckRow label={t("doctor.projectEnv")} ok={data.projectEnv} />
           <CheckRow label={t("doctor.globalEnv")} ok={data.globalEnv} />
-          <CheckRow label={t("doctor.booksDir")} ok={data.booksDir} detail={`${data.bookCount} book(s)`} />
-          <CheckRow label={t("doctor.llmApi")} ok={data.llmConnected} detail={data.llmConnected ? t("doctor.connected") : t("doctor.failed")} />
+          <CheckRow
+            label={t("doctor.booksDir")}
+            ok={data.booksDir}
+            detail={`${data.bookCount} book(s)`}
+          />
+          <CheckRow
+            label={t("doctor.llmApi")}
+            ok={data.llmConnected}
+            detail={data.llmConnected ? t("doctor.connected") : t("doctor.failed")}
+          />
         </div>
       )}
 
       {data && (
-        <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
-          data.inkosJson && (data.projectEnv || data.globalEnv) && data.llmConnected
-            ? "bg-emerald-500/10 text-emerald-600"
-            : "bg-amber-500/10 text-amber-600"
-        }`}>
+        <div
+          className={`px-4 py-3 rounded-lg text-sm font-medium ${
+            data.inkosJson && (data.projectEnv || data.globalEnv) && data.llmConnected
+              ? "bg-emerald-500/10 text-emerald-600"
+              : "bg-amber-500/10 text-amber-600"
+          }`}
+        >
           {data.inkosJson && (data.projectEnv || data.globalEnv) && data.llmConnected
             ? t("doctor.allPassed")
-            : t("doctor.someFailed")
-          }
+            : t("doctor.someFailed")}
         </div>
       )}
     </div>

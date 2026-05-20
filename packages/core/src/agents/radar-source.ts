@@ -102,8 +102,7 @@ export class QidianRadarSource implements RadarSource {
       if (!res.ok) return { platform: "起点中文网", entries };
       const html = await res.text();
 
-      const bookPattern =
-        /<a[^>]*href="\/\/book\.qidian\.com\/info\/(\d+)"[^>]*>([^<]+)<\/a>/g;
+      const bookPattern = /<a[^>]*href="\/\/book\.qidian\.com\/info\/(\d+)"[^>]*>([^<]+)<\/a>/g;
       let match: RegExpExecArray | null;
       const seen = new Set<string>();
       while ((match = bookPattern.exec(html)) !== null) {

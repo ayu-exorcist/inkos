@@ -3,10 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import type { ChapterMeta } from "../models/chapter.js";
-import {
-  classifyTruthAuthority,
-  normalizeTruthFileName,
-} from "../interaction/truth-authority.js";
+import { classifyTruthAuthority, normalizeTruthFileName } from "../interaction/truth-authority.js";
 import {
   executeEditTransaction,
   planEditTransaction,
@@ -106,7 +103,11 @@ describe("edit controller", () => {
   it("executes entity rename across truth files and chapters", async () => {
     const bookDir = join(projectRoot, "books", "harbor");
     await writeFile(join(bookDir, "story", "story_bible.md"), "主角陆尘住在港口。", "utf-8");
-    await writeFile(join(bookDir, "chapters", "0001_旧名字.md"), "# 第1章 旧名字\n\n陆尘走进港口。", "utf-8");
+    await writeFile(
+      join(bookDir, "chapters", "0001_旧名字.md"),
+      "# 第1章 旧名字\n\n陆尘走进港口。",
+      "utf-8",
+    );
 
     const result = await executeEditTransaction(
       {
@@ -123,25 +124,35 @@ describe("edit controller", () => {
       },
     );
 
-    await expect(readFile(join(bookDir, "story", "story_bible.md"), "utf-8")).resolves.toContain("林砚");
-    await expect(readFile(join(bookDir, "chapters", "0001_旧名字.md"), "utf-8")).resolves.toContain("林砚");
+    await expect(readFile(join(bookDir, "story", "story_bible.md"), "utf-8")).resolves.toContain(
+      "林砚",
+    );
+    await expect(readFile(join(bookDir, "chapters", "0001_旧名字.md"), "utf-8")).resolves.toContain(
+      "林砚",
+    );
     expect(result.touchedFiles.length).toBeGreaterThan(0);
   });
 
   it("executes chapter text patches and marks the chapter for review", async () => {
     const bookDir = join(projectRoot, "books", "harbor");
-    await writeFile(join(bookDir, "chapters", "0003_灰墙榜下.md"), "# 第3章 灰墙榜下\n\n旧名字在这里。", "utf-8");
+    await writeFile(
+      join(bookDir, "chapters", "0003_灰墙榜下.md"),
+      "# 第3章 灰墙榜下\n\n旧名字在这里。",
+      "utf-8",
+    );
     await writeFile(join(bookDir, "story", "runtime", "chapter-0003.intent.md"), "stale", "utf-8");
-    const chapterIndex = [{
-      number: 3,
-      title: "灰墙榜下",
-      status: "ready-for-review" as const,
-      wordCount: 12,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      auditIssues: [],
-      lengthWarnings: [],
-    }];
+    const chapterIndex = [
+      {
+        number: 3,
+        title: "灰墙榜下",
+        status: "ready-for-review" as const,
+        wordCount: 12,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        auditIssues: [],
+        lengthWarnings: [],
+      },
+    ];
 
     let savedIndex: ChapterMeta[] = [...chapterIndex];
     const result = await executeEditTransaction(
@@ -162,7 +173,9 @@ describe("edit controller", () => {
       },
     );
 
-    await expect(readFile(join(bookDir, "chapters", "0003_灰墙榜下.md"), "utf-8")).resolves.toContain("新名字");
+    await expect(
+      readFile(join(bookDir, "chapters", "0003_灰墙榜下.md"), "utf-8"),
+    ).resolves.toContain("新名字");
     expect(savedIndex[0]?.status).toBe("audit-failed");
     expect(savedIndex[0]?.auditIssues.at(-1)).toContain("Manual text edit requires review");
     expect(result.reviewRequired).toBe(true);
@@ -172,19 +185,21 @@ describe("edit controller", () => {
     const invalidRoot = join(projectRoot, "invalid-root.txt");
     await writeFile(invalidRoot, "not a directory", "utf-8");
 
-    await expect(executeEditTransaction(
-      {
-        bookDir: () => invalidRoot,
-        loadChapterIndex: async () => [],
-        saveChapterIndex: async () => undefined,
-      },
-      {
-        kind: "entity-rename",
-        bookId: "harbor",
-        entityType: "protagonist",
-        oldValue: "陆尘",
-        newValue: "林砚",
-      },
-    )).rejects.toThrow(/not a directory|ENOTDIR/i);
+    await expect(
+      executeEditTransaction(
+        {
+          bookDir: () => invalidRoot,
+          loadChapterIndex: async () => [],
+          saveChapterIndex: async () => undefined,
+        },
+        {
+          kind: "entity-rename",
+          bookId: "harbor",
+          entityType: "protagonist",
+          oldValue: "陆尘",
+          newValue: "林砚",
+        },
+      ),
+    ).rejects.toThrow(/not a directory|ENOTDIR/i);
   });
 });

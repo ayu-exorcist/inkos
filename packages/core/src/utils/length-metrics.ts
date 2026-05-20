@@ -1,4 +1,8 @@
-import type { LengthCountingMode, LengthNormalizeMode, LengthSpec } from "../models/length-governance.js";
+import type {
+  LengthCountingMode,
+  LengthNormalizeMode,
+  LengthSpec,
+} from "../models/length-governance.js";
 
 export type LengthLanguage = "zh" | "en";
 
@@ -6,10 +10,7 @@ const REFERENCE_TARGET = 2200;
 const SOFT_RANGE_DELTA = 300;
 const HARD_RANGE_DELTA = 600;
 
-export function countChapterLength(
-  content: string,
-  countingMode: LengthCountingMode,
-): number {
+export function countChapterLength(content: string, countingMode: LengthCountingMode): number {
   const normalized = stripMarkdownMetadata(content);
 
   if (countingMode === "en_words") {
@@ -20,23 +21,15 @@ export function countChapterLength(
   return normalized.replace(/\s+/g, "").length;
 }
 
-export function resolveLengthCountingMode(
-  language: LengthLanguage = "zh",
-): LengthCountingMode {
+export function resolveLengthCountingMode(language: LengthLanguage = "zh"): LengthCountingMode {
   return language === "en" ? "en_words" : "zh_chars";
 }
 
-export function formatLengthCount(
-  count: number,
-  countingMode: LengthCountingMode,
-): string {
+export function formatLengthCount(count: number, countingMode: LengthCountingMode): string {
   return countingMode === "en_words" ? `${count} words` : `${count}字`;
 }
 
-export function buildLengthSpec(
-  target: number,
-  language: LengthLanguage = "zh",
-): LengthSpec {
+export function buildLengthSpec(target: number, language: LengthLanguage = "zh"): LengthSpec {
   const softDelta = scaleRangeDelta(target, SOFT_RANGE_DELTA);
   const hardDelta = Math.max(softDelta, scaleRangeDelta(target, HARD_RANGE_DELTA));
   const softMin = Math.max(1, target - softDelta);
@@ -83,7 +76,10 @@ export function chooseNormalizeMode(
 }
 
 function stripMarkdownMetadata(content: string): string {
-  const lines = content.replace(/\r\n/g, "\n").replace(/^\uFEFF/, "").split("\n");
+  const lines = content
+    .replace(/\r\n/g, "\n")
+    .replace(/^\uFEFF/, "")
+    .split("\n");
   const proseLines: string[] = [];
   let index = 0;
 

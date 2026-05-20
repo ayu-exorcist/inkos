@@ -27,9 +27,31 @@ export const DEEPSEEK: InkosEndpoint = {
   writingTemperature: 1.5,
   temperatureHint: "创意写作推荐 1.5",
   models: [
-    { id: "deepseek-v4-flash", maxOutput: 393216, contextWindowTokens: 1_000_000, enabled: true, releasedAt: "2026-04-24" },
-    { id: "deepseek-v4-pro", maxOutput: 393216, contextWindowTokens: 1_000_000, enabled: true, releasedAt: "2026-04-24" },
-    { id: "deepseek-chat", maxOutput: 393216, contextWindowTokens: 1_000_000, releasedAt: "2026-04-24" },
-    { id: "deepseek-reasoner", maxOutput: 393216, contextWindowTokens: 1_000_000, releasedAt: "2026-04-24" },
+    {
+      id: "deepseek-v4-flash",
+      maxOutput: 393216,
+      contextWindowTokens: 1_000_000,
+      enabled: true,
+      releasedAt: "2026-04-24",
+    },
+    {
+      id: "deepseek-v4-pro",
+      maxOutput: 393216,
+      contextWindowTokens: 1_000_000,
+      enabled: true,
+      releasedAt: "2026-04-24",
+    },
+    {
+      id: "deepseek-chat",
+      maxOutput: 393216,
+      contextWindowTokens: 1_000_000,
+      releasedAt: "2026-04-24",
+    },
+    {
+      id: "deepseek-reasoner",
+      maxOutput: 393216,
+      contextWindowTokens: 1_000_000,
+      releasedAt: "2026-04-24",
+    },
   ],
 };

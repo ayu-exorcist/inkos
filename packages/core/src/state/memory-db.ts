@@ -143,70 +143,82 @@ export class MemoryDB {
        VALUES (?, ?, ?, ?, ?, ?)`,
     );
     const result = stmt.run(
-      fact.subject, fact.predicate, fact.object,
-      fact.validFromChapter, fact.validUntilChapter ?? null, fact.sourceChapter,
+      fact.subject,
+      fact.predicate,
+      fact.object,
+      fact.validFromChapter,
+      fact.validUntilChapter ?? null,
+      fact.sourceChapter,
     );
     return Number(result.lastInsertRowid);
   }
 
   /** Invalidate a fact (set valid_until). */
   invalidateFact(id: number, untilChapter: number): void {
-    this.db.prepare(
-      "UPDATE facts SET valid_until_chapter = ? WHERE id = ?",
-    ).run(untilChapter, id);
+    this.db.prepare("UPDATE facts SET valid_until_chapter = ? WHERE id = ?").run(untilChapter, id);
   }
 
   /** Get all currently valid facts (valid_until is null). */
   getCurrentFacts(): ReadonlyArray<Fact> {
-    return this.db.prepare(
-      `SELECT ${FACT_SELECT_COLUMNS}
+    return this.db
+      .prepare(
+        `SELECT ${FACT_SELECT_COLUMNS}
        FROM facts
        WHERE valid_until_chapter IS NULL
        ORDER BY subject, predicate`,
-    ).all() as unknown as Fact[];
+      )
+      .all() as unknown as Fact[];
   }
 
   /** Get facts about a specific subject that are valid at a given chapter. */
   getFactsAt(subject: string, chapter: number): ReadonlyArray<Fact> {
-    return this.db.prepare(
-      `SELECT ${FACT_SELECT_COLUMNS}
+    return this.db
+      .prepare(
+        `SELECT ${FACT_SELECT_COLUMNS}
        FROM facts
        WHERE subject = ? AND valid_from_chapter <= ?
        AND (valid_until_chapter IS NULL OR valid_until_chapter > ?)
        ORDER BY predicate`,
-    ).all(subject, chapter, chapter) as unknown as Fact[];
+      )
+      .all(subject, chapter, chapter) as unknown as Fact[];
   }
 
   /** Get all facts about a subject (including historical). */
   getFactHistory(subject: string): ReadonlyArray<Fact> {
-    return this.db.prepare(
-      `SELECT ${FACT_SELECT_COLUMNS}
+    return this.db
+      .prepare(
+        `SELECT ${FACT_SELECT_COLUMNS}
        FROM facts
        WHERE subject = ?
        ORDER BY valid_from_chapter`,
-    ).all(subject) as unknown as Fact[];
+      )
+      .all(subject) as unknown as Fact[];
   }
 
   /** Search facts by predicate (e.g., all "location" facts). */
   getFactsByPredicate(predicate: string): ReadonlyArray<Fact> {
-    return this.db.prepare(
-      `SELECT ${FACT_SELECT_COLUMNS}
+    return this.db
+      .prepare(
+        `SELECT ${FACT_SELECT_COLUMNS}
        FROM facts
        WHERE predicate = ? AND valid_until_chapter IS NULL
        ORDER BY subject`,
-    ).all(predicate) as unknown as Fact[];
+      )
+      .all(predicate) as unknown as Fact[];
   }
 
   /** Get facts relevant to a set of character names. */
   getFactsForCharacters(names: ReadonlyArray<string>): ReadonlyArray<Fact> {
     if (names.length === 0) return [];
     const placeholders = names.map(() => "?").join(",");
-    return this.db.prepare(
-      `SELECT ${FACT_SELECT_COLUMNS}
+    return this.db
+      .prepare(
+        `SELECT ${FACT_SELECT_COLUMNS}
        FROM facts
        WHERE subject IN (${placeholders}) AND valid_until_chapter IS NULL
        ORDER BY subject, predicate`,
-    ).all(...names) as unknown as Fact[];
+      )
+      .all(...names) as unknown as Fact[];
   }
 
   replaceCurrentFacts(facts: ReadonlyArray<Omit<Fact, "id">>): void {
@@ -226,13 +238,21 @@ export class MemoryDB {
 
   /** Upsert a chapter summary. */
   upsertSummary(summary: StoredSummary): void {
-    this.db.prepare(
-      `INSERT OR REPLACE INTO chapter_summaries (chapter, title, characters, events, state_changes, hook_activity, mood, chapter_type)
+    this.db
+      .prepare(
+        `INSERT OR REPLACE INTO chapter_summaries (chapter, title, characters, events, state_changes, hook_activity, mood, chapter_type)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      summary.chapter, summary.title, summary.characters, summary.events,
-      summary.stateChanges, summary.hookActivity, summary.mood, summary.chapterType,
-    );
+      )
+      .run(
+        summary.chapter,
+        summary.title,
+        summary.characters,
+        summary.events,
+        summary.stateChanges,
+        summary.hookActivity,
+        summary.mood,
+        summary.chapterType,
+      );
   }
 
   replaceSummaries(summaries: ReadonlyArray<StoredSummary>): void {
@@ -244,8 +264,9 @@ export class MemoryDB {
 
   /** Get summaries for a range of chapters. */
   getSummaries(fromChapter: number, toChapter: number): ReadonlyArray<StoredSummary> {
-    return this.db.prepare(
-      `SELECT
+    return this.db
+      .prepare(
+        `SELECT
          chapter,
          title,
          characters,
@@ -257,7 +278,8 @@ export class MemoryDB {
        FROM chapter_summaries
        WHERE chapter >= ? AND chapter <= ?
        ORDER BY chapter`,
-    ).all(fromChapter, toChapter) as unknown as StoredSummary[];
+      )
+      .all(fromChapter, toChapter) as unknown as StoredSummary[];
   }
 
   /** Get summaries matching any of the given character names. */
@@ -265,8 +287,9 @@ export class MemoryDB {
     if (names.length === 0) return [];
     const conditions = names.map(() => "characters LIKE ?").join(" OR ");
     const params = names.map((n) => `%${n}%`);
-    return this.db.prepare(
-      `SELECT
+    return this.db
+      .prepare(
+        `SELECT
          chapter,
          title,
          characters,
@@ -278,19 +301,23 @@ export class MemoryDB {
        FROM chapter_summaries
        WHERE ${conditions}
        ORDER BY chapter`,
-    ).all(...params) as unknown as StoredSummary[];
+      )
+      .all(...params) as unknown as StoredSummary[];
   }
 
   /** Get total chapter count. */
   getChapterCount(): number {
-    const row = this.db.prepare("SELECT COUNT(*) as count FROM chapter_summaries").get() as unknown as { count: number };
+    const row = this.db
+      .prepare("SELECT COUNT(*) as count FROM chapter_summaries")
+      .get() as unknown as { count: number };
     return row.count;
   }
 
   /** Get the most recent N summaries. */
   getRecentSummaries(count: number): ReadonlyArray<StoredSummary> {
-    return this.db.prepare(
-      `SELECT
+    return this.db
+      .prepare(
+        `SELECT
          chapter,
          title,
          characters,
@@ -302,7 +329,8 @@ export class MemoryDB {
        FROM chapter_summaries
        ORDER BY chapter DESC
        LIMIT ?`,
-    ).all(count) as unknown as ReadonlyArray<StoredSummary>;
+      )
+      .all(count) as unknown as ReadonlyArray<StoredSummary>;
   }
 
   // ---------------------------------------------------------------------------
@@ -310,19 +338,21 @@ export class MemoryDB {
   // ---------------------------------------------------------------------------
 
   upsertHook(hook: StoredHook): void {
-    this.db.prepare(
-      `INSERT OR REPLACE INTO hooks (hook_id, start_chapter, type, status, last_advanced_chapter, expected_payoff, payoff_timing, notes)
+    this.db
+      .prepare(
+        `INSERT OR REPLACE INTO hooks (hook_id, start_chapter, type, status, last_advanced_chapter, expected_payoff, payoff_timing, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      hook.hookId,
-      hook.startChapter,
-      hook.type,
-      hook.status,
-      hook.lastAdvancedChapter,
-      hook.expectedPayoff,
-      hook.payoffTiming ?? "",
-      hook.notes,
-    );
+      )
+      .run(
+        hook.hookId,
+        hook.startChapter,
+        hook.type,
+        hook.status,
+        hook.lastAdvancedChapter,
+        hook.expectedPayoff,
+        hook.payoffTiming ?? "",
+        hook.notes,
+      );
   }
 
   replaceHooks(hooks: ReadonlyArray<StoredHook>): void {
@@ -333,8 +363,9 @@ export class MemoryDB {
   }
 
   getActiveHooks(): ReadonlyArray<StoredHook> {
-    return this.db.prepare(
-      `SELECT
+    return this.db
+      .prepare(
+        `SELECT
          hook_id AS hookId,
          start_chapter AS startChapter,
          type,
@@ -346,7 +377,8 @@ export class MemoryDB {
        FROM hooks
        WHERE lower(status) NOT IN ('resolved', 'closed', '已回收', '已解决')
        ORDER BY last_advanced_chapter DESC, start_chapter DESC, hook_id ASC`,
-    ).all() as unknown as ReadonlyArray<StoredHook>;
+      )
+      .all() as unknown as ReadonlyArray<StoredHook>;
   }
 
   // ---------------------------------------------------------------------------

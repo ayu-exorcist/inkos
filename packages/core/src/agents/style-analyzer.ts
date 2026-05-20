@@ -32,21 +32,24 @@ export function analyzeStyle(text: string, sourceName?: string): StyleProfile {
 
   // Sentence length stats
   const sentenceLengths = sentences.map((s) => s.length);
-  const avgSentenceLength = sentenceLengths.length > 0
-    ? sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length
-    : 0;
-  const sentenceLengthStdDev = sentenceLengths.length > 1
-    ? Math.sqrt(
-        sentenceLengths.reduce((sum, l) => sum + (l - avgSentenceLength) ** 2, 0) /
-          sentenceLengths.length,
-      )
-    : 0;
+  const avgSentenceLength =
+    sentenceLengths.length > 0
+      ? sentenceLengths.reduce((a, b) => a + b, 0) / sentenceLengths.length
+      : 0;
+  const sentenceLengthStdDev =
+    sentenceLengths.length > 1
+      ? Math.sqrt(
+          sentenceLengths.reduce((sum, l) => sum + (l - avgSentenceLength) ** 2, 0) /
+            sentenceLengths.length,
+        )
+      : 0;
 
   // Paragraph length stats
   const paragraphLengths = paragraphs.map((p) => p.length);
-  const avgParagraphLength = paragraphLengths.length > 0
-    ? paragraphLengths.reduce((a, b) => a + b, 0) / paragraphLengths.length
-    : 0;
+  const avgParagraphLength =
+    paragraphLengths.length > 0
+      ? paragraphLengths.reduce((a, b) => a + b, 0) / paragraphLengths.length
+      : 0;
   const minParagraph = paragraphLengths.length > 0 ? Math.min(...paragraphLengths) : 0;
   const maxParagraph = paragraphLengths.length > 0 ? Math.max(...paragraphLengths) : 0;
 

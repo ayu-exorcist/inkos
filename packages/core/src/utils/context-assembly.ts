@@ -4,10 +4,7 @@ import type {
   ContextPackage,
   RuleStack,
 } from "../models/input-governance.js";
-import {
-  ChapterTraceSchema,
-  RuleStackSchema,
-} from "../models/input-governance.js";
+import { ChapterTraceSchema, RuleStackSchema } from "../models/input-governance.js";
 import type { PlanChapterOutput } from "../agents/planner.js";
 
 const MAX_OVERRIDE_REASON_CHARS = 80;

@@ -1,7 +1,4 @@
-import {
-  RuntimeStateDeltaSchema,
-  type RuntimeStateDelta,
-} from "../models/runtime-state.js";
+import { RuntimeStateDeltaSchema, type RuntimeStateDelta } from "../models/runtime-state.js";
 
 export interface SettlerDeltaOutput {
   readonly postSettlement: string;
@@ -9,16 +6,12 @@ export interface SettlerDeltaOutput {
 }
 
 function sanitizeJSON(str: string): string {
-  return str
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    .replace(/,\s*([}\]])/g, "$1");
+  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").replace(/,\s*([}\]])/g, "$1");
 }
 
 export function parseSettlerDeltaOutput(content: string): SettlerDeltaOutput {
   const extract = (tag: string): string => {
-    const regex = new RegExp(
-      `=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`,
-    );
+    const regex = new RegExp(`=== ${tag} ===\\s*([\\s\\S]*?)(?==== [A-Z_]+ ===|$)`);
     const match = content.match(regex);
     return match?.[1]?.trim() ?? "";
   };

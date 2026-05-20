@@ -332,7 +332,8 @@ describe("applyRuntimeStateDelta", () => {
               type: "source-risk",
               status: "open",
               lastAdvancedChapter: 8,
-              expectedPayoff: "Reveal how much the anonymous source already knew about the route and address.",
+              expectedPayoff:
+                "Reveal how much the anonymous source already knew about the route and address.",
               notes: "Still unresolved anonymous source knowledge question.",
             },
           ],
@@ -352,7 +353,8 @@ describe("applyRuntimeStateDelta", () => {
               status: "open",
               lastAdvancedChapter: 12,
               expectedPayoff: "Reveal how much the anonymous source already knew about the route.",
-              notes: "Anonymous source knowledge question restated with slightly different wording.",
+              notes:
+                "Anonymous source knowledge question restated with slightly different wording.",
             },
           ],
           mention: [],
@@ -364,9 +366,11 @@ describe("applyRuntimeStateDelta", () => {
     });
 
     expect(result.hooks.hooks).toHaveLength(1);
-    expect(result.hooks.hooks[0]).toEqual(expect.objectContaining({
-      hookId: "anonymous-source-scope",
-      lastAdvancedChapter: 12,
-    }));
+    expect(result.hooks.hooks[0]).toEqual(
+      expect.objectContaining({
+        hookId: "anonymous-source-scope",
+        lastAdvancedChapter: 12,
+      }),
+    );
   });
 });

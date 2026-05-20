@@ -44,7 +44,12 @@ const MOCK_TOOL_RESPONSE = {
     {
       id: "call_1",
       name: "create_book",
-      arguments: JSON.stringify({ title: "都市异能", genre: "urban", platform: "tomato", brief: "都市异能题材" }),
+      arguments: JSON.stringify({
+        title: "都市异能",
+        genre: "urban",
+        platform: "tomato",
+        brief: "都市异能题材",
+      }),
     },
   ],
 };
@@ -59,13 +64,9 @@ describe("chat tool – maxTokens forwarding", () => {
   });
 
   it("does not pass maxTokens to chatCompletion when depth has no maxTokens set", async () => {
-    const tools = createInteractionToolsFromDeps(
-      fakePipeline as never,
-      fakeState as never,
-      {
-        getChatRequestOptions: () => ({ temperature: 0.7 }),
-      },
-    );
+    const tools = createInteractionToolsFromDeps(fakePipeline as never, fakeState as never, {
+      getChatRequestOptions: () => ({ temperature: 0.7 }),
+    });
 
     await tools.chat?.("你好", { bookId: "test-book", automationMode: "manual" });
 
@@ -75,13 +76,9 @@ describe("chat tool – maxTokens forwarding", () => {
   });
 
   it("passes maxTokens to chatCompletion when depth explicitly sets it", async () => {
-    const tools = createInteractionToolsFromDeps(
-      fakePipeline as never,
-      fakeState as never,
-      {
-        getChatRequestOptions: () => ({ temperature: 0.7, maxTokens: 512 }),
-      },
-    );
+    const tools = createInteractionToolsFromDeps(fakePipeline as never, fakeState as never, {
+      getChatRequestOptions: () => ({ temperature: 0.7, maxTokens: 512 }),
+    });
 
     await tools.chat?.("你好", { bookId: "test-book", automationMode: "manual" });
 
@@ -93,13 +90,9 @@ describe("chat tool – maxTokens forwarding", () => {
   it("rethrows real chatCompletion errors instead of silently falling back", async () => {
     mockChatCompletion.mockRejectedValueOnce(new Error("provider down"));
 
-    const tools = createInteractionToolsFromDeps(
-      fakePipeline as never,
-      fakeState as never,
-      {
-        getChatRequestOptions: () => ({ temperature: 0.7 }),
-      },
-    );
+    const tools = createInteractionToolsFromDeps(fakePipeline as never, fakeState as never, {
+      getChatRequestOptions: () => ({ temperature: 0.7 }),
+    });
 
     await expect(
       tools.chat?.("你好", { bookId: "test-book", automationMode: "manual" }),
@@ -114,10 +107,7 @@ describe("developBookDraft – uses chatWithTools", () => {
   });
 
   it("calls chatWithTools with create_book tool and does not pass maxTokens", async () => {
-    const tools = createInteractionToolsFromDeps(
-      fakePipeline as never,
-      fakeState as never,
-    );
+    const tools = createInteractionToolsFromDeps(fakePipeline as never, fakeState as never);
 
     await tools.developBookDraft?.("我想写都市异能", undefined);
 
@@ -127,22 +117,24 @@ describe("developBookDraft – uses chatWithTools", () => {
   });
 
   it("extracts tool call arguments into the creation draft", async () => {
-    const tools = createInteractionToolsFromDeps(
-      fakePipeline as never,
-      fakeState as never,
-    );
+    const tools = createInteractionToolsFromDeps(fakePipeline as never, fakeState as never);
 
-    const result = await tools.developBookDraft?.("我想写都市异能", undefined) as Record<string, unknown>;
+    const result = (await tools.developBookDraft?.("我想写都市异能", undefined)) as Record<
+      string,
+      unknown
+    >;
     const interaction = (result as { __interaction: Record<string, unknown> }).__interaction;
     const details = interaction.details as Record<string, unknown>;
 
-    expect(details.creationDraft).toEqual(expect.objectContaining({
-      title: "都市异能",
-      genre: "urban",
-      platform: "tomato",
-      blurb: "都市异能题材",
-      readyToCreate: true,
-    }));
+    expect(details.creationDraft).toEqual(
+      expect.objectContaining({
+        title: "都市异能",
+        genre: "urban",
+        platform: "tomato",
+        blurb: "都市异能题材",
+        readyToCreate: true,
+      }),
+    );
     expect(details.toolCall).toEqual({
       name: "create_book",
       arguments: { title: "都市异能", genre: "urban", platform: "tomato", brief: "都市异能题材" },
@@ -156,12 +148,12 @@ describe("developBookDraft – uses chatWithTools", () => {
       reviseDraft: vi.fn(),
     };
 
-    const tools = createInteractionToolsFromDeps(
-      noLlmPipeline as never,
-      fakeState as never,
-    );
+    const tools = createInteractionToolsFromDeps(noLlmPipeline as never, fakeState as never);
 
-    const result = await tools.developBookDraft?.("我想写都市异能", undefined) as Record<string, unknown>;
+    const result = (await tools.developBookDraft?.("我想写都市异能", undefined)) as Record<
+      string,
+      unknown
+    >;
     const interaction = (result as { __interaction: Record<string, unknown> }).__interaction;
 
     expect(mockChatWithTools).not.toHaveBeenCalled();

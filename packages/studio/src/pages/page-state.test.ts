@@ -68,14 +68,19 @@ describe("book create form", () => {
   });
 
   it("builds a direct create payload without dropping the story brief", () => {
-    expect(buildBookCreatePayload({
-      title: " 夜港账本 ",
-      genre: " 都市悬疑 ",
-      platform: "qidian",
-      targetChapters: "120",
-      chapterWordCount: "2600",
-      brief: " 主角查账洗白，旧案回潮。 ",
-    }, "zh")).toEqual({
+    expect(
+      buildBookCreatePayload(
+        {
+          title: " 夜港账本 ",
+          genre: " 都市悬疑 ",
+          platform: "qidian",
+          targetChapters: "120",
+          chapterWordCount: "2600",
+          brief: " 主角查账洗白，旧案回潮。 ",
+        },
+        "zh",
+      ),
+    ).toEqual({
       title: "夜港账本",
       genre: "都市悬疑",
       platform: "qidian",
@@ -91,17 +96,19 @@ describe("waitForBookReady", () => {
   it("retries until the created book becomes readable", async () => {
     let attempts = 0;
 
-    await expect(waitForBookReady("fresh-book", {
-      fetchBook: async () => {
-        attempts += 1;
-        if (attempts < 3) {
-          throw new Error("Book not found");
-        }
-      },
-      fetchStatus: async () => ({ status: "creating" }),
-      delayMs: 0,
-      waitImpl: async () => undefined,
-    })).resolves.toBeUndefined();
+    await expect(
+      waitForBookReady("fresh-book", {
+        fetchBook: async () => {
+          attempts += 1;
+          if (attempts < 3) {
+            throw new Error("Book not found");
+          }
+        },
+        fetchStatus: async () => ({ status: "creating" }),
+        delayMs: 0,
+        waitImpl: async () => undefined,
+      }),
+    ).resolves.toBeUndefined();
 
     expect(attempts).toBe(3);
   });
@@ -109,49 +116,59 @@ describe("waitForBookReady", () => {
   it("keeps polling while the server still reports the book as creating", async () => {
     let attempts = 0;
 
-    await expect(waitForBookReady("slow-book", {
-      fetchBook: async () => {
-        attempts += 1;
-        if (attempts < 25) {
-          throw new Error("Book not found");
-        }
-      },
-      fetchStatus: async () => ({ status: "creating" }),
-      delayMs: 0,
-      waitImpl: async () => undefined,
-    })).resolves.toBeUndefined();
+    await expect(
+      waitForBookReady("slow-book", {
+        fetchBook: async () => {
+          attempts += 1;
+          if (attempts < 25) {
+            throw new Error("Book not found");
+          }
+        },
+        fetchStatus: async () => ({ status: "creating" }),
+        delayMs: 0,
+        waitImpl: async () => undefined,
+      }),
+    ).resolves.toBeUndefined();
 
     expect(attempts).toBe(25);
   });
 
   it("surfaces a clear timeout when the book is still being created", async () => {
-    await expect(waitForBookReady("missing-book", {
-      fetchBook: async () => {
-        throw new Error("Book not found");
-      },
-      fetchStatus: async () => ({ status: "creating" }),
-      maxAttempts: 2,
-      delayMs: 0,
-      waitImpl: async () => undefined,
-    })).rejects.toThrow('Book "missing-book" is still being created. Wait a moment and refresh.');
+    await expect(
+      waitForBookReady("missing-book", {
+        fetchBook: async () => {
+          throw new Error("Book not found");
+        },
+        fetchStatus: async () => ({ status: "creating" }),
+        maxAttempts: 2,
+        delayMs: 0,
+        waitImpl: async () => undefined,
+      }),
+    ).rejects.toThrow('Book "missing-book" is still being created. Wait a moment and refresh.');
   });
 
   it("prefers the server-reported create failure over a polling timeout", async () => {
-    await expect(waitForBookReady("broken-book", {
-      fetchBook: async () => {
-        throw new Error("Book not found");
-      },
-      fetchStatus: async () => ({ status: "error", error: "INKOS_LLM_API_KEY not set" }),
-      delayMs: 0,
-      waitImpl: async () => undefined,
-    })).rejects.toThrow("INKOS_LLM_API_KEY not set");
+    await expect(
+      waitForBookReady("broken-book", {
+        fetchBook: async () => {
+          throw new Error("Book not found");
+        },
+        fetchStatus: async () => ({ status: "error", error: "INKOS_LLM_API_KEY not set" }),
+        delayMs: 0,
+        waitImpl: async () => undefined,
+      }),
+    ).rejects.toThrow("INKOS_LLM_API_KEY not set");
   });
 });
 
 describe("resolveDraftInstruction", () => {
   it("forces the first ideation turn through /new so an active book does not hijack the flow", () => {
-    expect(resolveDraftInstruction("我想写个港风商战悬疑", false)).toBe("/new 我想写个港风商战悬疑");
-    expect(resolveDraftInstruction("把世界观改成近未来港口城", true)).toBe("把世界观改成近未来港口城");
+    expect(resolveDraftInstruction("我想写个港风商战悬疑", false)).toBe(
+      "/new 我想写个港风商战悬疑",
+    );
+    expect(resolveDraftInstruction("把世界观改成近未来港口城", true)).toBe(
+      "把世界观改成近未来港口城",
+    );
   });
 });
 
@@ -164,19 +181,23 @@ describe("book create agent session", () => {
   });
 
   it("rejects agent requests before a session is ready", () => {
-    expect(() => buildBookCreateAgentRequest("/create", " ")).toThrow("Book create session is not ready.");
+    expect(() => buildBookCreateAgentRequest("/create", " ")).toThrow(
+      "Book create session is not ready.",
+    );
   });
 
   it("reuses a stored orphan session", async () => {
     const createSession = vi.fn();
     const setStoredSessionId = vi.fn();
 
-    await expect(ensureBookCreateSessionId({
-      getStoredSessionId: () => "123456-abcdef",
-      fetchSession: async () => ({ session: { sessionId: "123456-abcdef", bookId: null } }),
-      createSession,
-      setStoredSessionId,
-    })).resolves.toBe("123456-abcdef");
+    await expect(
+      ensureBookCreateSessionId({
+        getStoredSessionId: () => "123456-abcdef",
+        fetchSession: async () => ({ session: { sessionId: "123456-abcdef", bookId: null } }),
+        createSession,
+        setStoredSessionId,
+      }),
+    ).resolves.toBe("123456-abcdef");
 
     expect(createSession).not.toHaveBeenCalled();
     expect(setStoredSessionId).not.toHaveBeenCalled();
@@ -186,15 +207,17 @@ describe("book create agent session", () => {
     const clearStoredSessionId = vi.fn();
     const setStoredSessionId = vi.fn();
 
-    await expect(ensureBookCreateSessionId({
-      getStoredSessionId: () => "old-session",
-      fetchSession: async () => {
-        throw new Error("Session not found");
-      },
-      createSession: async () => ({ session: { sessionId: "123456-newone", bookId: null } }),
-      clearStoredSessionId,
-      setStoredSessionId,
-    })).resolves.toBe("123456-newone");
+    await expect(
+      ensureBookCreateSessionId({
+        getStoredSessionId: () => "old-session",
+        fetchSession: async () => {
+          throw new Error("Session not found");
+        },
+        createSession: async () => ({ session: { sessionId: "123456-newone", bookId: null } }),
+        clearStoredSessionId,
+        setStoredSessionId,
+      }),
+    ).resolves.toBe("123456-newone");
 
     expect(clearStoredSessionId).toHaveBeenCalledOnce();
     expect(setStoredSessionId).toHaveBeenCalledWith("123456-newone");
@@ -203,55 +226,70 @@ describe("book create agent session", () => {
 
 describe("canCreateFromDraft", () => {
   it("accepts drafts explicitly marked ready", () => {
-    expect(canCreateFromDraft({
-      concept: "港风商战悬疑",
-      readyToCreate: true,
-      missingFields: [],
-    })).toBe(true);
+    expect(
+      canCreateFromDraft({
+        concept: "港风商战悬疑",
+        readyToCreate: true,
+        missingFields: [],
+      }),
+    ).toBe(true);
   });
 
   it("accepts drafts that already have the minimum creation fields", () => {
-    expect(canCreateFromDraft({
-      concept: "港风商战悬疑",
-      title: "夜港账本",
-      genre: "urban",
-      targetChapters: 120,
-      chapterWordCount: 2800,
-      readyToCreate: false,
-      missingFields: [],
-    })).toBe(true);
+    expect(
+      canCreateFromDraft({
+        concept: "港风商战悬疑",
+        title: "夜港账本",
+        genre: "urban",
+        targetChapters: 120,
+        chapterWordCount: 2800,
+        readyToCreate: false,
+        missingFields: [],
+      }),
+    ).toBe(true);
   });
 
   it("rejects incomplete drafts", () => {
-    expect(canCreateFromDraft({
-      concept: "港风商战悬疑",
-      title: "夜港账本",
-      readyToCreate: false,
-      missingFields: ["genre", "targetChapters"],
-    })).toBe(false);
+    expect(
+      canCreateFromDraft({
+        concept: "港风商战悬疑",
+        title: "夜港账本",
+        readyToCreate: false,
+        missingFields: ["genre", "targetChapters"],
+      }),
+    ).toBe(false);
   });
 });
 
 describe("buildCreationDraftSummary", () => {
   it("surfaces the shared foundation draft in a user-facing order", () => {
-    expect(buildCreationDraftSummary({
-      concept: "港风商战悬疑，主角从灰产洗白。",
-      title: "夜港账本",
-      worldPremise: "近未来港口城，账本牵出多方势力。",
-      protagonist: "林砚，水货账房出身，擅长记账和看人。",
-      conflictCore: "洗白与旧债回潮的对撞。",
-      volumeOutline: "卷一先查账，再暴露港口旧案。",
-      blurb: "一个做灰产生意的人，准备在夜港洗白，却先被旧账拖回去。",
-      nextQuestion: "卷一先查账还是先砸场？",
-      missingFields: ["targetChapters"],
-      readyToCreate: false,
-    }, "zh")).toEqual([
+    expect(
+      buildCreationDraftSummary(
+        {
+          concept: "港风商战悬疑，主角从灰产洗白。",
+          title: "夜港账本",
+          worldPremise: "近未来港口城，账本牵出多方势力。",
+          protagonist: "林砚，水货账房出身，擅长记账和看人。",
+          conflictCore: "洗白与旧债回潮的对撞。",
+          volumeOutline: "卷一先查账，再暴露港口旧案。",
+          blurb: "一个做灰产生意的人，准备在夜港洗白，却先被旧账拖回去。",
+          nextQuestion: "卷一先查账还是先砸场？",
+          missingFields: ["targetChapters"],
+          readyToCreate: false,
+        },
+        "zh",
+      ),
+    ).toEqual([
       { key: "title", label: "书名", value: "夜港账本" },
       { key: "worldPremise", label: "世界观", value: "近未来港口城，账本牵出多方势力。" },
       { key: "protagonist", label: "主角", value: "林砚，水货账房出身，擅长记账和看人。" },
       { key: "conflictCore", label: "核心冲突", value: "洗白与旧债回潮的对撞。" },
       { key: "volumeOutline", label: "卷纲方向", value: "卷一先查账，再暴露港口旧案。" },
-      { key: "blurb", label: "简介", value: "一个做灰产生意的人，准备在夜港洗白，却先被旧账拖回去。" },
+      {
+        key: "blurb",
+        label: "简介",
+        value: "一个做灰产生意的人，准备在夜港洗白，却先被旧账拖回去。",
+      },
       { key: "nextQuestion", label: "下一步", value: "卷一先查账还是先砸场？" },
     ]);
   });

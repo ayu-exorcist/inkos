@@ -168,8 +168,7 @@ describe("parseMemo", () => {
         "## 不要做",
         "",
       ].join("\n");
-      expect(() => parseMemo(makeRaw({ body: blankBody }), 12, false))
-        .toThrow(/empty sections/);
+      expect(() => parseMemo(makeRaw({ body: blankBody }), 12, false)).toThrow(/empty sections/);
     });
 
     it("rejects a memo where one section has only whitespace / placeholder", () => {
@@ -177,8 +176,7 @@ describe("parseMemo", () => {
         /## 当前任务\n[\s\S]*?\n\n## 读者此刻在等什么/,
         "## 当前任务\n   \n\n## 读者此刻在等什么",
       );
-      expect(() => parseMemo(makeRaw({ body }), 12, false))
-        .toThrow(/empty sections.*当前任务/);
+      expect(() => parseMemo(makeRaw({ body }), 12, false)).toThrow(/empty sections.*当前任务/);
     });
 
     it("rejects a memo where one section has 'TODO' (under 20 chars)", () => {
@@ -186,8 +184,9 @@ describe("parseMemo", () => {
         /## 章尾必须发生的改变\n[\s\S]*?\n\n## 本章 hook 账/,
         "## 章尾必须发生的改变\nTODO\n\n## 本章 hook 账",
       );
-      expect(() => parseMemo(makeRaw({ body }), 12, false))
-        .toThrow(/empty sections.*章尾必须发生的改变/);
+      expect(() => parseMemo(makeRaw({ body }), 12, false)).toThrow(
+        /empty sections.*章尾必须发生的改变/,
+      );
     });
 
     it("accepts a sparse-but-non-empty memo (Phase 6 sparse-memo principle)", () => {
@@ -227,21 +226,14 @@ describe("parseMemo", () => {
     it('accepts "## 不要做" with very short content like "无" / "N/A" (relaxed threshold)', () => {
       // The "do not" section uses a 5-char minimum so books with no extra
       // chapter-level prohibitions can say so without inventing filler.
-      const body = SECTIONS.replace(
-        /## 不要做\n[\s\S]*$/,
-        "## 不要做\n无。",
-      );
+      const body = SECTIONS.replace(/## 不要做\n[\s\S]*$/, "## 不要做\n无。");
       const memo = parseMemo(makeRaw({ body }), 12, false);
       expect(memo.body).toContain("无。");
     });
 
     it("rejects empty '## 不要做' even with the relaxed threshold", () => {
-      const body = SECTIONS.replace(
-        /## 不要做\n[\s\S]*$/,
-        "## 不要做\n",
-      );
-      expect(() => parseMemo(makeRaw({ body }), 12, false))
-        .toThrow(/empty sections.*不要做/);
+      const body = SECTIONS.replace(/## 不要做\n[\s\S]*$/, "## 不要做\n");
+      expect(() => parseMemo(makeRaw({ body }), 12, false)).toThrow(/empty sections.*不要做/);
     });
   });
 });

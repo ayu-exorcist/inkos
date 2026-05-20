@@ -1,6 +1,13 @@
 import { Command } from "commander";
 import { PipelineRunner } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 
 export const auditCommand = new Command("audit")
   .description("Audit a chapter for continuity issues")
@@ -25,7 +32,8 @@ export const auditCommand = new Command("audit")
 
       const pipeline = new PipelineRunner(buildPipelineConfig(config, root));
 
-      if (!opts.json) log(`Auditing "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"}...`);
+      if (!opts.json)
+        log(`Auditing "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"}...`);
 
       const result = await pipeline.auditDraft(bookId, chapterNumber);
 

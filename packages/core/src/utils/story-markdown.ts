@@ -11,28 +11,35 @@ export function renderSummarySnapshot(
 ): string {
   if (summaries.length === 0) return "- none";
 
-  const headers = language === "en"
-    ? [
-      "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-    ]
-    : [
-      "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-    ];
+  const headers =
+    language === "en"
+      ? [
+          "| chapter | title | characters | events | stateChanges | hookActivity | mood | chapterType |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+      : [
+          "| 章节 | 标题 | 出场人物 | 关键事件 | 状态变化 | 伏笔动态 | 情绪基调 | 章节类型 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ];
 
   return [
     ...headers,
-    ...summaries.map((summary) => [
-      summary.chapter,
-      summary.title,
-      summary.characters,
-      summary.events,
-      summary.stateChanges,
-      summary.hookActivity,
-      summary.mood,
-      summary.chapterType,
-    ].map(escapeTableCell).join(" | ")).map((row) => `| ${row} |`),
+    ...summaries
+      .map((summary) =>
+        [
+          summary.chapter,
+          summary.title,
+          summary.characters,
+          summary.events,
+          summary.stateChanges,
+          summary.hookActivity,
+          summary.mood,
+          summary.chapterType,
+        ]
+          .map(escapeTableCell)
+          .join(" | "),
+      )
+      .map((row) => `| ${row} |`),
   ].join("\n");
 }
 
@@ -42,33 +49,40 @@ export function renderHookSnapshot(
 ): string {
   if (hooks.length === 0) return "- none";
 
-  const headers = language === "en"
-    ? [
-      "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | payoff_timing | depends_on | pays_off_in_arc | core_hook | half_life | promoted | notes |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-    ]
-    : [
-      "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 上游依赖 | 回收卷 | 核心 | 半衰期 | 升级 | 备注 |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-    ];
+  const headers =
+    language === "en"
+      ? [
+          "| hook_id | start_chapter | type | status | last_advanced | expected_payoff | payoff_timing | depends_on | pays_off_in_arc | core_hook | half_life | promoted | notes |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+      : [
+          "| hook_id | 起始章节 | 类型 | 状态 | 最近推进 | 预期回收 | 回收节奏 | 上游依赖 | 回收卷 | 核心 | 半衰期 | 升级 | 备注 |",
+          "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ];
 
   return [
     ...headers,
-    ...hooks.map((hook) => [
-      hook.hookId,
-      hook.startChapter,
-      hook.type,
-      hook.status,
-      hook.lastAdvancedChapter,
-      hook.expectedPayoff,
-      localizeHookPayoffTiming(resolveHookPayoffTiming(hook), language),
-      renderDependsOnCell(hook.dependsOn ?? [], language),
-      hook.paysOffInArc ?? "",
-      renderCoreHookCell(hook.coreHook === true, language),
-      renderHalfLifeCell(hook.halfLifeChapters),
-      renderPromotedCell(hook.promoted, language),
-      hook.notes,
-    ].map((cell) => escapeTableCell(String(cell))).join(" | ")).map((row) => `| ${row} |`),
+    ...hooks
+      .map((hook) =>
+        [
+          hook.hookId,
+          hook.startChapter,
+          hook.type,
+          hook.status,
+          hook.lastAdvancedChapter,
+          hook.expectedPayoff,
+          localizeHookPayoffTiming(resolveHookPayoffTiming(hook), language),
+          renderDependsOnCell(hook.dependsOn ?? [], language),
+          hook.paysOffInArc ?? "",
+          renderCoreHookCell(hook.coreHook === true, language),
+          renderHalfLifeCell(hook.halfLifeChapters),
+          renderPromotedCell(hook.promoted, language),
+          hook.notes,
+        ]
+          .map((cell) => escapeTableCell(String(cell)))
+          .join(" | "),
+      )
+      .map((row) => `| ${row} |`),
   ].join("\n");
 }
 
@@ -94,8 +108,7 @@ function renderCoreHookCell(isCore: boolean, language: "zh" | "en"): string {
 }
 
 export function parseChapterSummariesMarkdown(markdown: string): StoredSummary[] {
-  const rows = parseMarkdownTableRows(markdown)
-    .filter((row) => /^\d+$/.test(row[0] ?? ""));
+  const rows = parseMarkdownTableRows(markdown).filter((row) => /^\d+$/.test(row[0] ?? ""));
 
   return rows.map((row) => ({
     chapter: parseInt(row[0]!, 10),
@@ -110,8 +123,9 @@ export function parseChapterSummariesMarkdown(markdown: string): StoredSummary[]
 }
 
 export function parsePendingHooksMarkdown(markdown: string): StoredHook[] {
-  const tableRows = parseMarkdownTableRows(markdown)
-    .filter((row) => (row[0] ?? "").toLowerCase() !== "hook_id");
+  const tableRows = parseMarkdownTableRows(markdown).filter(
+    (row) => (row[0] ?? "").toLowerCase() !== "hook_id",
+  );
 
   if (tableRows.length > 0) {
     return tableRows
@@ -137,10 +151,7 @@ export function parsePendingHooksMarkdown(markdown: string): StoredHook[] {
     }));
 }
 
-export function parseCurrentStateFacts(
-  markdown: string,
-  fallbackChapter: number,
-): Fact[] {
+export function parseCurrentStateFacts(markdown: string, fallbackChapter: number): Fact[] {
   const tableRows = parseMarkdownTableRows(markdown);
   const fieldValueRows = tableRows
     .filter((row) => row.length >= 2)
@@ -157,14 +168,16 @@ export function parseCurrentStateFacts(
         const value = (row[1] ?? "").trim();
         if (!label || !value) return [];
 
-        return [{
-          subject: inferFactSubject(label),
-          predicate: label,
-          object: value,
-          validFromChapter: stateChapter,
-          validUntilChapter: null,
-          sourceChapter: stateChapter,
-        }];
+        return [
+          {
+            subject: inferFactSubject(label),
+            predicate: label,
+            object: value,
+            validFromChapter: stateChapter,
+            validUntilChapter: null,
+            sourceChapter: stateChapter,
+          },
+        ];
       });
   }
 
@@ -191,7 +204,12 @@ export function parseMarkdownTableRows(markdown: string): string[][] {
     .map((line) => line.trim())
     .filter((line) => line.startsWith("|"))
     .filter((line) => !line.includes("---"))
-    .map((line) => line.split("|").slice(1, -1).map((cell) => cell.trim()))
+    .map((line) =>
+      line
+        .split("|")
+        .slice(1, -1)
+        .map((cell) => cell.trim()),
+    )
     .filter((cells) => cells.some(Boolean));
 }
 
@@ -298,7 +316,7 @@ function parsePendingHookRow(row: ReadonlyArray<string | undefined>): StoredHook
     dependsOn: parseDependsOn(row[7] ?? ""),
     paysOffInArc: (row[8] ?? "").trim(),
     coreHook: parseBooleanCell(row[9]),
-    halfLifeChapters: (phase7HalfLife || phase7Promoted) ? parseOptionalInt(row[10]) : undefined,
+    halfLifeChapters: phase7HalfLife || phase7Promoted ? parseOptionalInt(row[10]) : undefined,
     promoted: phase7Promoted ? parseOptionalBooleanCell(row[11]) : undefined,
   };
 }

@@ -28,7 +28,9 @@ export function LogViewer({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span className="text-foreground">{t("logs.title")}</span>
       </div>
@@ -55,13 +57,13 @@ export function LogViewer({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
                     </span>
                   )}
                   {entry.level && (
-                    <span className={`shrink-0 w-12 uppercase ${LEVEL_COLORS[entry.level] ?? "text-muted-foreground"}`}>
+                    <span
+                      className={`shrink-0 w-12 uppercase ${LEVEL_COLORS[entry.level] ?? "text-muted-foreground"}`}
+                    >
                       {entry.level}
                     </span>
                   )}
-                  {entry.tag && (
-                    <span className="text-primary/70 shrink-0">[{entry.tag}]</span>
-                  )}
+                  {entry.tag && <span className="text-primary/70 shrink-0">[{entry.tag}]</span>}
                   <span className="text-foreground/80">{entry.message}</span>
                 </div>
               ))}
@@ -74,9 +76,7 @@ export function LogViewer({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        {t("logs.showingRecent")}
-      </p>
+      <p className="text-sm text-muted-foreground">{t("logs.showingRecent")}</p>
     </div>
   );
 }

@@ -5,7 +5,7 @@ describe("analyzeStyle", () => {
   const sampleText = [
     "陈风一脚踩碎了脚下的石板。碎石飞溅，打在旁边的墙壁上发出清脆的声响。他低头看了一眼，嘴角微微上扬。",
     "",
-    "\"谁？\"他低喝一声，手已经按上了腰间的刀柄。指尖触到冰凉的金属，心跳稍微稳了一些。",
+    '"谁？"他低喝一声，手已经按上了腰间的刀柄。指尖触到冰凉的金属，心跳稍微稳了一些。',
     "",
     "黑暗中，一双眼睛正盯着他。那目光冰冷得像冬夜的寒风，带着审视和一丝不易察觉的警惕。来者不善。但陈风并不怕。他经历过比这更恶劣的处境。比这更危险的对手。他攥紧了刀柄，朝着那双眼睛走了过去。脚步声在空旷的巷子里回荡。",
   ].join("\n");
@@ -20,7 +20,9 @@ describe("analyzeStyle", () => {
     const profile = analyzeStyle(sampleText);
     expect(profile.avgParagraphLength).toBeGreaterThan(0);
     expect(profile.paragraphLengthRange.min).toBeGreaterThan(0);
-    expect(profile.paragraphLengthRange.max).toBeGreaterThanOrEqual(profile.paragraphLengthRange.min);
+    expect(profile.paragraphLengthRange.max).toBeGreaterThanOrEqual(
+      profile.paragraphLengthRange.min,
+    );
   });
 
   it("calculates vocabulary diversity", () => {

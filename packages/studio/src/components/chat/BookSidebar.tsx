@@ -46,7 +46,9 @@ function ArtifactView({ bookId }: { readonly bookId: string }) {
   const isChapter = artifactChapter !== null;
   const label = isChapter
     ? `第 ${artifactChapter} 章`
-    : artifactFile ? FOUNDATION_LABELS[artifactFile] ?? artifactFile : "";
+    : artifactFile
+      ? (FOUNDATION_LABELS[artifactFile] ?? artifactFile)
+      : "";
 
   useEffect(() => {
     setEditing(false);
@@ -145,7 +147,9 @@ function ArtifactView({ bookId }: { readonly bookId: string }) {
           />
         ) : (
           <div className="px-4 py-3 text-sm leading-7">
-            <Streamdown plugins={streamdownPlugins} mode="static">{content}</Streamdown>
+            <Streamdown plugins={streamdownPlugins} mode="static">
+              {content}
+            </Streamdown>
           </div>
         )}
       </div>
@@ -206,7 +210,10 @@ const SIDEBAR_MIN = 280;
 const SIDEBAR_MAX = 700;
 
 function defaultSidebarWidth(): number {
-  return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, Math.round(window.innerWidth * SIDEBAR_RATIO)));
+  return Math.min(
+    SIDEBAR_MAX,
+    Math.max(SIDEBAR_MIN, Math.round(window.innerWidth * SIDEBAR_RATIO)),
+  );
 }
 
 export function BookSidebar({ bookId, theme, t, sse }: BookSidebarProps) {
@@ -214,24 +221,27 @@ export function BookSidebar({ bookId, theme, t, sse }: BookSidebarProps) {
   const [width, setWidth] = useState(defaultSidebarWidth);
   const dragging = useRef(false);
 
-  const onMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    dragging.current = true;
-    const startX = e.clientX;
-    const startW = width;
-    const onMove = (ev: MouseEvent) => {
-      if (!dragging.current) return;
-      const delta = startX - ev.clientX;
-      setWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startW + delta)));
-    };
-    const onUp = () => {
-      dragging.current = false;
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  }, [width]);
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      dragging.current = true;
+      const startX = e.clientX;
+      const startW = width;
+      const onMove = (ev: MouseEvent) => {
+        if (!dragging.current) return;
+        const delta = startX - ev.clientX;
+        setWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startW + delta)));
+      };
+      const onUp = () => {
+        dragging.current = false;
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    },
+    [width],
+  );
 
   return (
     <aside
@@ -274,7 +284,10 @@ export function BookSidebarToggle({ bookId, theme, t, sse }: BookSidebarProps) {
           >
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/20">
               <span className="text-xs font-medium text-muted-foreground">书籍信息</span>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
+              <button
+                onClick={() => setOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <PanelRightClose size={14} />
               </button>
             </div>

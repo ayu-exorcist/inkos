@@ -31,16 +31,16 @@ function parseCharacterMatrix(md: string): CharacterInfo[] {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  "主角": "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  "反派": "bg-red-500/15 text-red-600 dark:text-red-400",
-  "盟友": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  "配角": "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  "提及": "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
-  "protagonist": "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  "antagonist": "bg-red-500/15 text-red-600 dark:text-red-400",
-  "ally": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-  "minor": "bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  "mentioned": "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
+  主角: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  反派: "bg-red-500/15 text-red-600 dark:text-red-400",
+  盟友: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  配角: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  提及: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
+  protagonist: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  antagonist: "bg-red-500/15 text-red-600 dark:text-red-400",
+  ally: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  minor: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  mentioned: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
 };
 
 function getRoleColor(role: string): string {
@@ -68,19 +68,31 @@ function CharacterCard({ char }: { readonly char: CharacterInfo }) {
           {char.name}
         </span>
         {role && (
-          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full shrink-0", getRoleColor(role))}>
+          <span
+            className={cn("text-[10px] px-1.5 py-0.5 rounded-full shrink-0", getRoleColor(role))}
+          >
             {role.split("/")[0].trim()}
           </span>
         )}
-        <ChevronDown size={12} className={cn("text-muted-foreground/50 transition-transform shrink-0", expanded && "rotate-180")} />
+        <ChevronDown
+          size={12}
+          className={cn(
+            "text-muted-foreground/50 transition-transform shrink-0",
+            expanded && "rotate-180",
+          )}
+        />
       </button>
       {expanded && (
         <div className="px-2.5 pb-2.5 space-y-1">
           {tags && (
-            <p className="text-xs text-muted-foreground"><span className="text-muted-foreground/60">标签</span> {tags}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground/60">标签</span> {tags}
+            </p>
           )}
           {current && (
-            <p className="text-xs text-muted-foreground"><span className="text-muted-foreground/60">当前</span> {current}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground/60">当前</span> {current}
+            </p>
           )}
           {Object.entries(char.fields)
             .filter(([k]) => !["定位", "Role", "标签", "Tags", "当前", "Current"].includes(k))

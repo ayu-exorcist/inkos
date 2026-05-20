@@ -52,9 +52,10 @@ export function filterModelGroups(
   return groupedModels
     .map((group) => ({
       ...group,
-      models: group.models.filter((model) =>
-        (model.name ?? model.id).toLowerCase().includes(query)
-        || group.label.toLowerCase().includes(query),
+      models: group.models.filter(
+        (model) =>
+          (model.name ?? model.id).toLowerCase().includes(query) ||
+          group.label.toLowerCase().includes(query),
       ),
     }))
     .filter((group) => group.models.length > 0);
@@ -66,12 +67,14 @@ export function pickModelSelection(
   selectedService: string | null,
   preference?: ChatPageModelPreference | null,
 ): { model: string; service: string } | null {
-  const selectedStillAvailable = selectedModel && selectedService
-    ? groupedModels.some((group) =>
-        group.service === selectedService
-        && group.models.some((model) => model.id === selectedModel),
-      )
-    : false;
+  const selectedStillAvailable =
+    selectedModel && selectedService
+      ? groupedModels.some(
+          (group) =>
+            group.service === selectedService &&
+            group.models.some((model) => model.id === selectedModel),
+        )
+      : false;
   if (selectedStillAvailable) return null;
 
   const preferredService = preference?.service?.trim();
@@ -106,7 +109,9 @@ export function pickModelSelection(
 export function pickProjectChatSessionId(
   sessions: ReadonlyArray<ChatPageSessionSummary>,
 ): string | null {
-  return sessions.find((session) => session.messageCount > 0)?.sessionId
-    ?? sessions[0]?.sessionId
-    ?? null;
+  return (
+    sessions.find((session) => session.messageCount > 0)?.sessionId ??
+    sessions[0]?.sessionId ??
+    null
+  );
 }

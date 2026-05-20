@@ -48,6 +48,7 @@ export async function inspectNodeRuntimePinFiles(root: string): Promise<NodeRunt
         missing.push(file);
       }
     } catch {
+      // failure expected, safe to ignore
       missing.push(file);
     }
   }
@@ -76,6 +77,7 @@ export async function ensureNodeRuntimePinFiles(root: string): Promise<NodeRunti
     try {
       content = await readFile(path, "utf-8");
     } catch {
+      // failure expected, safe to ignore
       content = "";
     }
 
@@ -102,6 +104,7 @@ function hasNodeSqliteBuiltin(): boolean {
     require("node:sqlite");
     return true;
   } catch {
+    // failure expected, safe to ignore
     return false;
   }
 }

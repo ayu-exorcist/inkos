@@ -21,7 +21,12 @@ export const AI360: InkosEndpoint = {
     { id: "360zhinao3-o1.5", maxOutput: 4096, contextWindowTokens: 128000, enabled: true },
     { id: "360zhinao2-o1.5", maxOutput: 4096, contextWindowTokens: 128000 },
     { id: "360zhinao2-o1", maxOutput: 4096, contextWindowTokens: 128000 },
-    { id: "360zhinao-pro-32k-thinking-vision", maxOutput: 4096, contextWindowTokens: 32000, enabled: true },
+    {
+      id: "360zhinao-pro-32k-thinking-vision",
+      maxOutput: 4096,
+      contextWindowTokens: 32000,
+      enabled: true,
+    },
     { id: "360zhinao-turbo", maxOutput: 4096, contextWindowTokens: 32000, enabled: true },
     { id: "360zhinao-turbo-qwen-plus", maxOutput: 4096, contextWindowTokens: 32000 },
     { id: "360gpt2-o1", maxOutput: 4096, contextWindowTokens: 128000 },

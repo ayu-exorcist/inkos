@@ -34,7 +34,8 @@ function fakeClient(): LLMClient {
 
 describe("public short-fiction chain", () => {
   it("parses a complete tagged short-fiction draft", () => {
-    const draft = parseShortFictionBatchDraft(`
+    const draft = parseShortFictionBatchDraft(
+      `
 === SHORT_FICTION_TITLE ===
 我离婚后，全家悔疯了
 === SHORT_FICTION_OPENING_HOOK ===
@@ -47,7 +48,9 @@ describe("public short-fiction chain", () => {
 三年前那张转账单
 === CHAPTER 2 CONTENT ===
 第二天早上，家庭群里全是骂我的语音。我没有回，只把三年前的转账单发给律师。十分钟后，丈夫第一次打电话求我回家谈谈。
-`, { expectedChapters: 2 });
+`,
+      { expectedChapters: 2 },
+    );
 
     expect(draft.storyTitle).toBe("我离婚后，全家悔疯了");
     expect(draft.openingHook).toContain("离婚协议");
@@ -58,7 +61,8 @@ describe("public short-fiction chain", () => {
   });
 
   it("recovers chapter content when a model repeats the title tag instead of the content tag", () => {
-    const draft = parseShortFictionBatchDraft(`
+    const draft = parseShortFictionBatchDraft(
+      `
 === SHORT_FICTION_TITLE ===
 离婚协议签好那天，我甩出十三页证据清单
 === CHAPTER 1 TITLE ===
@@ -76,7 +80,9 @@ describe("public short-fiction chain", () => {
 === CHAPTER 3 TITLE ===
 凌晨三点，陆景琛踹开老宅院门，举着铁棍砸碎电视。
 林晚坐在闺蜜家，把早就准备好的直播链接发给了董事会。
-`, { expectedChapters: 3 });
+`,
+      { expectedChapters: 3 },
+    );
 
     expect(draft.chapters[1]?.title).toBe("她逼小三亲自递上了最后的刀");
     expect(draft.chapters[1]?.content).toContain("陈磊的慌张");
@@ -85,17 +91,20 @@ describe("public short-fiction chain", () => {
   });
 
   it("uses the previous draft as assistant context for the second writer pass", async () => {
-    const firstDraft = parseShortFictionBatchDraft(`
+    const firstDraft = parseShortFictionBatchDraft(
+      `
 === SHORT_FICTION_TITLE ===
 初稿标题
 === CHAPTER 1 TITLE ===
 旧章
 === CHAPTER 1 CONTENT ===
 旧正文有一处时间线问题。
-`, { expectedChapters: 1 });
+`,
+      { expectedChapters: 1 },
+    );
 
     const chatSpy = vi
-      .spyOn(ShortFictionDraftReviserAgent.prototype as never, "chat" as never)
+      .spyOn(ShortFictionDraftReviserAgent.prototype as any, "chat")
       .mockResolvedValue({
         content: `
 === SHORT_FICTION_TITLE ===
@@ -124,7 +133,12 @@ describe("public short-fiction chain", () => {
     });
 
     const messages = chatSpy.mock.calls[0]?.[0] as ReadonlyArray<{ role: string; content: string }>;
-    expect(messages.map((message) => message.role)).toEqual(["system", "user", "assistant", "user"]);
+    expect(messages.map((message) => message.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "user",
+    ]);
     expect(messages[2]?.content).toContain("旧正文有一处时间线问题");
     expect(messages[3]?.content).toContain("时间线不成立");
     expect(revised.storyTitle).toBe("新稿标题");
@@ -135,24 +149,32 @@ describe("public short-fiction chain", () => {
   it("resolves cover generation from project cover config and stored cover secret", async () => {
     const root = await mkdtemp(join(tmpdir(), "inkos-short-cover-"));
     try {
-      await writeFile(join(root, "inkos.json"), JSON.stringify({
-        name: "cover-test",
-        version: "0.1.0",
-        language: "zh",
-        llm: {
-          provider: "openai",
-          service: "kkaiapi",
-          configSource: "studio",
-          baseUrl: "https://api.kkaiapi.com/v1",
-          apiKey: "",
-          model: "deepseek-v4-flash",
-          cover: {
-            service: "kkaiapi",
-            model: "gpt-image-2",
+      await writeFile(
+        join(root, "inkos.json"),
+        JSON.stringify(
+          {
+            name: "cover-test",
+            version: "0.1.0",
+            language: "zh",
+            llm: {
+              provider: "openai",
+              service: "kkaiapi",
+              configSource: "studio",
+              baseUrl: "https://api.kkaiapi.com/v1",
+              apiKey: "",
+              model: "deepseek-v4-flash",
+              cover: {
+                service: "kkaiapi",
+                model: "gpt-image-2",
+              },
+            },
+            notify: [],
           },
-        },
-        notify: [],
-      }, null, 2), "utf-8");
+          null,
+          2,
+        ),
+        "utf-8",
+      );
       await saveSecrets(root, {
         services: {
           "cover:kkaiapi": { apiKey: "sk-cover" },
@@ -171,13 +193,17 @@ describe("public short-fiction chain", () => {
   });
 
   it("extracts OpenAI-compatible image generation URLs and base64 payloads", () => {
-    expect(extractImagesGenerationImage({
-      data: [{ url: "https://api.kkaiapi.com/files/img_abc123.png" }],
-    })).toEqual({ url: "https://api.kkaiapi.com/files/img_abc123.png" });
+    expect(
+      extractImagesGenerationImage({
+        data: [{ url: "https://api.kkaiapi.com/files/img_abc123.png" }],
+      }),
+    ).toEqual({ url: "https://api.kkaiapi.com/files/img_abc123.png" });
 
-    expect(extractImagesGenerationImage({
-      data: [{ b64_json: "ZmFrZQ==" }],
-    })).toEqual({ base64: "ZmFrZQ==", extension: "png" });
+    expect(
+      extractImagesGenerationImage({
+        data: [{ b64_json: "ZmFrZQ==" }],
+      }),
+    ).toEqual({ base64: "ZmFrZQ==", extension: "png" });
   });
 
   it("extracts Gemini inline image data from generateContent responses", () => {
@@ -185,10 +211,7 @@ describe("public short-fiction chain", () => {
       candidates: [
         {
           content: {
-            parts: [
-              { text: "ok" },
-              { inlineData: { mimeType: "image/jpeg", data: "ZmFrZQ==" } },
-            ],
+            parts: [{ text: "ok" }, { inlineData: { mimeType: "image/jpeg", data: "ZmFrZQ==" } }],
           },
         },
       ],
@@ -202,9 +225,15 @@ describe("public short-fiction chain", () => {
     const originalFetch = globalThis.fetch;
     process.env.INKOS_TEST_COVER_KEY = "sk-cover";
     try {
-      const fetchMock = vi.fn(async () => new Response(JSON.stringify({
-        data: [{ b64_json: "ZmFrZQ==" }],
-      }), { status: 200, headers: { "content-type": "application/json" } }));
+      const fetchMock = vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              data: [{ b64_json: "ZmFrZQ==" }],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+      );
       globalThis.fetch = fetchMock as never;
 
       const result = await generateShortFictionCover({
@@ -221,10 +250,12 @@ describe("public short-fiction chain", () => {
 
       expect(result.coverPromptPath).toBe("covers/demo/cover-prompt.md");
       expect(result.coverImagePath).toBe("covers/demo/cover.png");
-      await expect(readFile(join(root, "covers", "demo", "cover-prompt.md"), "utf-8"))
-        .resolves.toContain("离婚协议他递了三年");
-      await expect(readFile(join(root, "covers", "demo", "cover.png")))
-        .resolves.toEqual(Buffer.from("fake"));
+      await expect(
+        readFile(join(root, "covers", "demo", "cover-prompt.md"), "utf-8"),
+      ).resolves.toContain("离婚协议他递了三年");
+      await expect(readFile(join(root, "covers", "demo", "cover.png"))).resolves.toEqual(
+        Buffer.from("fake"),
+      );
       expect(fetchMock).toHaveBeenCalledWith(
         "https://images.example.test/v1/images/generations",
         expect.objectContaining({

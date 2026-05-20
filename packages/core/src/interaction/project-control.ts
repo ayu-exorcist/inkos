@@ -22,9 +22,10 @@ async function processProjectInteractionRequestInternal(params: {
   const session = await loadProjectSession(params.projectRoot);
   const restoredBookId = await resolveSessionActiveBook(params.projectRoot, session);
   const resolvedBookId = params.activeBookId ?? localizedRequest.bookId ?? restoredBookId;
-  const sessionWithBook = resolvedBookId && session.activeBookId !== resolvedBookId
-    ? { ...session, activeBookId: resolvedBookId }
-    : session;
+  const sessionWithBook =
+    resolvedBookId && session.activeBookId !== resolvedBookId
+      ? { ...session, activeBookId: resolvedBookId }
+      : session;
 
   try {
     const result = await runInteractionRequest({
@@ -39,22 +40,28 @@ async function processProjectInteractionRequestInternal(params: {
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    const failedSession = appendInteractionEvent({
-      ...sessionWithBook,
-      currentExecution: {
+    const failedSession = appendInteractionEvent(
+      {
+        ...sessionWithBook,
+        currentExecution: {
+          status: "failed",
+          bookId: sessionWithBook.activeBookId,
+          chapterNumber: sessionWithBook.activeChapterNumber,
+          stageLabel:
+            localizedRequest.language === "en"
+              ? `failed ${localizedRequest.intent}`
+              : `执行失败：${localizedRequest.intent}`,
+        },
+      },
+      {
+        kind: "task.failed",
+        timestamp: Date.now(),
         status: "failed",
         bookId: sessionWithBook.activeBookId,
         chapterNumber: sessionWithBook.activeChapterNumber,
-        stageLabel: localizedRequest.language === "en" ? `failed ${localizedRequest.intent}` : `执行失败：${localizedRequest.intent}`,
+        detail,
       },
-    }, {
-      kind: "task.failed",
-      timestamp: Date.now(),
-      status: "failed",
-      bookId: sessionWithBook.activeBookId,
-      chapterNumber: sessionWithBook.activeChapterNumber,
-      detail,
-    });
+    );
     await persistProjectSession(params.projectRoot, failedSession);
     throw error;
   }
@@ -70,18 +77,22 @@ export async function processProjectInteractionInput(params: {
   const session = await loadProjectSession(params.projectRoot);
   const restoredBookId = await resolveSessionActiveBook(params.projectRoot, session);
   const resolvedBookId = params.activeBookId ?? restoredBookId;
-  const sessionWithBook = resolvedBookId && session.activeBookId !== resolvedBookId
-    ? { ...session, activeBookId: resolvedBookId }
-    : session;
+  const sessionWithBook =
+    resolvedBookId && session.activeBookId !== resolvedBookId
+      ? { ...session, activeBookId: resolvedBookId }
+      : session;
   const userSession = appendInteractionMessage(sessionWithBook, {
     role: "user",
     content: params.input,
     timestamp: Date.now(),
   });
-  const request = attachRequestLanguage(routeNaturalLanguageIntent(params.input, {
-    activeBookId: userSession.activeBookId,
-    hasCreationDraft: Boolean(userSession.creationDraft),
-  }), requestLanguage);
+  const request = attachRequestLanguage(
+    routeNaturalLanguageIntent(params.input, {
+      activeBookId: userSession.activeBookId,
+      hasCreationDraft: Boolean(userSession.creationDraft),
+    }),
+    requestLanguage,
+  );
   try {
     const result = await runInteractionRequest({
       session: userSession,
@@ -95,22 +106,26 @@ export async function processProjectInteractionInput(params: {
     };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    const failedSession = appendInteractionEvent({
-      ...userSession,
-      currentExecution: {
+    const failedSession = appendInteractionEvent(
+      {
+        ...userSession,
+        currentExecution: {
+          status: "failed",
+          bookId: userSession.activeBookId,
+          chapterNumber: userSession.activeChapterNumber,
+          stageLabel:
+            request.language === "en" ? `failed ${request.intent}` : `执行失败：${request.intent}`,
+        },
+      },
+      {
+        kind: "task.failed",
+        timestamp: Date.now(),
         status: "failed",
         bookId: userSession.activeBookId,
         chapterNumber: userSession.activeChapterNumber,
-        stageLabel: request.language === "en" ? `failed ${request.intent}` : `执行失败：${request.intent}`,
+        detail,
       },
-    }, {
-      kind: "task.failed",
-      timestamp: Date.now(),
-      status: "failed",
-      bookId: userSession.activeBookId,
-      chapterNumber: userSession.activeChapterNumber,
-      detail,
-    });
+    );
     await persistProjectSession(params.projectRoot, failedSession);
     throw error;
   }
@@ -139,12 +154,15 @@ function attachRequestLanguage(
   };
 }
 
-async function detectProjectInteractionLanguage(projectRoot: string): Promise<"zh" | "en" | undefined> {
+async function detectProjectInteractionLanguage(
+  projectRoot: string,
+): Promise<"zh" | "en" | undefined> {
   try {
     const raw = await readFile(join(projectRoot, "inkos.json"), "utf-8");
     const parsed = JSON.parse(raw) as { language?: string };
     return parsed.language === "en" ? "en" : parsed.language === "zh" ? "zh" : undefined;
   } catch {
+    // failure expected, safe to ignore
     return undefined;
   }
 }

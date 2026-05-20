@@ -46,21 +46,25 @@ export async function persistChapterArtifacts(params: {
     wordCount: params.finalWordCount,
     createdAt: now,
     updatedAt: now,
-    auditIssues: params.auditResult.issues.map((issue) => `[${issue.severity}] ${issue.description}`),
+    auditIssues: params.auditResult.issues.map(
+      (issue) => `[${issue.severity}] ${issue.description}`,
+    ),
     lengthWarnings: [...params.lengthWarnings],
-    reviewNote: params.status === "state-degraded"
-      ? buildStateDegradedReviewNote(
-          params.auditResult.passed ? "ready-for-review" : "audit-failed",
-          params.degradedIssues,
-        )
-      : undefined,
+    reviewNote:
+      params.status === "state-degraded"
+        ? buildStateDegradedReviewNote(
+            params.auditResult.passed ? "ready-for-review" : "audit-failed",
+            params.degradedIssues,
+          )
+        : undefined,
     lengthTelemetry: params.lengthTelemetry,
     tokenUsage: params.tokenUsage,
   };
   const existingIdx = existingIndex.findIndex((e) => e.number === params.chapterNumber);
-  const updatedIndex = existingIdx >= 0
-    ? existingIndex.map((e, i) => i === existingIdx ? { ...entry, createdAt: e.createdAt } : e)
-    : [...existingIndex, entry];
+  const updatedIndex =
+    existingIdx >= 0
+      ? existingIndex.map((e, i) => (i === existingIdx ? { ...entry, createdAt: e.createdAt } : e))
+      : [...existingIndex, entry];
   await params.saveChapterIndex(updatedIndex);
   await params.markBookActiveIfNeeded();
 

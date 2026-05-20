@@ -16,10 +16,15 @@ export interface SearchResult {
  * Requires TAVILY_API_KEY environment variable.
  * Throws if key is not set — caller should catch and fall back to regular chat.
  */
-export async function searchWeb(query: string, maxResults = 5): Promise<ReadonlyArray<SearchResult>> {
+export async function searchWeb(
+  query: string,
+  maxResults = 5,
+): Promise<ReadonlyArray<SearchResult>> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
-    throw new Error("TAVILY_API_KEY not set. Set this env var to enable web search, or use OpenAI which has native search.");
+    throw new Error(
+      "TAVILY_API_KEY not set. Set this env var to enable web search, or use OpenAI which has native search.",
+    );
   }
 
   const res = await fetch("https://api.tavily.com/search", {
@@ -40,7 +45,9 @@ export async function searchWeb(query: string, maxResults = 5): Promise<Readonly
     throw new Error(`Tavily search failed: ${res.status} ${await res.text().catch(() => "")}`);
   }
 
-  const data = await res.json() as { results?: Array<{ title?: string; url?: string; content?: string }> };
+  const data = (await res.json()) as {
+    results?: Array<{ title?: string; url?: string; content?: string }>;
+  };
   return (data.results ?? []).map((r) => ({
     title: r.title ?? "",
     url: r.url ?? "",
@@ -56,7 +63,7 @@ export async function fetchUrl(url: string, maxChars = 8000): Promise<string> {
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      "Accept": "text/html, application/json, text/plain",
+      Accept: "text/html, application/json, text/plain",
     },
     signal: AbortSignal.timeout(15000),
   });

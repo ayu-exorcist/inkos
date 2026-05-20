@@ -31,7 +31,13 @@ interface Nav {
   toDashboard: () => void;
 }
 
-export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
+export function ChapterReader({
+  bookId,
+  chapterNumber,
+  nav,
+  theme,
+  t,
+}: {
   bookId: string;
   chapterNumber: number;
   nav: Nav;
@@ -74,14 +80,20 @@ export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
     }
   };
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center py-32 space-y-4">
-      <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-      <span className="text-sm text-muted-foreground">{t("reader.openingManuscript")}</span>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <span className="text-sm text-muted-foreground">{t("reader.openingManuscript")}</span>
+      </div>
+    );
 
-  if (error) return <div className="text-destructive p-8 bg-destructive/5 rounded-xl border border-destructive/20">Error: {error}</div>;
+  if (error)
+    return (
+      <div className="text-destructive p-8 bg-destructive/5 rounded-xl border border-destructive/20">
+        Error: {error}
+      </div>
+    );
   if (!data) return null;
 
   // Split markdown content into title and body
@@ -155,7 +167,11 @@ export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-primary text-primary-foreground rounded-xl hover:scale-105 active:scale-95 transition-all shadow-sm disabled:opacity-50"
               >
-                {saving ? <div className="w-3.5 h-3.5 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" /> : <Save size={14} />}
+                {saving ? (
+                  <div className="w-3.5 h-3.5 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
                 {saving ? t("book.saving") : t("book.save")}
               </button>
               <button
@@ -211,7 +227,7 @@ export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
           <div className="mt-8 flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
             <span>{t("reader.manuscriptPage")}</span>
             <span className="text-border">·</span>
-            <span>{chapterNumber.toString().padStart(2, '0')}</span>
+            <span>{chapterNumber.toString().padStart(2, "0")}</span>
           </div>
         </header>
 
@@ -225,7 +241,10 @@ export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
         ) : (
           <article className="prose prose-zinc dark:prose-invert max-w-none">
             {paragraphs.map((para, i) => (
-              <p key={i} className="font-serif text-lg md:text-xl leading-[1.8] text-foreground/90 mb-8 first-letter:text-2xl first-letter:font-bold first-letter:text-primary/40">
+              <p
+                key={i}
+                className="font-serif text-lg md:text-xl leading-[1.8] text-foreground/90 mb-8 first-letter:text-2xl first-letter:font-bold first-letter:text-primary/40"
+              >
                 {para}
               </p>
             ))}
@@ -234,16 +253,22 @@ export function ChapterReader({ bookId, chapterNumber, nav, theme, t }: {
 
         <footer className="mt-24 pt-12 border-t border-border/20 flex flex-col items-center gap-6 text-center">
           <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
-               <Type size={14} className="text-primary/60" />
-               <span>{body.length.toLocaleString()} {t("reader.characters")}</span>
-             </div>
-             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
-               <Clock size={14} className="text-primary/60" />
-               <span>{Math.ceil(body.length / 500)} {t("reader.minRead")}</span>
-             </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
+              <Type size={14} className="text-primary/60" />
+              <span>
+                {body.length.toLocaleString()} {t("reader.characters")}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50">
+              <Clock size={14} className="text-primary/60" />
+              <span>
+                {Math.ceil(body.length / 500)} {t("reader.minRead")}
+              </span>
+            </div>
           </div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">{t("reader.endOfChapter")}</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">
+            {t("reader.endOfChapter")}
+          </p>
         </footer>
       </div>
 

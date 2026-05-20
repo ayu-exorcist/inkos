@@ -34,20 +34,25 @@ export class FoundationReviewerAgent extends BaseAgent {
       ? `\n## 原作风格参照\n${params.styleGuide.slice(0, 2000)}\n`
       : "";
 
-    const dimensions = params.mode === "original"
-      ? this.originalDimensions(params.language)
-      : this.derivativeDimensions(params.language, params.mode);
+    const dimensions =
+      params.mode === "original"
+        ? this.originalDimensions(params.language)
+        : this.derivativeDimensions(params.language, params.mode);
 
-    const systemPrompt = params.language === "en"
-      ? this.buildEnglishReviewPrompt(dimensions, canonBlock, styleBlock)
-      : this.buildChineseReviewPrompt(dimensions, canonBlock, styleBlock);
+    const systemPrompt =
+      params.language === "en"
+        ? this.buildEnglishReviewPrompt(dimensions, canonBlock, styleBlock)
+        : this.buildChineseReviewPrompt(dimensions, canonBlock, styleBlock);
 
     const userPrompt = this.buildFoundationExcerpt(params.foundation, params.language);
 
-    const response = await this.chat([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ], { temperature: 0.3 });
+    const response = await this.chat(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      { temperature: 0.3 },
+    );
 
     return this.parseReviewResult(response.content, dimensions);
   }
@@ -70,10 +75,18 @@ export class FoundationReviewerAgent extends BaseAgent {
         ];
   }
 
-  private derivativeDimensions(language: "zh" | "en", mode: "fanfic" | "series"): ReadonlyArray<string> {
-    const modeLabel = mode === "fanfic"
-      ? (language === "en" ? "Fan Fiction" : "同人")
-      : (language === "en" ? "Series" : "系列");
+  private derivativeDimensions(
+    language: "zh" | "en",
+    mode: "fanfic" | "series",
+  ): ReadonlyArray<string> {
+    const modeLabel =
+      mode === "fanfic"
+        ? language === "en"
+          ? "Fan Fiction"
+          : "同人"
+        : language === "en"
+          ? "Series"
+          : "系列";
 
     return language === "en"
       ? [
@@ -174,7 +187,11 @@ Be strict. 80 means "ready to write without changes."`;
     content: string,
     dimensions: ReadonlyArray<string>,
   ): FoundationReviewResult {
-    const parsedDimensions: Array<{ readonly name: string; readonly score: number; readonly feedback: string }> = [];
+    const parsedDimensions: Array<{
+      readonly name: string;
+      readonly score: number;
+      readonly feedback: string;
+    }> = [];
 
     for (let i = 0; i < dimensions.length; i++) {
       const regex = new RegExp(
@@ -188,9 +205,12 @@ Be strict. 80 means "ready to write without changes."`;
       });
     }
 
-    const totalScore = parsedDimensions.length > 0
-      ? Math.round(parsedDimensions.reduce((sum, d) => sum + d.score, 0) / parsedDimensions.length)
-      : 0;
+    const totalScore =
+      parsedDimensions.length > 0
+        ? Math.round(
+            parsedDimensions.reduce((sum, d) => sum + d.score, 0) / parsedDimensions.length,
+          )
+        : 0;
     const anyBelowFloor = parsedDimensions.some((d) => d.score < DIMENSION_FLOOR);
     const passed = totalScore >= PASS_THRESHOLD && !anyBelowFloor;
 

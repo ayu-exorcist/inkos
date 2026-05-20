@@ -4,11 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createProjectSession, loadProjectSession } from "../tui/session-store.js";
 
-const {
-  runAgentSessionMock,
-  loadConfigMock,
-  buildPipelineConfigMock,
-} = vi.hoisted(() => ({
+const { runAgentSessionMock, loadConfigMock, buildPipelineConfigMock } = vi.hoisted(() => ({
   runAgentSessionMock: vi.fn(),
   loadConfigMock: vi.fn(),
   buildPipelineConfigMock: vi.fn(),
@@ -117,17 +113,21 @@ describe("tui agent session bridge", () => {
       ],
     );
     expect(result.responseText).toBe("这是 agent 直接返回的回复。");
-    expect(result.session.messages.at(-1)).toEqual(expect.objectContaining({
-      role: "assistant",
-      content: "这是 agent 直接返回的回复。",
-      thinking: "internal",
-    }));
+    expect(result.session.messages.at(-1)).toEqual(
+      expect.objectContaining({
+        role: "assistant",
+        content: "这是 agent 直接返回的回复。",
+        thinking: "internal",
+      }),
+    );
 
     const persisted = await loadProjectSession(projectRoot);
-    expect(persisted.messages.at(-1)).toEqual(expect.objectContaining({
-      role: "assistant",
-      content: "这是 agent 直接返回的回复。",
-    }));
+    expect(persisted.messages.at(-1)).toEqual(
+      expect.objectContaining({
+        role: "assistant",
+        content: "这是 agent 直接返回的回复。",
+      }),
+    );
   });
 
   it("stores the created book from architect tool results as the active TUI book", async () => {
@@ -166,7 +166,8 @@ describe("tui agent session bridge", () => {
 
     const result = await processTuiAgentInput({
       projectRoot,
-      input: "创建一本10章中文都市悬疑短篇，标题《雾灯小巷》，目标平台番茄，每章约1200字。信息足够，请直接建书。",
+      input:
+        "创建一本10章中文都市悬疑短篇，标题《雾灯小巷》，目标平台番茄，每章约1200字。信息足够，请直接建书。",
       session,
     });
 

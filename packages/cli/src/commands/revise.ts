@@ -1,12 +1,23 @@
 import { Command } from "commander";
 import { DEFAULT_REVISE_MODE, PipelineRunner, type ReviseMode } from "@actalk/inkos-core";
-import { loadConfig, buildPipelineConfig, findProjectRoot, resolveBookId, log, logError } from "../utils.js";
+import {
+  loadConfig,
+  buildPipelineConfig,
+  findProjectRoot,
+  resolveBookId,
+  log,
+  logError,
+} from "../utils.js";
 
 export const reviseCommand = new Command("revise")
   .description("Revise a chapter based on audit issues")
   .argument("[book-id]", "Book ID (auto-detected if only one book)")
   .argument("[chapter]", "Chapter number (defaults to latest)")
-  .option("--mode <mode>", "Revise mode: spot-fix, polish, rewrite, rework, anti-detect", DEFAULT_REVISE_MODE)
+  .option(
+    "--mode <mode>",
+    "Revise mode: spot-fix, polish, rewrite, rework, anti-detect",
+    DEFAULT_REVISE_MODE,
+  )
   .option("--brief <text>", "One-off creative guidance for this revise/rewrite only")
   .option("--json", "Output JSON")
   .action(async (bookIdArg: string | undefined, chapterStr: string | undefined, opts) => {
@@ -24,12 +35,17 @@ export const reviseCommand = new Command("revise")
         chapterNumber = chapterStr ? parseInt(chapterStr, 10) : undefined;
       }
 
-      const pipeline = new PipelineRunner(buildPipelineConfig(config, root, {
-        externalContext: opts.brief,
-      }));
+      const pipeline = new PipelineRunner(
+        buildPipelineConfig(config, root, {
+          externalContext: opts.brief,
+        }),
+      );
 
       const mode = opts.mode as ReviseMode;
-      if (!opts.json) log(`Revising "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"} [mode: ${mode}]...`);
+      if (!opts.json)
+        log(
+          `Revising "${bookId}"${chapterNumber ? ` chapter ${chapterNumber}` : " (latest)"} [mode: ${mode}]...`,
+        );
 
       const result = await pipeline.reviseDraft(bookId, chapterNumber, mode);
 

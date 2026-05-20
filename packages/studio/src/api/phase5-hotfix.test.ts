@@ -49,9 +49,15 @@ vi.mock("@actalk/inkos-core", async (importOriginal) => {
 
   class MockScheduler {
     constructor(_config: unknown) {}
-    async start(): Promise<void> { /* noop */ }
-    stop(): void { /* noop */ }
-    get isRunning(): boolean { return false; }
+    async start(): Promise<void> {
+      /* noop */
+    }
+    stop(): void {
+      /* noop */
+    }
+    get isRunning(): boolean {
+      return false;
+    }
   }
 
   // Real isNewLayoutBook — needs filesystem access for per-book detection
@@ -134,7 +140,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
   it("serves outline/story_frame.md content (Phase 5 authoritative path)", async () => {
     await writeFile(
       join(storyDir, "outline/story_frame.md"),
-      "---\nversion: \"1.0\"\n---\n\n# Frame prose",
+      '---\nversion: "1.0"\n---\n\n# Frame prose',
       "utf-8",
     );
     const { createStudioServer } = await import("./server.js");
@@ -144,7 +150,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
       "http://localhost/api/v1/books/hotfix-book/truth/outline/story_frame.md",
     );
     expect(response.status).toBe(200);
-    const body = await response.json() as { file: string; content: string; legacy?: boolean };
+    const body = (await response.json()) as { file: string; content: string; legacy?: boolean };
     expect(body.file).toBe("outline/story_frame.md");
     expect(body.content).toContain("# Frame prose");
     expect(body.legacy).toBeUndefined();
@@ -163,7 +169,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
       "http://localhost/api/v1/books/hotfix-book/truth/roles/主要角色/主角甲.md",
     );
     expect(response.status).toBe(200);
-    const body = await response.json() as { file: string; content: string };
+    const body = (await response.json()) as { file: string; content: string };
     expect(body.content).toContain("核心标签");
   });
 
@@ -178,7 +184,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
     for (const file of ["story_bible.md", "book_rules.md"]) {
       const res = await app.request(`http://localhost/api/v1/books/hotfix-book/truth/${file}`);
       expect(res.status).toBe(200);
-      const body = await res.json() as { legacy?: boolean };
+      const body = (await res.json()) as { legacy?: boolean };
       expect(body.legacy).toBe(true);
     }
   });
@@ -234,7 +240,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
       },
     );
     expect(response.status).toBe(400);
-    const body = await response.json() as { error: string };
+    const body = (await response.json()) as { error: string };
     expect(body.error).toMatch(/Legacy compat shim/);
   });
 
@@ -247,7 +253,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: "---\nversion: \"1.0\"\n---\n\n# Updated" }),
+        body: JSON.stringify({ content: '---\nversion: "1.0"\n---\n\n# Updated' }),
       },
     );
     expect(response.status).toBe(200);
@@ -260,11 +266,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
   // could read them but Studio could not surface them.
   it("serves roles/major/<name>.md (en locale)", async () => {
     await mkdir(join(storyDir, "roles/major"), { recursive: true });
-    await writeFile(
-      join(storyDir, "roles/major/Mara.md"),
-      "# Mara\nCore tag: stoic",
-      "utf-8",
-    );
+    await writeFile(join(storyDir, "roles/major/Mara.md"), "# Mara\nCore tag: stoic", "utf-8");
     const { createStudioServer } = await import("./server.js");
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
@@ -272,7 +274,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
       "http://localhost/api/v1/books/hotfix-book/truth/roles/major/Mara.md",
     );
     expect(response.status).toBe(200);
-    const body = await response.json() as { content: string };
+    const body = (await response.json()) as { content: string };
     expect(body.content).toContain("Core tag");
   });
 
@@ -305,7 +307,7 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
     const app = createStudioServer(cloneProjectConfig() as never, root);
 
     const response = await app.request("http://localhost/api/v1/books/hotfix-book/truth");
-    const body = await response.json() as { files: ReadonlyArray<{ name: string }> };
+    const body = (await response.json()) as { files: ReadonlyArray<{ name: string }> };
     const names = body.files.map((f) => f.name);
     expect(names).toContain("roles/major/Mara.md");
     expect(names).toContain("roles/minor/Kit.md");
@@ -323,7 +325,9 @@ describe("Phase 5 hotfix 1 — Studio truth file endpoints", () => {
 
     const response = await app.request("http://localhost/api/v1/books/hotfix-book/truth");
     expect(response.status).toBe(200);
-    const body = await response.json() as { files: ReadonlyArray<{ name: string; legacy?: true }> };
+    const body = (await response.json()) as {
+      files: ReadonlyArray<{ name: string; legacy?: true }>;
+    };
     const names = body.files.map((f) => f.name).sort();
     expect(names).toContain("outline/story_frame.md");
     expect(names).toContain("outline/volume_map.md");

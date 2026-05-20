@@ -3,13 +3,36 @@ name: Tower Climbing
 id: tower-climber
 language: en
 chapterTypes: ["Floor Challenge", "Progression", "Setup", "Transition", "Payoff"]
-fatigueWords: ["delve", "tapestry", "testament", "intricate", "pivotal", "vibrant", "comprehensive", "nuanced", "embark", "foster", "underscore", "bolstered", "crucial"]
+fatigueWords:
+  [
+    "delve",
+    "tapestry",
+    "testament",
+    "intricate",
+    "pivotal",
+    "vibrant",
+    "comprehensive",
+    "nuanced",
+    "embark",
+    "foster",
+    "underscore",
+    "bolstered",
+    "crucial",
+  ]
 numericalSystem: false
 powerScaling: true
 eraResearch: false
 pacingRule: "Each floor arc spans 3-8 chapters: introduction, exploration, confrontation, advancement. Difficulty must escalate visibly between floors."
-satisfactionTypes: ["Floor Cleared", "Boss Defeated", "New Ability Gained", "Floor Secret Discovered", "Rival Surpassed", "Summit Progress"]
-auditDimensions: [1,2,3,4,6,7,8,9,10,13,14,15,16,17,18,19,24,25,26]
+satisfactionTypes:
+  [
+    "Floor Cleared",
+    "Boss Defeated",
+    "New Ability Gained",
+    "Floor Secret Discovered",
+    "Rival Surpassed",
+    "Summit Progress",
+  ]
+auditDimensions: [1, 2, 3, 4, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 24, 25, 26]
 ---
 
 ## Genre Prohibitions

@@ -40,8 +40,12 @@ export const analyticsCommand = new Command("analytics")
           log("  Token usage:");
           log(`    Total tokens: ${analytics.tokenStats.totalTokens.toLocaleString()}`);
           log(`    Prompt tokens: ${analytics.tokenStats.totalPromptTokens.toLocaleString()}`);
-          log(`    Completion tokens: ${analytics.tokenStats.totalCompletionTokens.toLocaleString()}`);
-          log(`    Avg tokens/chapter: ${analytics.tokenStats.avgTokensPerChapter.toLocaleString()}`);
+          log(
+            `    Completion tokens: ${analytics.tokenStats.totalCompletionTokens.toLocaleString()}`,
+          );
+          log(
+            `    Avg tokens/chapter: ${analytics.tokenStats.avgTokensPerChapter.toLocaleString()}`,
+          );
           if (analytics.tokenStats.recentTrend.length > 0) {
             log("    Recent trend:");
             for (const { chapter, totalTokens } of analytics.tokenStats.recentTrend) {

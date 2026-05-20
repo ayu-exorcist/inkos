@@ -66,14 +66,19 @@ const BOOK: BookConfig = {
 describe("validateChapterTruthPersistence", () => {
   it("uses recovered settlement output when retry succeeds", async () => {
     const validator = {
-      validate: vi.fn()
-        .mockResolvedValueOnce(createValidationResult({
-          passed: false,
-          warnings: [{
-            category: "unsupported_change",
-            description: "正文写铜牌在怀里，但 state 说未携带。",
-          }],
-        }))
+      validate: vi
+        .fn()
+        .mockResolvedValueOnce(
+          createValidationResult({
+            passed: false,
+            warnings: [
+              {
+                category: "unsupported_change",
+                description: "正文写铜牌在怀里，但 state 说未携带。",
+              },
+            ],
+          }),
+        )
         .mockResolvedValueOnce(createValidationResult()),
     };
     const writer = {
@@ -113,16 +118,20 @@ describe("validateChapterTruthPersistence", () => {
     });
 
     expect(writer.settleChapterState).toHaveBeenCalledTimes(1);
-    expect(writer.settleChapterState).toHaveBeenCalledWith(expect.objectContaining({
-      chapterNumber: 3,
-      title: "Test Chapter",
-      validationFeedback: expect.stringContaining("铜牌在怀里"),
-    }));
+    expect(writer.settleChapterState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chapterNumber: 3,
+        title: "Test Chapter",
+        validationFeedback: expect.stringContaining("铜牌在怀里"),
+      }),
+    );
     expect(result.chapterStatus).toBeNull();
     expect(result.persistenceOutput.updatedState).toBe("fixed state");
     expect(result.persistenceOutput.updatedHooks).toBe("fixed hooks");
     expect(result.auditResult.issues).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith("  [unsupported_change] 正文写铜牌在怀里，但 state 说未携带。");
+    expect(logger.warn).toHaveBeenCalledWith(
+      "  [unsupported_change] 正文写铜牌在怀里，但 state 说未携带。",
+    );
   });
 
   it("degrades gracefully when validator throws (e.g. LLM returned empty response)", async () => {
@@ -175,21 +184,30 @@ describe("validateChapterTruthPersistence", () => {
 
   it("degrades persistence output and appends audit issues when retry still fails", async () => {
     const validator = {
-      validate: vi.fn()
-        .mockResolvedValueOnce(createValidationResult({
-          passed: false,
-          warnings: [{
-            category: "unsupported_change",
-            description: "第一次校验失败。",
-          }],
-        }))
-        .mockResolvedValueOnce(createValidationResult({
-          passed: false,
-          warnings: [{
-            category: "unsupported_change",
-            description: "重试后仍然失败。",
-          }],
-        })),
+      validate: vi
+        .fn()
+        .mockResolvedValueOnce(
+          createValidationResult({
+            passed: false,
+            warnings: [
+              {
+                category: "unsupported_change",
+                description: "第一次校验失败。",
+              },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(
+          createValidationResult({
+            passed: false,
+            warnings: [
+              {
+                category: "unsupported_change",
+                description: "重试后仍然失败。",
+              },
+            ],
+          }),
+        ),
     };
     const writer = {
       settleChapterState: vi.fn().mockResolvedValue(

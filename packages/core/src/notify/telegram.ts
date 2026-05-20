@@ -3,10 +3,7 @@ export interface TelegramConfig {
   readonly chatId: string;
 }
 
-export async function sendTelegram(
-  config: TelegramConfig,
-  message: string,
-): Promise<void> {
+export async function sendTelegram(config: TelegramConfig, message: string): Promise<void> {
   const url = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
   const response = await fetch(url, {
     method: "POST",

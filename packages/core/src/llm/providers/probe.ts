@@ -30,6 +30,7 @@ export async function probeModelsFromUpstream(
       .filter((m): m is { id: string } => typeof m.id === "string" && m.id.length > 0)
       .map((m) => ({ id: m.id, name: m.id, contextWindow: 0 }));
   } catch {
+    // failure expected, safe to ignore
     return [];
   }
 }

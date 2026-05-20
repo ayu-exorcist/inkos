@@ -166,7 +166,7 @@ function extractLedgerSection(memoBody: string): string | undefined {
     const start = match.index + match[0].length;
     const rest = memoBody.slice(start);
     const nextHeading = rest.match(/\n#{2,3}\s/);
-    const end = nextHeading ? nextHeading.index ?? rest.length : rest.length;
+    const end = nextHeading ? (nextHeading.index ?? rest.length) : rest.length;
     return rest.slice(0, end);
   }
   return undefined;
@@ -230,9 +230,26 @@ function extractKeywords(descriptor: string): ReadonlyArray<string> {
 }
 
 const ASCII_STOPWORDS = new Set([
-  "and", "the", "for", "with", "from", "that", "into", "then",
-  "open", "close", "advance", "resolve", "defer", "new",
-  "planted", "pressured", "near", "payoff", "ready", "stale",
+  "and",
+  "the",
+  "for",
+  "with",
+  "from",
+  "that",
+  "into",
+  "then",
+  "open",
+  "close",
+  "advance",
+  "resolve",
+  "defer",
+  "new",
+  "planted",
+  "pressured",
+  "near",
+  "payoff",
+  "ready",
+  "stale",
 ]);
 
 function draftEchoesEntry(draft: string, entry: HookLedgerEntry): boolean {

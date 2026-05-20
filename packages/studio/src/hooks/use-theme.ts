@@ -25,11 +25,14 @@ function getThemeStorage(): ThemeStorageLike | null {
   try {
     return window.localStorage;
   } catch {
+    // failure expected, safe to ignore
     return null;
   }
 }
 
-export function readStoredTheme(storage: Pick<ThemeStorageLike, "getItem"> | null | undefined): Theme | null {
+export function readStoredTheme(
+  storage: Pick<ThemeStorageLike, "getItem"> | null | undefined,
+): Theme | null {
   const storedTheme = storage?.getItem(THEME_STORAGE_KEY);
   return storedTheme === "light" || storedTheme === "dark" ? storedTheme : null;
 }
@@ -52,10 +55,12 @@ export function useTheme() {
   useEffect(() => {
     const timer = setInterval(() => {
       const storedTheme = readStoredTheme(getThemeStorage());
-      setThemeState(resolveThemePreference({
-        hour: new Date().getHours(),
-        storedTheme,
-      }));
+      setThemeState(
+        resolveThemePreference({
+          hour: new Date().getHours(),
+          storedTheme,
+        }),
+      );
     }, 60000);
 
     return () => clearInterval(timer);

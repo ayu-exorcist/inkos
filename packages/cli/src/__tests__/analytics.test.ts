@@ -29,7 +29,12 @@ describe("computeAnalytics", () => {
   it("calculates audit pass rate excluding un-audited statuses", () => {
     const chapters = [
       { number: 1, status: "approved", wordCount: 3000, auditIssues: [] },
-      { number: 2, status: "audit-failed", wordCount: 3000, auditIssues: ["[critical] 连续性：角色位置矛盾"] },
+      {
+        number: 2,
+        status: "audit-failed",
+        wordCount: 3000,
+        auditIssues: ["[critical] 连续性：角色位置矛盾"],
+      },
       { number: 3, status: "drafted", wordCount: 3000, auditIssues: [] }, // not audited
       { number: 4, status: "ready-for-review", wordCount: 3000, auditIssues: [] },
     ];
@@ -43,7 +48,12 @@ describe("computeAnalytics", () => {
   it("counts state-degraded chapters as audited but not passed", () => {
     const chapters = [
       { number: 1, status: "approved", wordCount: 3000, auditIssues: [] },
-      { number: 2, status: "state-degraded", wordCount: 2800, auditIssues: ["[warning] state validation drift"] },
+      {
+        number: 2,
+        status: "state-degraded",
+        wordCount: 2800,
+        auditIssues: ["[warning] state validation drift"],
+      },
       { number: 3, status: "drafted", wordCount: 2600, auditIssues: [] },
     ];
     const result = computeAnalytics("book-state-degraded", chapters);
@@ -71,9 +81,7 @@ describe("computeAnalytics", () => {
         number: 2,
         status: "audit-failed",
         wordCount: 2900,
-        auditIssues: [
-          "[warning] 数值错误：修炼速度超标",
-        ],
+        auditIssues: ["[warning] 数值错误：修炼速度超标"],
       },
     ];
     const result = computeAnalytics("book-c", chapters);
@@ -93,9 +101,7 @@ describe("computeAnalytics", () => {
       },
     ];
     const result = computeAnalytics("book-d", chapters);
-    expect(result.topIssueCategories).toEqual([
-      { category: "未分类", count: 1 },
-    ]);
+    expect(result.topIssueCategories).toEqual([{ category: "未分类", count: 1 }]);
   });
 
   it("ranks chapters by issue count", () => {
@@ -129,12 +135,8 @@ describe("computeAnalytics", () => {
   });
 
   it("limits topIssueCategories to 10", () => {
-    const issues = Array.from({ length: 15 }, (_, i) =>
-      `[warning] cat${i}：something`,
-    );
-    const chapters = [
-      { number: 1, status: "audit-failed", wordCount: 3000, auditIssues: issues },
-    ];
+    const issues = Array.from({ length: 15 }, (_, i) => `[warning] cat${i}：something`);
+    const chapters = [{ number: 1, status: "audit-failed", wordCount: 3000, auditIssues: issues }];
     const result = computeAnalytics("book-g", chapters);
     expect(result.topIssueCategories.length).toBe(10);
   });

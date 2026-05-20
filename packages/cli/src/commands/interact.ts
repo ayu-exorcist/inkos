@@ -1,8 +1,5 @@
 import { Command } from "commander";
-import {
-  processProjectInteractionInput,
-  type InteractionRuntimeTools,
-} from "@actalk/inkos-core";
+import { processProjectInteractionInput, type InteractionRuntimeTools } from "@actalk/inkos-core";
 import { createInteractionTools } from "../interaction/tools.js";
 
 export interface InteractCommandHooks {
@@ -87,19 +84,27 @@ export function createInteractCommand(hooks: InteractCommandHooks = {}): Command
       });
 
       if (opts.json) {
-        process.stdout.write(`${JSON.stringify({
-          request: result.request,
-          responseText: result.responseText,
-          session: result.session,
-          currentExecution: result.session.currentExecution ?? null,
-          pendingDecision: result.session.pendingDecision ?? null,
-          events: result.session.events,
-        }, null, 2)}\n`);
+        process.stdout.write(
+          `${JSON.stringify(
+            {
+              request: result.request,
+              responseText: result.responseText,
+              session: result.session,
+              currentExecution: result.session.currentExecution ?? null,
+              pendingDecision: result.session.pendingDecision ?? null,
+              events: result.session.events,
+            },
+            null,
+            2,
+          )}\n`,
+        );
         return;
       }
 
-      const text = result.responseText
-        ?? (result.session.messages.at(-1) && "content" in (result.session.messages.at(-1) as Record<string, unknown>)
+      const text =
+        result.responseText ??
+        (result.session.messages.at(-1) &&
+        "content" in (result.session.messages.at(-1) as Record<string, unknown>)
           ? String((result.session.messages.at(-1) as Record<string, unknown>).content)
           : "");
       if (text) {

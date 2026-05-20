@@ -27,10 +27,10 @@ describe("doctor model candidate probing", () => {
     const modelsBaseUrl = resolveDoctorModelsBaseUrl(
       "bailian",
       "https://dashscope.aliyuncs.com/apps/anthropic",
-      (service) => service === "bailian" ? "https://dashscope.aliyuncs.com/compatible-mode/v1" : undefined,
+      (service) =>
+        service === "bailian" ? "https://dashscope.aliyuncs.com/compatible-mode/v1" : undefined,
     );
 
     expect(modelsBaseUrl).toBe("https://dashscope.aliyuncs.com/compatible-mode/v1");
   });
-
 });

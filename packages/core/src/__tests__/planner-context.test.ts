@@ -37,11 +37,7 @@ describe("composeCurrentArcProse reads chapter from emotional_arcs column 1", ()
     // Previously the function filtered where row[0] matched /^\d+$/.
     // Since row[0] is "周谨川" here, the old predicate produced zero matches
     // and "近期情感线" fell out of the composed prose entirely.
-    const prose = composeCurrentArcProse(
-      SUBPLOT_BOARD_SAMPLE,
-      EMOTIONAL_ARCS_SAMPLE,
-      39,
-    );
+    const prose = composeCurrentArcProse(SUBPLOT_BOARD_SAMPLE, EMOTIONAL_ARCS_SAMPLE, 39);
     expect(prose).toContain("近期情感线");
     expect(prose).toContain("紧绷");
     expect(prose).toContain("克制发热");
@@ -49,11 +45,7 @@ describe("composeCurrentArcProse reads chapter from emotional_arcs column 1", ()
   });
 
   it("excludes rows at or beyond the current chapter", () => {
-    const prose = composeCurrentArcProse(
-      SUBPLOT_BOARD_SAMPLE,
-      EMOTIONAL_ARCS_SAMPLE,
-      37,
-    );
+    const prose = composeCurrentArcProse(SUBPLOT_BOARD_SAMPLE, EMOTIONAL_ARCS_SAMPLE, 37);
     expect(prose).toContain("紧绷");
     expect(prose).not.toContain("克制发热");
     expect(prose).not.toContain("骤亮后阴冷");

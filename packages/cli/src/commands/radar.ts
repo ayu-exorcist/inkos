@@ -4,8 +4,7 @@ import { loadConfig, buildPipelineConfig, findProjectRoot, log, logError } from 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
-export const radarCommand = new Command("radar")
-  .description("Market intelligence");
+export const radarCommand = new Command("radar").description("Market intelligence");
 
 radarCommand
   .command("scan")
@@ -27,11 +26,7 @@ radarCommand
       await mkdir(radarDir, { recursive: true });
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filePath = join(radarDir, `scan-${timestamp}.json`);
-      await writeFile(
-        filePath,
-        JSON.stringify(result, null, 2),
-        "utf-8",
-      );
+      await writeFile(filePath, JSON.stringify(result, null, 2), "utf-8");
 
       if (opts.json) {
         log(JSON.stringify({ ...result, savedTo: filePath }, null, 2));

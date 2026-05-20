@@ -1,6 +1,11 @@
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { InteractionSessionSchema, type InteractionSession, GlobalSessionSchema, type GlobalSession } from "./session.js";
+import {
+  InteractionSessionSchema,
+  type InteractionSession,
+  GlobalSessionSchema,
+  type GlobalSession,
+} from "./session.js";
 
 const SESSION_DIR = ".inkos";
 const SESSION_FILE = "session.json";
@@ -23,6 +28,7 @@ export async function loadProjectSession(projectRoot: string): Promise<Interacti
     const raw = await readFile(resolveProjectSessionPath(projectRoot), "utf-8");
     return InteractionSessionSchema.parse(JSON.parse(raw));
   } catch {
+    // failure expected, safe to ignore
     return createProjectSession(projectRoot);
   }
 }
@@ -33,7 +39,11 @@ export async function persistProjectSession(
 ): Promise<void> {
   const dir = join(projectRoot, SESSION_DIR);
   await mkdir(dir, { recursive: true });
-  await writeFile(resolveProjectSessionPath(projectRoot), JSON.stringify(session, null, 2), "utf-8");
+  await writeFile(
+    resolveProjectSessionPath(projectRoot),
+    JSON.stringify(session, null, 2),
+    "utf-8",
+  );
 }
 
 export async function loadGlobalSession(projectRoot: string): Promise<GlobalSession> {
@@ -45,6 +55,7 @@ export async function loadGlobalSession(projectRoot: string): Promise<GlobalSess
       automationMode: data.automationMode ?? "semi",
     });
   } catch {
+    // failure expected, safe to ignore
     return { automationMode: "semi" };
   }
 }

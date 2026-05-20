@@ -32,7 +32,7 @@ describe("Phase 5 hotfix 2 — bookRules.body decoupling", () => {
       join(storyDir, "outline/story_frame.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: 主角甲",
         "  personalityLock: [沉默]",
@@ -65,7 +65,7 @@ describe("Phase 5 hotfix 2 — bookRules.body decoupling", () => {
       join(storyDir, "book_rules.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: LegacyHero",
         "  personalityLock: []",
@@ -91,7 +91,7 @@ describe("Phase 5 hotfix 2 — bookRules.body decoupling", () => {
       join(storyDir, "outline/story_frame.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: 林辞",
         "  personalityLock: [沉默]",
@@ -125,7 +125,9 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
 
   beforeEach(async () => {
     bookDir = await mkdtemp(join(tmpdir(), "inkos-hotfix3-"));
-    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { /* suppress */ });
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {
+      /* suppress */
+    });
   });
 
   afterEach(async () => {
@@ -150,7 +152,7 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
 
   it("tryParseBookRulesFrontmatter returns parsed rules on valid YAML", () => {
     const result = tryParseBookRulesFrontmatter(
-      "---\nversion: \"1.0\"\nprotagonist:\n  name: X\n  personalityLock: []\n  behavioralConstraints: []\nprohibitions: []\n---\n",
+      '---\nversion: "1.0"\nprotagonist:\n  name: X\n  personalityLock: []\n  behavioralConstraints: []\nprohibitions: []\n---\n',
     );
     expect(result).not.toBeNull();
     expect(result?.rules.protagonist?.name).toBe("X");
@@ -171,7 +173,7 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
       join(storyDir, "book_rules.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: LegacyHero",
         "  personalityLock: [stoic]",
@@ -219,7 +221,7 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
     // Two warnings expected: one for the broken story_frame frontmatter,
     // one for the shim fallback.
     expect(warnSpy).toHaveBeenCalled();
-    const allWarnings = warnSpy.mock.calls
+    const allWarnings = (warnSpy.mock.calls as unknown[][])
       .map((call) => String(call[0] ?? ""))
       .join("\n");
     expect(allWarnings).toMatch(/story_frame\.md frontmatter is malformed/);
@@ -251,7 +253,7 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
       join(storyDir, "outline/story_frame.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: NewHero",
         "  personalityLock: []",
@@ -267,7 +269,7 @@ describe("Phase 5 hotfix 3 — broken frontmatter fallback", () => {
       join(storyDir, "book_rules.md"),
       [
         "---",
-        "version: \"1.0\"",
+        'version: "1.0"',
         "protagonist:",
         "  name: OldHero",
         "  personalityLock: []",

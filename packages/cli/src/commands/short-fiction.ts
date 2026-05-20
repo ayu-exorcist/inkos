@@ -19,8 +19,7 @@ import { buildPipelineConfig, findProjectRoot, loadConfig, log, logError } from 
 
 export { extractResponsesImageBase64, resolveCoverApiKey } from "@actalk/inkos-core";
 
-export const shortCommand = new Command("short")
-  .description("Short fiction production workflow");
+export const shortCommand = new Command("short").description("Short fiction production workflow");
 
 shortCommand
   .command("run")
@@ -29,8 +28,16 @@ shortCommand
   .option("--reference <path>", "Optional reference notes/text")
   .option("--story-id <id>", "Output story id under shorts/")
   .option("--out-dir <path>", "Output directory", "shorts")
-  .option("--chapters <n>", "Complete short chapter count (12-18)", String(SHORT_FICTION_DEFAULT_CHAPTERS))
-  .option("--chars <n>", "Target characters per chapter (900-1200)", String(SHORT_FICTION_DEFAULT_CHARS_PER_CHAPTER))
+  .option(
+    "--chapters <n>",
+    "Complete short chapter count (12-18)",
+    String(SHORT_FICTION_DEFAULT_CHAPTERS),
+  )
+  .option(
+    "--chars <n>",
+    "Target characters per chapter (900-1200)",
+    String(SHORT_FICTION_DEFAULT_CHARS_PER_CHAPTER),
+  )
   .option("--llm-base-url <url>", "Override LLM base URL")
   .option("--model <model>", "Fallback model for all short stages")
   .option("--planner-model <model>", "Model for outline creation/revision")
@@ -39,8 +46,14 @@ shortCommand
   .option("--draft-review-model <model>", "Model for draft review")
   .option("--revise-model <model>", "Model for second full draft")
   .option("--package-model <model>", "Model for synopsis and cover prompt packaging")
-  .option("--cover-base-url <url>", "OpenAI-compatible Responses API base URL for cover generation, e.g. https://api.openai.com/v1")
-  .option("--cover-endpoint <url>", "Exact Responses endpoint for cover generation; overrides --cover-base-url")
+  .option(
+    "--cover-base-url <url>",
+    "OpenAI-compatible Responses API base URL for cover generation, e.g. https://api.openai.com/v1",
+  )
+  .option(
+    "--cover-endpoint <url>",
+    "Exact Responses endpoint for cover generation; overrides --cover-base-url",
+  )
   .option("--cover-model <model>", "Image-capable Responses model for cover generation", "gpt-5.5")
   .option("--cover-size <size>", "Cover image size", "1024x1360")
   .option("--cover-api-key-env <name>", "Env var containing cover API key", "INKOS_COVER_API_KEY")
@@ -226,7 +239,8 @@ function buildEnvLLMConfig(options: {
 }): LLMConfig {
   const baseUrl = options.llmBaseUrl ?? process.env.INKOS_LLM_BASE_URL;
   const model = options.model ?? process.env.INKOS_LLM_MODEL;
-  if (!baseUrl) throw new Error("LLM base URL is required. Set INKOS_LLM_BASE_URL or pass --llm-base-url.");
+  if (!baseUrl)
+    throw new Error("LLM base URL is required. Set INKOS_LLM_BASE_URL or pass --llm-base-url.");
   if (!model) throw new Error("LLM model is required. Set INKOS_LLM_MODEL or pass --model.");
   return {
     provider: "openai",

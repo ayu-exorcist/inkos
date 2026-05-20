@@ -35,8 +35,8 @@ const LEVEL_ORDER: Record<LogLevel, number> = {
 
 const COLORS: Record<LogLevel, string> = {
   debug: "\x1b[90m", // gray
-  info: "\x1b[36m",  // cyan
-  warn: "\x1b[33m",  // yellow
+  info: "\x1b[36m", // cyan
+  warn: "\x1b[33m", // yellow
   error: "\x1b[31m", // red
 };
 const RESET = "\x1b[0m";
@@ -48,7 +48,7 @@ export function createStderrSink(options: {
   readonly enableColors?: boolean;
 }): LogSink {
   const minLevel = options.minLevel ?? "info";
-  const enableColors = options.enableColors ?? (process.stderr.isTTY ?? false);
+  const enableColors = options.enableColors ?? process.stderr.isTTY ?? false;
   const minOrder = LEVEL_ORDER[minLevel];
 
   return {
@@ -60,9 +60,7 @@ export function createStderrSink(options: {
 
       if (enableColors) {
         const color = COLORS[entry.level];
-        process.stderr.write(
-          `${color}${levelTag}${RESET} ${prefix} ${entry.message}\n`,
-        );
+        process.stderr.write(`${color}${levelTag}${RESET} ${prefix} ${entry.message}\n`);
       } else {
         process.stderr.write(`${levelTag} ${prefix} ${entry.message}\n`);
       }
@@ -98,9 +96,7 @@ export function createLogger(options: {
       tag,
       message: msg,
       timestamp: new Date().toISOString(),
-      ...(ctx || baseCtx
-        ? { ctx: { ...baseCtx, ...ctx } }
-        : {}),
+      ...(ctx || baseCtx ? { ctx: { ...baseCtx, ...ctx } } : {}),
     };
     for (const sink of sinks) {
       sink.write(entry);

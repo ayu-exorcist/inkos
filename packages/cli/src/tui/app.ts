@@ -3,9 +3,20 @@ import { basename, dirname, join } from "node:path";
 import { render } from "ink";
 import React from "react";
 import { InkTuiApp } from "./dashboard.js";
-import { formatModeLabel, getTuiCopy, normalizeStageLabel, resolveTuiLocale, type TuiLocale } from "./i18n.js";
+import {
+  formatModeLabel,
+  getTuiCopy,
+  normalizeStageLabel,
+  resolveTuiLocale,
+  type TuiLocale,
+} from "./i18n.js";
 import { loadProjectSession } from "./session-store.js";
-import { detectModelInfo, detectProjectLanguage, ensureProject, interactiveLlmSetup } from "./setup.js";
+import {
+  detectModelInfo,
+  detectProjectLanguage,
+  ensureProject,
+  interactiveLlmSetup,
+} from "./setup.js";
 import { animateStartup } from "./effects.js";
 
 export interface TuiFrameState {
@@ -50,6 +61,7 @@ async function readVersion(): Promise<string> {
     const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf-8"));
     return pkg.version ?? "dev";
   } catch {
+    // failure expected, safe to ignore
     return "dev";
   }
 }
@@ -69,9 +81,7 @@ async function resolveProjectRoot(cwd: string): Promise<string> {
   return cwd;
 }
 
-export async function launchTui(
-  projectRoot: string,
-): Promise<void> {
+export async function launchTui(projectRoot: string): Promise<void> {
   projectRoot = await resolveProjectRoot(projectRoot);
   const { hasLlmConfig } = await ensureProject(projectRoot);
   const projectLanguage = await detectProjectLanguage(projectRoot);

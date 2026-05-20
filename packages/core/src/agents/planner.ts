@@ -8,19 +8,10 @@ import {
   type ChapterIntent,
   type ChapterMemo,
 } from "../models/input-governance.js";
-import {
-  renderHookSnapshot,
-  renderSummarySnapshot,
-} from "../utils/memory-retrieval.js";
-import {
-  gatherPlanningMaterials,
-  loadPlanningSeedMaterials,
-} from "../utils/planning-materials.js";
+import { renderHookSnapshot, renderSummarySnapshot } from "../utils/memory-retrieval.js";
+import { gatherPlanningMaterials, loadPlanningSeedMaterials } from "../utils/planning-materials.js";
 import { parseMemo, PlannerParseError } from "../utils/chapter-memo-parser.js";
-import {
-  buildPlannerUserMessage,
-  getPlannerMemoSystemPrompt,
-} from "./planner-prompts.js";
+import { buildPlannerUserMessage, getPlannerMemoSystemPrompt } from "./planner-prompts.js";
 import {
   composeCurrentArcProse,
   extractCollaboratorRows,
@@ -99,7 +90,10 @@ export class PlannerAgent extends BaseAgent {
     const prohibitions = parsedRules?.rules.prohibitions ?? [];
     const mustKeep = this.collectMustKeep(seedMaterials.currentState, seedMaterials.storyBible);
     const mustAvoid = this.collectMustAvoid(seedMaterials.currentFocus, prohibitions);
-    const styleEmphasis = this.collectStyleEmphasis(seedMaterials.authorIntent, seedMaterials.currentFocus);
+    const styleEmphasis = this.collectStyleEmphasis(
+      seedMaterials.authorIntent,
+      seedMaterials.currentFocus,
+    );
     const materials = await gatherPlanningMaterials({
       bookDir: input.bookDir,
       chapterNumber: input.chapterNumber,
@@ -152,7 +146,10 @@ export class PlannerAgent extends BaseAgent {
     // concrete task statement instead of the outline-derived fallback.
     intent.goal = memo.goal;
 
-    const runtimePath = join(runtimeDir, `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`);
+    const runtimePath = join(
+      runtimeDir,
+      `chapter-${String(input.chapterNumber).padStart(4, "0")}.intent.md`,
+    );
     const intentMarkdown = this.renderIntentMarkdown(
       intent,
       memo,
@@ -190,27 +187,24 @@ export class PlannerAgent extends BaseAgent {
     readonly recyclableHooks?: ReadonlyArray<StoredHook>;
     readonly language?: "zh" | "en";
   }): Promise<ChapterMemo> {
-    const [characterMatrix, subplotBoard, emotionalArcs, pendingHooks, bookRulesRaw] = await Promise.all([
-      readCharacterMatrix(input.storyDir),
-      readSubplotBoard(input.storyDir),
-      readEmotionalArcs(input.storyDir),
-      readPendingHooks(input.storyDir),
-      readBookRules(input.storyDir),
-    ]);
+    const [characterMatrix, subplotBoard, emotionalArcs, pendingHooks, bookRulesRaw] =
+      await Promise.all([
+        readCharacterMatrix(input.storyDir),
+        readSubplotBoard(input.storyDir),
+        readEmotionalArcs(input.storyDir),
+        readPendingHooks(input.storyDir),
+        readBookRules(input.storyDir),
+      ]);
 
     const language = input.language ?? "zh";
-    const noPriorChapter = language === "en"
-      ? "(this is the opening chapter — no prior chapter)"
-      : "（本章为起始章，无前章）";
-    const noBookRules = language === "en"
-      ? "(no book_rules entries)"
-      : "（暂无 book_rules 条目）";
-    const retryFeedbackHeader = language === "en"
-      ? "## Error from previous output"
-      : "## 上次输出的错误";
-    const retryFeedbackTrailer = language === "en"
-      ? "Fix and re-emit."
-      : "请修正后重新输出。";
+    const noPriorChapter =
+      language === "en"
+        ? "(this is the opening chapter — no prior chapter)"
+        : "（本章为起始章，无前章）";
+    const noBookRules = language === "en" ? "(no book_rules entries)" : "（暂无 book_rules 条目）";
+    const retryFeedbackHeader =
+      language === "en" ? "## Error from previous output" : "## 上次输出的错误";
+    const retryFeedbackTrailer = language === "en" ? "Fix and re-emit." : "请修正后重新输出。";
 
     const userMessage = buildPlannerUserMessage({
       chapterNumber: input.chapterNumber,
@@ -256,12 +250,16 @@ export class PlannerAgent extends BaseAgent {
           throw error;
         }
         lastError = error;
-        this.log?.warn(`[planner] memo parse failed (attempt ${attempt + 1}/${MEMO_RETRY_LIMIT}): ${error.message}`);
+        this.log?.warn(
+          `[planner] memo parse failed (attempt ${attempt + 1}/${MEMO_RETRY_LIMIT}): ${error.message}`,
+        );
         currentUserMessage = `${userMessage}\n\n${retryFeedbackHeader}\n${error.message}\n${retryFeedbackTrailer}`;
       }
     }
 
-    throw lastError ?? new PlannerParseError("memo planner exhausted retries without a specific error");
+    throw (
+      lastError ?? new PlannerParseError("memo planner exhausted retries without a specific error")
+    );
   }
 
   private isGoldenOpeningChapter(language: string | undefined, chapterNumber: number): boolean {
@@ -319,14 +317,11 @@ export class PlannerAgent extends BaseAgent {
     const focusAvoids = avoidSection
       ? this.extractListItems(avoidSection, 10)
       : currentFocus
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) =>
-          line.startsWith("-") &&
-          /avoid|don't|do not|不要|别|禁止/i.test(line),
-        )
-        .map((line) => this.cleanListItem(line))
-        .filter((line): line is string => Boolean(line));
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.startsWith("-") && /avoid|don't|do not|不要|别|禁止/i.test(line))
+          .map((line) => this.cleanListItem(line))
+          .filter((line): line is string => Boolean(line));
 
     return this.unique([...focusAvoids, ...prohibitions]).slice(0, 6);
   }
@@ -343,11 +338,12 @@ export class PlannerAgent extends BaseAgent {
     return content
       .split("\n")
       .map((line) => line.trim())
-      .find((line) =>
-        line.length > 0
-        && !line.startsWith("#")
-        && !line.startsWith("-")
-        && !this.isTemplatePlaceholder(line),
+      .find(
+        (line) =>
+          line.length > 0 &&
+          !line.startsWith("#") &&
+          !line.startsWith("-") &&
+          !this.isTemplatePlaceholder(line),
       );
   }
 
@@ -362,13 +358,14 @@ export class PlannerAgent extends BaseAgent {
   }
 
   private extractFocusGoal(currentFocus: string): string | undefined {
-    const focusSection = this.extractSection(currentFocus, [
-      "active focus",
-      "focus",
-      "当前聚焦",
-      "当前焦点",
-      "近期聚焦",
-    ]) ?? currentFocus;
+    const focusSection =
+      this.extractSection(currentFocus, [
+        "active focus",
+        "focus",
+        "当前聚焦",
+        "当前焦点",
+        "近期聚焦",
+      ]) ?? currentFocus;
     const directives = this.extractFocusStyleItems(focusSection, 3);
     if (directives.length === 0) {
       return this.extractFirstDirective(focusSection);
@@ -400,13 +397,14 @@ export class PlannerAgent extends BaseAgent {
   }
 
   private extractFocusStyleItems(currentFocus: string, limit = 3): string[] {
-    const focusSection = this.extractSection(currentFocus, [
-      "active focus",
-      "focus",
-      "当前聚焦",
-      "当前焦点",
-      "近期聚焦",
-    ]) ?? currentFocus;
+    const focusSection =
+      this.extractSection(currentFocus, [
+        "active focus",
+        "focus",
+        "当前聚焦",
+        "当前焦点",
+        "近期聚焦",
+      ]) ?? currentFocus;
     return this.extractListItems(focusSection, limit);
   }
 
@@ -476,8 +474,8 @@ export class PlannerAgent extends BaseAgent {
     if (!normalized) return false;
 
     return (
-      /^\((describe|briefly describe|write)\b[\s\S]*\)$/i.test(normalized)
-      || /^（(?:在这里描述|描述|填写|写下)[\s\S]*）$/u.test(normalized)
+      /^\((describe|briefly describe|write)\b[\s\S]*\)$/i.test(normalized) ||
+      /^（(?:在这里描述|描述|填写|写下)[\s\S]*）$/u.test(normalized)
     );
   }
 
@@ -486,7 +484,10 @@ export class PlannerAgent extends BaseAgent {
   }
 
   private findOutlineNode(volumeOutline: string, chapterNumber: number): string | undefined {
-    const lines = volumeOutline.split("\n").map((line) => line.trim()).filter(Boolean);
+    const lines = volumeOutline
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
 
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index]!;
@@ -566,7 +567,10 @@ export class PlannerAgent extends BaseAgent {
     return cleaned;
   }
 
-  private extractSectionAroundRange(lines: ReadonlyArray<string>, rangeLineIndex: number): string | undefined {
+  private extractSectionAroundRange(
+    lines: ReadonlyArray<string>,
+    rangeLineIndex: number,
+  ): string | undefined {
     let headingIndex = -1;
     for (let i = rangeLineIndex - 1; i >= 0; i--) {
       if (lines[i]!.startsWith("#")) {
@@ -615,7 +619,10 @@ export class PlannerAgent extends BaseAgent {
     return beats[beatIndex];
   }
 
-  private findNextOutlineContent(lines: ReadonlyArray<string>, startIndex: number): string | undefined {
+  private findNextOutlineContent(
+    lines: ReadonlyArray<string>,
+    startIndex: number,
+  ): string | undefined {
     for (let index = startIndex; index < lines.length; index += 1) {
       const line = lines[index]!;
       if (!line) {
@@ -641,8 +648,13 @@ export class PlannerAgent extends BaseAgent {
 
   private matchExactOutlineLine(line: string, chapterNumber: number): RegExpMatchArray | undefined {
     const patterns = [
-      new RegExp(`^(?:#+\\s*)?(?:[-*]\\s+)?(?:\\*\\*)?Chapter\\s*${chapterNumber}(?!\\d|\\s*[-~–—]\\s*\\d)(?:[:：-])?(?:\\*\\*)?\\s*(.*)$`, "i"),
-      new RegExp(`^(?:#+\\s*)?(?:[-*]\\s+)?(?:\\*\\*)?第\\s*${chapterNumber}\\s*章(?!\\d|\\s*[-~–—]\\s*\\d)(?:[:：-])?(?:\\*\\*)?\\s*(.*)$`),
+      new RegExp(
+        `^(?:#+\\s*)?(?:[-*]\\s+)?(?:\\*\\*)?Chapter\\s*${chapterNumber}(?!\\d|\\s*[-~–—]\\s*\\d)(?:[:：-])?(?:\\*\\*)?\\s*(.*)$`,
+        "i",
+      ),
+      new RegExp(
+        `^(?:#+\\s*)?(?:[-*]\\s+)?(?:\\*\\*)?第\\s*${chapterNumber}\\s*章(?!\\d|\\s*[-~–—]\\s*\\d)(?:[:：-])?(?:\\*\\*)?\\s*(.*)$`,
+      ),
     ];
 
     return patterns
@@ -685,11 +697,17 @@ export class PlannerAgent extends BaseAgent {
   }
 
   private isOutlineAnchorLine(line: string): boolean {
-    return this.matchAnyExactOutlineLine(line) !== undefined
-      || this.matchAnyRangeOutlineLine(line) !== undefined;
+    return (
+      this.matchAnyExactOutlineLine(line) !== undefined ||
+      this.matchAnyRangeOutlineLine(line) !== undefined
+    );
   }
 
-  private isChapterWithinRange(startText: string | undefined, endText: string | undefined, chapterNumber: number): boolean {
+  private isChapterWithinRange(
+    startText: string | undefined,
+    endText: string | undefined,
+    chapterNumber: number,
+  ): boolean {
     const start = Number.parseInt(startText ?? "", 10);
     const end = Number.parseInt(endText ?? "", 10);
     if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
@@ -706,22 +724,22 @@ export class PlannerAgent extends BaseAgent {
     chapterSummaries: string,
     activeHookCount: number,
   ): string {
-    const mustKeep = intent.mustKeep.length > 0
-      ? intent.mustKeep.map((item) => `- ${item}`).join("\n")
-      : "- none";
+    const mustKeep =
+      intent.mustKeep.length > 0 ? intent.mustKeep.map((item) => `- ${item}`).join("\n") : "- none";
 
-    const mustAvoid = intent.mustAvoid.length > 0
-      ? intent.mustAvoid.map((item) => `- ${item}`).join("\n")
-      : "- none";
+    const mustAvoid =
+      intent.mustAvoid.length > 0
+        ? intent.mustAvoid.map((item) => `- ${item}`).join("\n")
+        : "- none";
 
-    const styleEmphasis = intent.styleEmphasis.length > 0
-      ? intent.styleEmphasis.map((item) => `- ${item}`).join("\n")
-      : "- none";
+    const styleEmphasis =
+      intent.styleEmphasis.length > 0
+        ? intent.styleEmphasis.map((item) => `- ${item}`).join("\n")
+        : "- none";
 
     const memoBody = memo.body.trim();
-    const threadRefsLine = memo.threadRefs.length > 0
-      ? memo.threadRefs.map((id) => `- ${id}`).join("\n")
-      : "- (none)";
+    const threadRefsLine =
+      memo.threadRefs.length > 0 ? memo.threadRefs.map((id) => `- ${id}`).join("\n") : "- (none)";
 
     return [
       "# Chapter Intent",
@@ -777,6 +795,7 @@ export class PlannerAgent extends BaseAgent {
     try {
       return await readFile(path, "utf-8");
     } catch {
+      // failure expected, safe to ignore
       return "(文件尚未创建)";
     }
   }

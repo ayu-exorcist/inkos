@@ -24,8 +24,11 @@ const baseProfile: GenreProfile = {
   satisfactionTypes: [],
 };
 
-function findRule(violations: ReadonlyArray<PostWriteViolation>, rule: string): PostWriteViolation | undefined {
-  return violations.find(v => v.rule === rule);
+function findRule(
+  violations: ReadonlyArray<PostWriteViolation>,
+  rule: string,
+): PostWriteViolation | undefined {
+  return violations.find((v) => v.rule === rule);
 }
 
 describe("validatePostWrite", () => {
@@ -43,7 +46,8 @@ describe("validatePostWrite", () => {
   });
 
   it("returns no violations for clean content", () => {
-    const content = "他走过去，端起杯子，灌了一口。外面的雨越下越大。\n\n她站在窗前，看着街上的行人匆匆走过。";
+    const content =
+      "他走过去，端起杯子，灌了一口。外面的雨越下越大。\n\n她站在窗前，看着街上的行人匆匆走过。";
     const result = validatePostWrite(content, baseProfile, null);
     expect(result).toHaveLength(0);
   });
@@ -130,7 +134,8 @@ describe("validatePostWrite", () => {
   });
 
   it("detects consecutive '了' sentences", () => {
-    const content = "他走了过去。他拿了杯子。他喝了一口。他放了下来。他转了身。他叹了口气。他摇了摇头。";
+    const content =
+      "他走了过去。他拿了杯子。他喝了一口。他放了下来。他转了身。他叹了口气。他摇了摇头。";
     const result = validatePostWrite(content, baseProfile, null);
     const v = findRule(result, "连续了字");
     expect(v).toBeDefined();
@@ -261,28 +266,18 @@ describe("validatePostWrite", () => {
   });
 
   it("prefers regenerating a duplicate title from chapter content before numeric suffix fallback", () => {
-    const result = resolveDuplicateTitle(
-      "回声",
-      ["旧路", "回声"],
-      "zh",
-      {
-        content: "塔楼里的铜铃只响了一声，风从缺口灌进来，守夜人没有回头。",
-      },
-    );
+    const result = resolveDuplicateTitle("回声", ["旧路", "回声"], "zh", {
+      content: "塔楼里的铜铃只响了一声，风从缺口灌进来，守夜人没有回头。",
+    });
 
     expect(result.title).toContain("塔楼");
     expect(result.title).not.toBe("回声（2）");
   });
 
   it("regenerates a title when it continues a collapsed recent title shell", () => {
-    const result = resolveDuplicateTitle(
-      "名单未落",
-      ["名单之前", "名单之后", "名单还在"],
-      "zh",
-      {
-        content: "塔楼里的铜铃只响了一声，守夜人没有回头，风从缺口灌进来。",
-      },
-    );
+    const result = resolveDuplicateTitle("名单未落", ["名单之前", "名单之后", "名单还在"], "zh", {
+      content: "塔楼里的铜铃只响了一声，守夜人没有回头，风从缺口灌进来。",
+    });
 
     expect(result.issues.some((issue) => issue.rule === "title-collapse")).toBe(true);
     expect(result.title).not.toContain("名单");

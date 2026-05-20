@@ -37,7 +37,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("compresses a long draft while preserving required markers", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "压缩后的正文。".repeat(8) + "[[KEEP_ME]]",
       usage: ZERO_USAGE,
     });
@@ -70,7 +70,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("expands a short draft without inserting forbidden markers", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "扩写后的正文，补足细节和过渡，但不引入禁词。",
       usage: ZERO_USAGE,
     });
@@ -102,7 +102,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("never retries normalization in the same pass", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "仍然过长的正文。".repeat(60),
       usage: ZERO_USAGE,
     });
@@ -132,7 +132,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("does not override provider output budget for large compression outputs", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "压缩后的完整正文。".repeat(200),
       usage: ZERO_USAGE,
     });
@@ -157,7 +157,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("falls back to the original chapter when normalized output is truncated mid-sentence", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "李队把传真和登记表叠在一起，收进文件夹，眼神已经不是单",
       usage: ZERO_USAGE,
     });
@@ -185,7 +185,7 @@ describe("LengthNormalizerAgent", () => {
   it("keeps a complete in-range rewrite even when it ends without punctuation", async () => {
     const agent = createAgent();
     const rewrite = "完整正文".repeat(900);
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: rewrite,
       usage: ZERO_USAGE,
     });
@@ -212,14 +212,10 @@ describe("LengthNormalizerAgent", () => {
 
   it("strips explanatory wrappers from malformed normalizer output", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
-      content: [
-        "我先压缩一下正文。",
-        "",
-        "```markdown",
-        "压缩后的正文。[[KEEP_ME]]",
-        "```",
-      ].join("\n"),
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
+      content: ["我先压缩一下正文。", "", "```markdown", "压缩后的正文。[[KEEP_ME]]", "```"].join(
+        "\n",
+      ),
       usage: ZERO_USAGE,
     });
     const lengthSpec = LengthSpecSchema.parse({
@@ -248,7 +244,7 @@ describe("LengthNormalizerAgent", () => {
 
   it("falls back to the original chapter when the response contains only wrappers", async () => {
     const agent = createAgent();
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: "我先压缩一下正文。",
       usage: ZERO_USAGE,
     });
@@ -278,7 +274,7 @@ describe("LengthNormalizerAgent", () => {
   it("preserves legitimate Chinese prose that starts with '我先'", async () => {
     const agent = createAgent();
     const prose = "我先回去了，明天再说。\n风从窗缝里灌进来。";
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: prose,
       usage: ZERO_USAGE,
     });
@@ -305,7 +301,7 @@ describe("LengthNormalizerAgent", () => {
   it("preserves legitimate English prose that starts with 'I will'", async () => {
     const agent = createAgent();
     const prose = "I will wait here until dawn.\nThe shutters rattled in the wind.";
-    const chatSpy = vi.spyOn(BaseAgent.prototype as never, "chat").mockResolvedValue({
+    const chatSpy = vi.spyOn(BaseAgent.prototype as any, "chat").mockResolvedValue({
       content: prose,
       usage: ZERO_USAGE,
     });

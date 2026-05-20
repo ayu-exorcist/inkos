@@ -7,10 +7,12 @@ import { createProgram } from "../program.js";
 describe("interact command", () => {
   const originalArgv = process.argv;
   let projectRoot: string;
-  let stdoutSpy: ReturnType<typeof vi.spyOn> | {
-    mockClear: () => void;
-    mock: { calls: Array<ReadonlyArray<unknown>> };
-  };
+  let stdoutSpy:
+    | ReturnType<typeof vi.spyOn>
+    | {
+        mockClear: () => void;
+        mock: { calls: Array<ReadonlyArray<unknown>> };
+      };
 
   beforeEach(async () => {
     stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
@@ -78,7 +80,7 @@ describe("interact command", () => {
       from: "user",
     });
 
-    const output = stdoutSpy.mock.calls.map((call) => String(call[0])).join("");
+    const output = (stdoutSpy.mock.calls as unknown[][]).map((call) => String(call[0])).join("");
     const parsed = JSON.parse(output);
     expect(parsed.request.intent).toBe("switch_mode");
     expect(parsed.responseText).toBe("Switched to auto.");
@@ -102,9 +104,12 @@ describe("interact command", () => {
       readInteractionInput: async () => "",
     });
 
-    await program.parseAsync(["interact", "--book", "harbor", "--message", "continue current book"], {
-      from: "user",
-    });
+    await program.parseAsync(
+      ["interact", "--book", "harbor", "--message", "continue current book"],
+      {
+        from: "user",
+      },
+    );
 
     expect(runInteraction).toHaveBeenCalledWith(
       expect.objectContaining({

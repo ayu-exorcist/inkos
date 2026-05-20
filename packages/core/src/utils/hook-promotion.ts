@@ -48,16 +48,9 @@ export interface PromotionDecision {
   readonly reasons: ReadonlyArray<PromotionReason>;
 }
 
-export type PromotionReason =
-  | "cross_volume"
-  | "advanced_count"
-  | "depends_on"
-  | "core_hook";
+export type PromotionReason = "cross_volume" | "advanced_count" | "depends_on" | "core_hook";
 
-export function shouldPromoteHook(
-  hook: StoredHook,
-  context: PromotionContext,
-): PromotionDecision {
+export function shouldPromoteHook(hook: StoredHook, context: PromotionContext): PromotionDecision {
   const reasons: PromotionReason[] = [];
 
   if (hook.coreHook === true) {
@@ -68,9 +61,7 @@ export function shouldPromoteHook(
     reasons.push("depends_on");
   }
 
-  const advancedCount = hook.advancedCount
-    ?? context.advancedCounts.get(hook.hookId)
-    ?? 0;
+  const advancedCount = hook.advancedCount ?? context.advancedCounts.get(hook.hookId) ?? 0;
   if (advancedCount >= 2) {
     reasons.push("advanced_count");
   }
@@ -111,8 +102,8 @@ function isCrossVolume(hook: StoredHook, context: PromotionContext): boolean {
   // Case C: payoff timing marks it as endgame / slow-burn while the hook is
   // planted in an early volume — that alone qualifies as cross-volume.
   if (
-    (hook.payoffTiming === "endgame" || hook.payoffTiming === "slow-burn")
-    && seedVolumeIndex < volumeBoundaries.length - 1
+    (hook.payoffTiming === "endgame" || hook.payoffTiming === "slow-burn") &&
+    seedVolumeIndex < volumeBoundaries.length - 1
   ) {
     return true;
   }
@@ -120,10 +111,7 @@ function isCrossVolume(hook: StoredHook, context: PromotionContext): boolean {
   return false;
 }
 
-function findVolumeIndex(
-  boundaries: ReadonlyArray<VolumeBoundary>,
-  chapter: number,
-): number {
+function findVolumeIndex(boundaries: ReadonlyArray<VolumeBoundary>, chapter: number): number {
   for (let i = 0; i < boundaries.length; i++) {
     const vol = boundaries[i]!;
     if (chapter >= vol.startCh && chapter <= vol.endCh) return i;
@@ -154,8 +142,16 @@ function extractVolumeIndexFromArc(arc: string): number | null {
 }
 
 const CHINESE_NUMERALS: Readonly<Record<string, number>> = {
-  一: 1, 二: 2, 三: 3, 四: 4, 五: 5,
-  六: 6, 七: 7, 八: 8, 九: 9, 十: 10,
+  一: 1,
+  二: 2,
+  三: 3,
+  四: 4,
+  五: 5,
+  六: 6,
+  七: 7,
+  八: 8,
+  九: 9,
+  十: 10,
 };
 
 function parseVolumeNumber(token: string): number | null {

@@ -75,7 +75,15 @@ type PipelineLike = Pick<PipelineRunner, "writeNextChapter" | "reviseDraft"> & {
     },
   ) => Promise<void>;
 };
-type StateLike = Pick<StateManager, "ensureControlDocuments" | "bookDir" | "loadBookConfig" | "loadChapterIndex" | "saveChapterIndex" | "listBooks">;
+type StateLike = Pick<
+  StateManager,
+  | "ensureControlDocuments"
+  | "bookDir"
+  | "loadBookConfig"
+  | "loadChapterIndex"
+  | "saveChapterIndex"
+  | "listBooks"
+>;
 type InstrumentablePipelineLike = PipelineLike & {
   readonly config?: {
     logger?: Logger;
@@ -149,70 +157,68 @@ export function buildChapterFileLookup(files: ReadonlyArray<string>): ReadonlyMa
   return lookup;
 }
 
-async function exportBookToPath(state: StateLike, bookId: string, options: {
-  readonly format?: "txt" | "md" | "epub";
-  readonly approvedOnly?: boolean;
-  readonly outputPath?: string;
-}) {
+async function exportBookToPath(
+  state: StateLike,
+  bookId: string,
+  options: {
+    readonly format?: "txt" | "md" | "epub";
+    readonly approvedOnly?: boolean;
+    readonly outputPath?: string;
+  },
+) {
   return writeExportArtifact(state, bookId, options);
 }
 
 function mapStageMessageToStatus(message: string): InteractionEvent["status"] | undefined {
   const lower = message.trim().toLowerCase();
   if (
-    lower.includes("planning next chapter")
-    || lower.includes("generating foundation")
-    || lower.includes("reviewing foundation")
-    || lower.includes("preparing chapter inputs")
-    || message.includes("规划下一章意图")
-    || message.includes("生成基础设定")
-    || message.includes("审核基础设定")
-    || message.includes("准备章节输入")
+    lower.includes("planning next chapter") ||
+    lower.includes("generating foundation") ||
+    lower.includes("reviewing foundation") ||
+    lower.includes("preparing chapter inputs") ||
+    message.includes("规划下一章意图") ||
+    message.includes("生成基础设定") ||
+    message.includes("审核基础设定") ||
+    message.includes("准备章节输入")
   ) {
     return "planning";
   }
   if (
-    lower.includes("composing chapter runtime context")
-    || message.includes("组装章节运行时上下文")
+    lower.includes("composing chapter runtime context") ||
+    message.includes("组装章节运行时上下文")
   ) {
     return "composing";
   }
-  if (
-    lower.includes("writing chapter draft")
-    || message.includes("撰写章节草稿")
-  ) {
+  if (lower.includes("writing chapter draft") || message.includes("撰写章节草稿")) {
     return "writing";
   }
-  if (
-    lower.includes("auditing draft")
-    || message.includes("审计草稿")
-  ) {
+  if (lower.includes("auditing draft") || message.includes("审计草稿")) {
     return "assessing";
   }
   if (
-    lower.includes("fixing")
-    || lower.includes("revising chapter")
-    || lower.includes("rewrite")
-    || lower.includes("repair")
-    || message.includes("自动修复")
-    || message.includes("整章改写")
-    || message.includes("修订第")
+    lower.includes("fixing") ||
+    lower.includes("revising chapter") ||
+    lower.includes("rewrite") ||
+    lower.includes("repair") ||
+    message.includes("自动修复") ||
+    message.includes("整章改写") ||
+    message.includes("修订第")
   ) {
     return "repairing";
   }
   if (
-    lower.includes("persist")
-    || lower.includes("saving")
-    || lower.includes("snapshot")
-    || lower.includes("rebuilding final truth files")
-    || lower.includes("validating truth file updates")
-    || lower.includes("syncing memory indexes")
-    || message.includes("落盘")
-    || message.includes("保存")
-    || message.includes("快照")
-    || message.includes("校验真相文件变更")
-    || message.includes("生成最终真相文件")
-    || message.includes("同步记忆索引")
+    lower.includes("persist") ||
+    lower.includes("saving") ||
+    lower.includes("snapshot") ||
+    lower.includes("rebuilding final truth files") ||
+    lower.includes("validating truth file updates") ||
+    lower.includes("syncing memory indexes") ||
+    message.includes("落盘") ||
+    message.includes("保存") ||
+    message.includes("快照") ||
+    message.includes("校验真相文件变更") ||
+    message.includes("生成最终真相文件") ||
+    message.includes("同步记忆索引")
   ) {
     return "persisting";
   }
@@ -298,12 +304,14 @@ async function withPipelineInteractionTelemetry<T extends { chapterNumber?: numb
   pipeline: InstrumentablePipelineLike,
   bookId: string,
   executor: () => Promise<T>,
-): Promise<T & {
-  __interaction: {
-    events: ReadonlyArray<InteractionEvent>;
-    activeChapterNumber?: number;
-  };
-}> {
+): Promise<
+  T & {
+    __interaction: {
+      events: ReadonlyArray<InteractionEvent>;
+      activeChapterNumber?: number;
+    };
+  }
+> {
   const events: InteractionEvent[] = [];
   const originalLogger = pipeline.config?.logger;
   if (pipeline.config) {
@@ -335,12 +343,23 @@ const CREATE_BOOK_TOOL: ToolDefinition = {
     type: "object",
     properties: {
       title: { type: "string", description: "书名" },
-      genre: { type: "string", description: "题材标识，如 xuanhuan, urban, romance, scifi, mystery" },
-      platform: { type: "string", enum: ["tomato", "qidian", "feilu", "other"], description: "发布平台" },
+      genre: {
+        type: "string",
+        description: "题材标识，如 xuanhuan, urban, romance, scifi, mystery",
+      },
+      platform: {
+        type: "string",
+        enum: ["tomato", "qidian", "feilu", "other"],
+        description: "发布平台",
+      },
       targetChapters: { type: "number", description: "目标章数，默认 200" },
       chapterWordCount: { type: "number", description: "每章字数，默认 3000" },
       language: { type: "string", enum: ["zh", "en"], description: "写作语言，默认 zh" },
-      brief: { type: "string", description: "创意简述，会传给 Architect 智能体生成完整的世界观、主角、冲突等 foundation 文件。把用户提到的所有创意要素都写进这里。" },
+      brief: {
+        type: "string",
+        description:
+          "创意简述，会传给 Architect 智能体生成完整的世界观、主角、冲突等 foundation 文件。把用户提到的所有创意要素都写进这里。",
+      },
     },
     required: ["title", "genre", "platform", "brief"],
   },
@@ -446,7 +465,9 @@ function formatDraftForUserMessage(
       ([, v]) => v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0),
     );
     for (const [key, value] of entries) {
-      parts.push(`- **${key}**: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`);
+      parts.push(
+        `- **${key}**: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`,
+      );
     }
     parts.push("");
   }
@@ -528,7 +549,8 @@ export function createInteractionToolsFromDeps(
         platform: (parsedArgs.platform as string) ?? existingDraft?.platform,
         language: (parsedArgs.language as "zh" | "en") ?? existingDraft?.language,
         targetChapters: (parsedArgs.targetChapters as number) ?? existingDraft?.targetChapters,
-        chapterWordCount: (parsedArgs.chapterWordCount as number) ?? existingDraft?.chapterWordCount,
+        chapterWordCount:
+          (parsedArgs.chapterWordCount as number) ?? existingDraft?.chapterWordCount,
         blurb: (parsedArgs.brief as string) ?? existingDraft?.blurb,
         missingFields: [],
         readyToCreate: Boolean(parsedArgs.title && parsedArgs.genre && parsedArgs.platform),
@@ -607,7 +629,9 @@ export function createInteractionToolsFromDeps(
             ],
             {
               temperature: chatRequestOptions.temperature ?? 0.4,
-              ...(chatRequestOptions.maxTokens !== undefined && { maxTokens: chatRequestOptions.maxTokens }),
+              ...(chatRequestOptions.maxTokens !== undefined && {
+                maxTokens: chatRequestOptions.maxTokens,
+              }),
               onTextDelta: hooks?.onChatTextDelta,
             },
           );
@@ -623,23 +647,22 @@ export function createInteractionToolsFromDeps(
 
       return {
         __interaction: {
-          responseText: response?.content?.trim()
-            || (options.bookId
+          responseText:
+            response?.content?.trim() ||
+            (options.bookId
               ? `I’m here. Active book is ${options.bookId}.`
               : "I’m here. No active book yet."),
         },
       };
     },
-    writeNextChapter: (bookId) => withPipelineInteractionTelemetry(
-      instrumentedPipeline,
-      bookId,
-      () => pipeline.writeNextChapter(bookId),
-    ),
-    reviseDraft: (bookId, chapterNumber, mode) => withPipelineInteractionTelemetry(
-      instrumentedPipeline,
-      bookId,
-      () => pipeline.reviseDraft(bookId, chapterNumber, mode as ReviseMode),
-    ),
+    writeNextChapter: (bookId) =>
+      withPipelineInteractionTelemetry(instrumentedPipeline, bookId, () =>
+        pipeline.writeNextChapter(bookId),
+      ),
+    reviseDraft: (bookId, chapterNumber, mode) =>
+      withPipelineInteractionTelemetry(instrumentedPipeline, bookId, () =>
+        pipeline.reviseDraft(bookId, chapterNumber, mode as ReviseMode),
+      ),
     patchChapterText: async (bookId, chapterNumber, targetText, replacementText) => {
       const execution = await executeEditTransaction(
         {

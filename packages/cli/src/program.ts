@@ -51,7 +51,10 @@ export function createProgram(hooks: ProgramHooks = {}): Command {
     .enablePositionalOptions()
     .option("--service <service>", "Override LLM service for this CLI run")
     .option("--model <model>", "Override LLM model for this CLI run")
-    .option("--api-key-env <envVar>", "Read LLM API key from this environment variable for this CLI run")
+    .option(
+      "--api-key-env <envVar>",
+      "Read LLM API key from this environment variable for this CLI run",
+    )
     .option("--base-url <url>", "Override LLM base URL for this CLI run")
     .option("--api-format <chat|responses>", "Override LLM API format for this CLI run")
     .option("--stream", "Force streaming LLM responses for this CLI run")
@@ -88,10 +91,12 @@ export function createProgram(hooks: ProgramHooks = {}): Command {
   program.addCommand(shortCommand);
   program.addCommand(createStudioCommand({ launchStudio: hooks.launchStudio }));
   program.addCommand(consolidateCommand);
-  program.addCommand(createInteractCommand({
-    runInteraction: hooks.runInteraction,
-    readInput: hooks.readInteractionInput,
-  }));
+  program.addCommand(
+    createInteractCommand({
+      runInteraction: hooks.runInteraction,
+      readInput: hooks.readInteractionInput,
+    }),
+  );
   program.addCommand(createTuiCommand({ launchTui: hooks.launchTui }));
 
   return program;

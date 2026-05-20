@@ -36,7 +36,9 @@ export const COVER_PROVIDER_PRESETS: readonly CoverProviderPreset[] = [
   },
 ];
 
-export function resolveCoverProviderPreset(service: string | undefined): CoverProviderPreset | undefined {
+export function resolveCoverProviderPreset(
+  service: string | undefined,
+): CoverProviderPreset | undefined {
   return COVER_PROVIDER_PRESETS.find((provider) => provider.service === service);
 }
 

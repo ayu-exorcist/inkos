@@ -57,9 +57,9 @@ describe("analyzeAITells", () => {
   });
 
   it("detects list-like sentence structure (dim 23)", () => {
-    const content = [
-      "他看着远方的山峰。他看着脚下的深渊。他看着身旁的同伴。他看着手中的剑。",
-    ].join("\n");
+    const content = ["他看着远方的山峰。他看着脚下的深渊。他看着身旁的同伴。他看着手中的剑。"].join(
+      "\n",
+    );
 
     const result = analyzeAITells(content);
     const listIssues = result.issues.filter((i) => i.category === "列表式结构");
@@ -79,7 +79,7 @@ describe("analyzeAITells", () => {
       "",
       "短暂的沉默。空气中弥漫着灰尘的味道，呛得他咳嗽了两声。远处传来脚步声。",
       "",
-      "\"谁？\"他低喝一声，手已经按上了腰间的刀柄。指尖触到冰凉的金属，心跳稍微稳了一些。黑暗中，一双眼睛正盯着他。那目光冰冷得像冬夜的寒风，带着审视和一丝不易察觉的警惕。",
+      '"谁？"他低喝一声，手已经按上了腰间的刀柄。指尖触到冰凉的金属，心跳稍微稳了一些。黑暗中，一双眼睛正盯着他。那目光冰冷得像冬夜的寒风，带着审视和一丝不易察觉的警惕。',
     ].join("\n");
 
     const result = analyzeAITells(content);

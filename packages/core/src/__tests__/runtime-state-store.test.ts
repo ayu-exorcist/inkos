@@ -58,44 +58,76 @@ describe("runtime-state-store memory helpers", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 3,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 3,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [
+      writeFile(
+        join(stateDir, "manifest.json"),
+        JSON.stringify(
           {
-            hookId: "structured-hook",
-            startChapter: 2,
-            type: "relationship",
-            status: "progressing",
-            lastAdvancedChapter: 3,
-            expectedPayoff: "Reveal the mentor ledger.",
-            notes: "Structured hook should win.",
+            schemaVersion: 2,
+            language: "en",
+            lastAppliedChapter: 3,
+            projectionVersion: 1,
+            migrationWarnings: [],
           },
-        ],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "current_state.json"),
+        JSON.stringify(
           {
             chapter: 3,
-            title: "Structured Summary",
-            characters: "Lin Yue",
-            events: "Structured runtime state event.",
-            stateChanges: "Structured runtime state shift.",
-            hookActivity: "structured-hook advanced",
-            mood: "grim",
-            chapterType: "mainline",
+            facts: [],
           },
-        ],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [
+              {
+                hookId: "structured-hook",
+                startChapter: 2,
+                type: "relationship",
+                status: "progressing",
+                lastAdvancedChapter: 3,
+                expectedPayoff: "Reveal the mentor ledger.",
+                notes: "Structured hook should win.",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [
+              {
+                chapter: 3,
+                title: "Structured Summary",
+                characters: "Lin Yue",
+                events: "Structured runtime state event.",
+                stateChanges: "Structured runtime state shift.",
+                hookActivity: "structured-hook advanced",
+                mood: "grim",
+                chapterType: "mainline",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     const seed = await loadNarrativeMemorySeed(bookDir);
@@ -137,27 +169,35 @@ describe("runtime-state-store memory helpers", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(snapshotStateDir, "current_state.json"), JSON.stringify({
-        chapter: 5,
-        facts: [
+      writeFile(
+        join(snapshotStateDir, "current_state.json"),
+        JSON.stringify(
           {
-            subject: "current",
-            predicate: "Current Location",
-            object: "Structured watchtower",
-            validFromChapter: 5,
-            validUntilChapter: null,
-            sourceChapter: 5,
+            chapter: 5,
+            facts: [
+              {
+                subject: "current",
+                predicate: "Current Location",
+                object: "Structured watchtower",
+                validFromChapter: 5,
+                validUntilChapter: null,
+                sourceChapter: 5,
+              },
+              {
+                subject: "protagonist",
+                predicate: "Current Conflict",
+                object: "Structured conflict replaces markdown drift.",
+                validFromChapter: 5,
+                validUntilChapter: null,
+                sourceChapter: 5,
+              },
+            ],
           },
-          {
-            subject: "protagonist",
-            predicate: "Current Conflict",
-            object: "Structured conflict replaces markdown drift.",
-            validFromChapter: 5,
-            validUntilChapter: null,
-            sourceChapter: 5,
-          },
-        ],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     const facts = await loadSnapshotCurrentStateFacts(bookDir, 5);
@@ -185,50 +225,86 @@ describe("runtime-state-store memory helpers", () => {
     await writeFile(
       join(chaptersDir, "index.json"),
       JSON.stringify(
-        Array.from({ length: 12 }, (_, i) => ({ number: i + 1, title: `Ch${i + 1}`, status: "approved" })),
+        Array.from({ length: 12 }, (_, i) => ({
+          number: i + 1,
+          title: `Ch${i + 1}`,
+          status: "approved",
+        })),
       ),
       "utf-8",
     );
 
     await Promise.all([
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "zh",
-        lastAppliedChapter: 12,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 12,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [
+      writeFile(
+        join(stateDir, "manifest.json"),
+        JSON.stringify(
+          {
+            schemaVersion: 2,
+            language: "zh",
+            lastAppliedChapter: 12,
+            projectionVersion: 1,
+            migrationWarnings: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "current_state.json"),
+        JSON.stringify(
           {
             chapter: 12,
-            title: "河埠对账",
-            characters: "林月",
-            events: "第一次写入。",
-            stateChanges: "第一次写入。",
-            hookActivity: "mentor-debt 推进",
-            mood: "紧绷",
-            chapterType: "主线推进",
+            facts: [],
           },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "hooks.json"),
+        JSON.stringify(
           {
-            chapter: 12,
-            title: "重复河埠对账",
-            characters: "林月",
-            events: "第二次写入。",
-            stateChanges: "第二次写入。",
-            hookActivity: "mentor-debt 推进",
-            mood: "紧绷",
-            chapterType: "主线推进",
+            hooks: [],
           },
-        ],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [
+              {
+                chapter: 12,
+                title: "河埠对账",
+                characters: "林月",
+                events: "第一次写入。",
+                stateChanges: "第一次写入。",
+                hookActivity: "mentor-debt 推进",
+                mood: "紧绷",
+                chapterType: "主线推进",
+              },
+              {
+                chapter: 12,
+                title: "重复河埠对账",
+                characters: "林月",
+                events: "第二次写入。",
+                stateChanges: "第二次写入。",
+                hookActivity: "mentor-debt 推进",
+                mood: "紧绷",
+                chapterType: "主线推进",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     // Duplicates are auto-repaired (deduped, keeping last occurrence), not rejected
@@ -249,7 +325,13 @@ describe("runtime-state-store memory helpers", () => {
     await Promise.all([
       writeFile(
         join(chaptersDir, "index.json"),
-        JSON.stringify(Array.from({ length: 5 }, (_, i) => ({ number: i + 1, title: `Ch${i + 1}`, status: "approved" }))),
+        JSON.stringify(
+          Array.from({ length: 5 }, (_, i) => ({
+            number: i + 1,
+            title: `Ch${i + 1}`,
+            status: "approved",
+          })),
+        ),
         "utf-8",
       ),
       writeFile(
@@ -262,41 +344,75 @@ describe("runtime-state-store memory helpers", () => {
         ].join("\n"),
         "utf-8",
       ),
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "zh",
-        lastAppliedChapter: 5,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 5,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [
+      writeFile(
+        join(stateDir, "manifest.json"),
+        JSON.stringify(
           {
-            hookId: "h001--broken",
-            startChapter: 3,
-            type: "",
-            status: "open",
-            lastAdvancedChapter: 5,
-            expectedPayoff: "后续揭开账本来源。",
-            notes: "模型生成了空 type，旧版本会导致 books 接口整体报错。",
+            schemaVersion: 2,
+            language: "zh",
+            lastAppliedChapter: 5,
+            projectionVersion: 1,
+            migrationWarnings: [],
           },
-        ],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "current_state.json"),
+        JSON.stringify(
+          {
+            chapter: 5,
+            facts: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [
+              {
+                hookId: "h001--broken",
+                startChapter: 3,
+                type: "",
+                status: "open",
+                lastAdvancedChapter: 5,
+                expectedPayoff: "后续揭开账本来源。",
+                notes: "模型生成了空 type，旧版本会导致 books 接口整体报错。",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
     ]);
 
     const snapshot = await loadRuntimeStateSnapshot(bookDir);
 
-    expect(snapshot.hooks.hooks[0]).toEqual(expect.objectContaining({
-      hookId: "h001--broken",
-      type: "unspecified",
-    }));
+    expect(snapshot.hooks.hooks[0]).toEqual(
+      expect.objectContaining({
+        hookId: "h001--broken",
+        type: "unspecified",
+      }),
+    );
     expect(snapshot.manifest.migrationWarnings.join("\n")).toContain("empty hook type");
   });
 
@@ -311,39 +427,76 @@ describe("runtime-state-store memory helpers", () => {
     await writeFile(
       join(chaptersDir, "index.json"),
       JSON.stringify(
-        Array.from({ length: 11 }, (_, i) => ({ number: i + 1, title: `Ch${i + 1}`, status: "approved" })),
+        Array.from({ length: 11 }, (_, i) => ({
+          number: i + 1,
+          title: `Ch${i + 1}`,
+          status: "approved",
+        })),
       ),
       "utf-8",
     );
 
     await Promise.all([
-      writeFile(join(stateDir, "manifest.json"), JSON.stringify({
-        schemaVersion: 2,
-        language: "en",
-        lastAppliedChapter: 11,
-        projectionVersion: 1,
-        migrationWarnings: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "current_state.json"), JSON.stringify({
-        chapter: 11,
-        facts: [],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "hooks.json"), JSON.stringify({
-        hooks: [
+      writeFile(
+        join(stateDir, "manifest.json"),
+        JSON.stringify(
           {
-            hookId: "anonymous-source-scope",
-            startChapter: 3,
-            type: "source-risk",
-            status: "open",
-            lastAdvancedChapter: 8,
-            expectedPayoff: "Reveal how much the anonymous source already knew about the route.",
-            notes: "The source knowledge question remains unresolved.",
+            schemaVersion: 2,
+            language: "en",
+            lastAppliedChapter: 11,
+            projectionVersion: 1,
+            migrationWarnings: [],
           },
-        ],
-      }, null, 2), "utf-8"),
-      writeFile(join(stateDir, "chapter_summaries.json"), JSON.stringify({
-        rows: [],
-      }, null, 2), "utf-8"),
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "current_state.json"),
+        JSON.stringify(
+          {
+            chapter: 11,
+            facts: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "hooks.json"),
+        JSON.stringify(
+          {
+            hooks: [
+              {
+                hookId: "anonymous-source-scope",
+                startChapter: 3,
+                type: "source-risk",
+                status: "open",
+                lastAdvancedChapter: 8,
+                expectedPayoff:
+                  "Reveal how much the anonymous source already knew about the route.",
+                notes: "The source knowledge question remains unresolved.",
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
+      writeFile(
+        join(stateDir, "chapter_summaries.json"),
+        JSON.stringify(
+          {
+            rows: [],
+          },
+          null,
+          2,
+        ),
+        "utf-8",
+      ),
       writeFile(join(storyDir, "pending_hooks.md"), "", "utf-8"),
       writeFile(join(storyDir, "chapter_summaries.md"), "", "utf-8"),
     ]);
@@ -362,7 +515,8 @@ describe("runtime-state-store memory helpers", () => {
         newHookCandidates: [
           {
             type: "source-risk",
-            expectedPayoff: "Reveal how much the anonymous source already knew about the route and address.",
+            expectedPayoff:
+              "Reveal how much the anonymous source already knew about the route and address.",
             notes: "This chapter adds the address angle to the anonymous source question.",
           },
         ],
@@ -380,9 +534,11 @@ describe("runtime-state-store memory helpers", () => {
       }),
     ]);
     expect(artifacts.snapshot.hooks.hooks).toHaveLength(1);
-    expect(artifacts.snapshot.hooks.hooks[0]).toEqual(expect.objectContaining({
-      hookId: "anonymous-source-scope",
-      lastAdvancedChapter: 12,
-    }));
+    expect(artifacts.snapshot.hooks.hooks[0]).toEqual(
+      expect.objectContaining({
+        hookId: "anonymous-source-scope",
+        lastAdvancedChapter: 12,
+      }),
+    );
   });
 });

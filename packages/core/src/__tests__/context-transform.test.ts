@@ -22,18 +22,14 @@ describe("createBookContextTransform", () => {
 
   it("returns messages unchanged when bookId is null", async () => {
     const transform = createBookContextTransform(null, projectRoot);
-    const messages = [
-      { role: "user" as const, content: "hello", timestamp: Date.now() },
-    ];
+    const messages = [{ role: "user" as const, content: "hello", timestamp: Date.now() }];
     const result = await transform(messages);
     expect(result).toBe(messages);
   });
 
   it("prepends a user message with truth file contents", async () => {
     const transform = createBookContextTransform(bookId, projectRoot);
-    const original = [
-      { role: "user" as const, content: "写下一章", timestamp: Date.now() },
-    ];
+    const original = [{ role: "user" as const, content: "写下一章", timestamp: Date.now() }];
     const result = await transform(original);
 
     expect(original).toHaveLength(1);
@@ -73,9 +69,7 @@ describe("createBookContextTransform", () => {
 
   it("returns original messages when story/ directory does not exist", async () => {
     const transform = createBookContextTransform("nonexistent-book", projectRoot);
-    const original = [
-      { role: "user" as const, content: "test", timestamp: Date.now() },
-    ];
+    const original = [{ role: "user" as const, content: "test", timestamp: Date.now() }];
     const result = await transform(original);
     expect(result).toBe(original);
   });

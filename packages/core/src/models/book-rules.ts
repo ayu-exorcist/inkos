@@ -1,27 +1,35 @@
 import { z } from "zod";
 import yaml from "js-yaml";
 
-const ProtagonistSchema = z.object({
-  name: z.string(),
-  personalityLock: z.array(z.string()).default([]),
-  behavioralConstraints: z.array(z.string()).default([]),
-}).optional();
+const ProtagonistSchema = z
+  .object({
+    name: z.string(),
+    personalityLock: z.array(z.string()).default([]),
+    behavioralConstraints: z.array(z.string()).default([]),
+  })
+  .optional();
 
-const GenreLockSchema = z.object({
-  primary: z.string(),
-  forbidden: z.array(z.string()).default([]),
-}).optional();
+const GenreLockSchema = z
+  .object({
+    primary: z.string(),
+    forbidden: z.array(z.string()).default([]),
+  })
+  .optional();
 
-const NumericalOverridesSchema = z.object({
-  hardCap: z.union([z.number(), z.string()]).optional(),
-  resourceTypes: z.array(z.string()).default([]),
-}).optional();
+const NumericalOverridesSchema = z
+  .object({
+    hardCap: z.union([z.number(), z.string()]).optional(),
+    resourceTypes: z.array(z.string()).default([]),
+  })
+  .optional();
 
-const EraConstraintsSchema = z.object({
-  enabled: z.boolean().default(false),
-  period: z.string().optional(),
-  region: z.string().optional(),
-}).optional();
+const EraConstraintsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    period: z.string().optional(),
+    region: z.string().optional(),
+  })
+  .optional();
 
 export const BookRulesSchema = z.object({
   version: z.string().default("1.0"),
@@ -57,10 +65,10 @@ export interface ParsedBookRules {
  */
 export function isBookRulesShim(raw: string): boolean {
   return (
-    /本书规则（兼容指针——已废弃）/.test(raw)
-    || /Book Rules \(compat pointer — deprecated\)/.test(raw)
-    || /本文件仅为外部读取保留/.test(raw)
-    || /This file is kept for external readers only/.test(raw)
+    /本书规则（兼容指针——已废弃）/.test(raw) ||
+    /Book Rules \(compat pointer — deprecated\)/.test(raw) ||
+    /本文件仅为外部读取保留/.test(raw) ||
+    /This file is kept for external readers only/.test(raw)
   );
 }
 

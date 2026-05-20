@@ -21,7 +21,9 @@ export interface StudioCommandHooks {
   readonly launchStudio?: (projectRoot: string, port: string) => Promise<void> | void;
 }
 
-async function prepareStudioRoot(root: string): Promise<{ readonly root: string; readonly initialized: boolean }> {
+async function prepareStudioRoot(
+  root: string,
+): Promise<{ readonly root: string; readonly initialized: boolean }> {
   const initialized = await ensureProjectDirectoryInitialized(root, { language: "zh" });
   return { root, initialized };
 }
@@ -47,10 +49,7 @@ export function toNodeImportSpecifier(path: string): string {
   return path;
 }
 
-export function resolveBrowserLaunch(
-  platform: NodeJS.Platform,
-  url: string,
-): BrowserLaunchSpec {
+export function resolveBrowserLaunch(platform: NodeJS.Platform, url: string): BrowserLaunchSpec {
   if (platform === "darwin") {
     return { command: "open", args: [url] };
   }
@@ -125,8 +124,8 @@ export async function launchStudioWorkbench(root: string, port: string): Promise
   if (!launch) {
     logError(
       "InkOS Studio not found. If you cloned the repo, run:\n" +
-      "  cd packages/studio && pnpm install && pnpm build\n" +
-      "Then run 'inkos studio' from the project root.",
+        "  cd packages/studio && pnpm install && pnpm build\n" +
+        "Then run 'inkos studio' from the project root.",
     );
     process.exit(1);
   }
@@ -182,13 +181,13 @@ export async function launchStudioEntry(
 
 export function createStudioCommand(hooks: StudioCommandHooks = {}): Command {
   return new Command("studio")
-  .description("Start InkOS Studio web workbench")
-  .option("-p, --port <port>", "Server port", "4567")
-  .action(async (opts) => {
-    const root = findProjectRoot();
-    const port = opts.port;
-    await launchStudioEntry(root, port, hooks);
-  });
+    .description("Start InkOS Studio web workbench")
+    .option("-p, --port <port>", "Server port", "4567")
+    .action(async (opts) => {
+      const root = findProjectRoot();
+      const port = opts.port;
+      await launchStudioEntry(root, port, hooks);
+    });
 }
 
 export const studioCommand = createStudioCommand();

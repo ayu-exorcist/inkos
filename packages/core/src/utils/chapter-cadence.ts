@@ -39,16 +39,53 @@ export interface ChapterCadenceAnalysis {
 export const DEFAULT_CHAPTER_CADENCE_WINDOW = CADENCE_WINDOW_DEFAULTS.summaryLookback;
 
 const HIGH_TENSION_KEYWORDS = [
-  "紧张", "冷硬", "压抑", "逼仄", "肃杀", "沉重", "凝重",
-  "冷峻", "压迫", "阴沉", "焦灼", "窒息", "凛冽", "锋利",
-  "克制", "危机", "对峙", "绷紧", "僵持", "杀意",
-  "tense", "cold", "oppressive", "grim", "ominous", "dark",
-  "bleak", "hostile", "threatening", "heavy", "suffocating",
+  "紧张",
+  "冷硬",
+  "压抑",
+  "逼仄",
+  "肃杀",
+  "沉重",
+  "凝重",
+  "冷峻",
+  "压迫",
+  "阴沉",
+  "焦灼",
+  "窒息",
+  "凛冽",
+  "锋利",
+  "克制",
+  "危机",
+  "对峙",
+  "绷紧",
+  "僵持",
+  "杀意",
+  "tense",
+  "cold",
+  "oppressive",
+  "grim",
+  "ominous",
+  "dark",
+  "bleak",
+  "hostile",
+  "threatening",
+  "heavy",
+  "suffocating",
 ];
 
 const ENGLISH_STOP_WORDS = new Set([
-  "the", "and", "with", "from", "into", "after", "before",
-  "over", "under", "this", "that", "your", "their",
+  "the",
+  "and",
+  "with",
+  "from",
+  "into",
+  "after",
+  "before",
+  "over",
+  "under",
+  "this",
+  "that",
+  "your",
+  "their",
 ]);
 
 export function analyzeChapterCadence(params: {
@@ -110,9 +147,7 @@ function analyzeScenePressure(
 function analyzeMoodPressure(
   rows: ReadonlyArray<CadenceSummaryRow>,
 ): MoodCadencePressure | undefined {
-  const moods = rows
-    .map((row) => row.mood.trim())
-    .filter((value) => isMeaningfulValue(value));
+  const moods = rows.map((row) => row.mood.trim()).filter((value) => isMeaningfulValue(value));
   if (moods.length < 2) {
     return undefined;
   }
@@ -144,9 +179,7 @@ function analyzeTitlePressure(
   rows: ReadonlyArray<CadenceSummaryRow>,
   language: "zh" | "en",
 ): TitleCadencePressure | undefined {
-  const titles = rows
-    .map((row) => row.title.trim())
-    .filter((value) => isMeaningfulValue(value));
+  const titles = rows.map((row) => row.title.trim()).filter((value) => isMeaningfulValue(value));
   if (titles.length < 2) {
     return undefined;
   }
@@ -159,7 +192,10 @@ function analyzeTitlePressure(
   }
 
   const repeated = [...counts.entries()]
-    .sort((left, right) => right[1] - left[1] || right[0].length - left[0].length || left[0].localeCompare(right[0]))
+    .sort(
+      (left, right) =>
+        right[1] - left[1] || right[0].length - left[0].length || left[0].localeCompare(right[0]),
+    )
     .find((entry) => entry[1] >= CADENCE_PRESSURE_THRESHOLDS.title.minimumRepeatedCount);
   if (!repeated) {
     return undefined;
@@ -182,11 +218,11 @@ function analyzeTitlePressure(
 function extractTitleTokens(title: string, language: "zh" | "en"): string[] {
   if (language === "en") {
     const words = title.match(/[a-z]{4,}/gi) ?? [];
-    return [...new Set(
-      words
-        .map((word) => word.toLowerCase())
-        .filter((word) => !ENGLISH_STOP_WORDS.has(word)),
-    )];
+    return [
+      ...new Set(
+        words.map((word) => word.toLowerCase()).filter((word) => !ENGLISH_STOP_WORDS.has(word)),
+      ),
+    ];
   }
 
   const segments = title.match(/[\u4e00-\u9fff]{2,}/g) ?? [];

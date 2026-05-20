@@ -1,8 +1,13 @@
 import { describe, it, expect } from "vitest";
 import type { ToolExecution } from "../../../store/chat/types";
-import { getGeneratedArtifactDetails, groupToolExecutionsChronologically } from "../ToolExecutionSteps";
+import {
+  getGeneratedArtifactDetails,
+  groupToolExecutionsChronologically,
+} from "../ToolExecutionSteps";
 
-const makeExec = (overrides: Partial<ToolExecution> & { id: string; tool: string }): ToolExecution => ({
+const makeExec = (
+  overrides: Partial<ToolExecution> & { id: string; tool: string },
+): ToolExecution => ({
   label: "test",
   status: "completed",
   startedAt: Date.now(),
@@ -84,7 +89,12 @@ describe("groupChronologically", () => {
     const groups = groupToolExecutionsChronologically(execs);
 
     expect(groups).toHaveLength(4);
-    expect(groups.map((group) => group.type)).toEqual(["utilities", "pipeline", "pipeline", "utilities"]);
+    expect(groups.map((group) => group.type)).toEqual([
+      "utilities",
+      "pipeline",
+      "pipeline",
+      "utilities",
+    ]);
     expect(groups[1].type === "pipeline" ? groups[1].exec.tool : "").toBe("generate_cover");
     expect(groups[2].type === "pipeline" ? groups[2].exec.tool : "").toBe("short_fiction_run");
   });

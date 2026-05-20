@@ -74,11 +74,7 @@ describe("persistChapterArtifacts", () => {
         title: "Chapter Title",
         status: "ready-for-review",
         wordCount: 888,
-        auditIssues: [
-          "[info] ignore me",
-          "[warning] keep me",
-          "[critical] keep me too",
-        ],
+        auditIssues: ["[info] ignore me", "[warning] keep me", "[critical] keep me too"],
         reviewNote: undefined,
         tokenUsage: ZERO_USAGE,
       }),

@@ -1,20 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AssistantMessage, Model, Api } from "@mariozechner/pi-ai";
+import type { AssistantMessage, Model, Api } from "@earendil-works/pi-ai";
 import {
   __resetFixedTemperatureWarnings,
   chatCompletion,
   type LLMClient,
 } from "../llm/provider.js";
 
-// ── Mock @mariozechner/pi-ai ──────────────────────────────────────────────────
+// ── Mock @earendil-works/pi-ai ──────────────────────────────────────────────────
 // We intercept streamSimple so tests don't hit the network.
 
 const mockStreamSimple = vi.fn();
 const mockCompleteSimple = vi.fn();
 const mockComplete = vi.fn();
 
-vi.mock("@mariozechner/pi-ai", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@mariozechner/pi-ai")>();
+vi.mock("@earendil-works/pi-ai", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@earendil-works/pi-ai")>();
   return {
     ...original,
     streamSimple: (...args: unknown[]) => mockStreamSimple(...args),
@@ -76,9 +76,7 @@ function makeTextStream(text: string): AsyncIterable<Record<string, unknown>> {
 /** Stream that emits only done with empty content. */
 function makeEmptyStream(): AsyncIterable<Record<string, unknown>> {
   const msg = makeAssistantMessage("");
-  return makeEventStream([
-    { type: "done", reason: "stop", message: msg },
-  ]);
+  return makeEventStream([{ type: "done", reason: "stop", message: msg }]);
 }
 
 /** Stream that throws immediately. */
@@ -149,9 +147,7 @@ describe("chatCompletion via pi-ai", () => {
     mockStreamSimple.mockReturnValue(makeTextStream("hello world"));
 
     const client = makeClient();
-    const result = await chatCompletion(client, "test-model", [
-      { role: "user", content: "ping" },
-    ]);
+    const result = await chatCompletion(client, "test-model", [{ role: "user", content: "ping" }]);
 
     expect(result.content).toBe("hello world");
     expect(result.usage.promptTokens).toBe(11);
@@ -265,12 +261,14 @@ describe("chatCompletion via pi-ai", () => {
 
   it("calls onTextDelta for each text chunk", async () => {
     const msg = makeAssistantMessage("abc");
-    mockStreamSimple.mockReturnValue(makeEventStream([
-      { type: "text_delta", contentIndex: 0, delta: "a", partial: msg },
-      { type: "text_delta", contentIndex: 0, delta: "b", partial: msg },
-      { type: "text_delta", contentIndex: 0, delta: "c", partial: msg },
-      { type: "done", reason: "stop", message: msg },
-    ]));
+    mockStreamSimple.mockReturnValue(
+      makeEventStream([
+        { type: "text_delta", contentIndex: 0, delta: "a", partial: msg },
+        { type: "text_delta", contentIndex: 0, delta: "b", partial: msg },
+        { type: "text_delta", contentIndex: 0, delta: "c", partial: msg },
+        { type: "done", reason: "stop", message: msg },
+      ]),
+    );
 
     const deltas: string[] = [];
     const client = makeClient();
@@ -368,7 +366,9 @@ describe("chatCompletion via pi-ai", () => {
         },
       },
     });
-    const result = await chatCompletion(client, "deepseek-v4-flash", [{ role: "user", content: "nihao" }]);
+    const result = await chatCompletion(client, "deepseek-v4-flash", [
+      { role: "user", content: "nihao" },
+    ]);
 
     expect(result.content).toBe("kkai ok");
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -479,9 +479,9 @@ describe("chatCompletion via pi-ai", () => {
   it("uses reasoning_content for custom openai-compatible streams that omit content deltas", async () => {
     const encoder = new TextEncoder();
     const sse = [
-      "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"你\"}}]}\n\n",
-      "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"好\"}}]}\n\n",
-      "data: {\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":2,\"total_tokens\":5}}\n\n",
+      'data: {"choices":[{"delta":{"reasoning_content":"你"}}]}\n\n',
+      'data: {"choices":[{"delta":{"reasoning_content":"好"}}]}\n\n',
+      'data: {"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}\n\n',
       "data: [DONE]\n\n",
     ].join("");
     const fetchMock = vi.fn().mockResolvedValue({
@@ -514,7 +514,8 @@ describe("chatCompletion via pi-ai", () => {
   });
 
   it("retries custom openai-compatible chat by folding system messages into user when system role is unsupported", async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -669,7 +670,9 @@ describe("chatCompletion via pi-ai", () => {
         baseUrl: "https://gateway.example",
       },
     });
-    const result = await chatCompletion(client, "claude-sonnet-4-6", [{ role: "user", content: "nihao" }]);
+    const result = await chatCompletion(client, "claude-sonnet-4-6", [
+      { role: "user", content: "nihao" },
+    ]);
 
     expect(result.content).toBe("你好，Anthropic!");
     expect(result.usage.promptTokens).toBe(5);
@@ -685,15 +688,15 @@ describe("chatCompletion via pi-ai", () => {
     const encoder = new TextEncoder();
     const sse = [
       "event: message_start\n",
-      "data: {\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":4}}}\n\n",
+      'data: {"type":"message_start","message":{"usage":{"input_tokens":4}}}\n\n',
       "event: content_block_delta\n",
-      "data: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"你\"}}\n\n",
+      'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"你"}}\n\n',
       "event: content_block_delta\n",
-      "data: {\"type\":\"content_block_delta\",\"delta\":{\"type\":\"text_delta\",\"text\":\"好\"}}\n\n",
+      'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"好"}}\n\n',
       "event: message_delta\n",
-      "data: {\"type\":\"message_delta\",\"usage\":{\"output_tokens\":2}}\n\n",
+      'data: {"type":"message_delta","usage":{"output_tokens":2}}\n\n',
       "event: message_stop\n",
-      "data: {\"type\":\"message_stop\"}\n\n",
+      'data: {"type":"message_stop"}\n\n',
     ].join("");
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -717,7 +720,9 @@ describe("chatCompletion via pi-ai", () => {
         baseUrl: "https://gateway.example",
       },
     });
-    const result = await chatCompletion(client, "claude-sonnet-4-6", [{ role: "user", content: "nihao" }]);
+    const result = await chatCompletion(client, "claude-sonnet-4-6", [
+      { role: "user", content: "nihao" },
+    ]);
 
     expect(result.content).toBe("你好");
     expect(result.usage.promptTokens).toBe(4);
@@ -759,12 +764,9 @@ describe("chatCompletion fixed-temperature clamp (thinking models)", () => {
     const client = makeClient(0.7);
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await chatCompletion(
-      client,
-      "kimi-k2.5",
-      [{ role: "user", content: "hi" }],
-      { temperature: 0.3 },
-    );
+    await chatCompletion(client, "kimi-k2.5", [{ role: "user", content: "hi" }], {
+      temperature: 0.3,
+    });
 
     const opts = mockStreamSimple.mock.calls[0]?.[2] as Record<string, unknown>;
     expect(opts.temperature).toBe(1);
@@ -786,9 +788,7 @@ describe("chatCompletion fixed-temperature clamp (thinking models)", () => {
     const client = makeClient(0.5);
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await chatCompletion(client, "kimi-k2-thinking", [
-      { role: "user", content: "hi" },
-    ]);
+    await chatCompletion(client, "kimi-k2-thinking", [{ role: "user", content: "hi" }]);
 
     const opts = mockStreamSimple.mock.calls[0]?.[2] as Record<string, unknown>;
     expect(opts.temperature).toBe(1);
@@ -798,12 +798,9 @@ describe("chatCompletion fixed-temperature clamp (thinking models)", () => {
     const client = makeClient(0.7);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await chatCompletion(
-      client,
-      "moonshot-v1-32k",
-      [{ role: "user", content: "hi" }],
-      { temperature: 0.3 },
-    );
+    await chatCompletion(client, "moonshot-v1-32k", [{ role: "user", content: "hi" }], {
+      temperature: 0.3,
+    });
 
     const opts = mockStreamSimple.mock.calls[0]?.[2] as Record<string, unknown>;
     expect(opts.temperature).toBe(0.3);
@@ -832,19 +829,21 @@ describe("createLLMClient per-call maxTokens not capped (v2.0.0)", () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
 
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "openai",
-      baseUrl: "http://localhost:0",
-      model: "test-model",
-      apiKey: "test-key",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "openai",
+        baseUrl: "http://localhost:0",
+        model: "test-model",
+        apiKey: "test-key",
+      }),
+    );
 
     mockStreamSimple.mockReset();
     mockStreamSimple.mockReturnValue(makeTextStream("ok"));
 
-    await chatCompletion(client, "test-model", [
-      { role: "user", content: "architect" },
-    ], { maxTokens: 16384 });
+    await chatCompletion(client, "test-model", [{ role: "user", content: "architect" }], {
+      maxTokens: 16384,
+    });
 
     const opts = mockStreamSimple.mock.calls[0]?.[2] as Record<string, unknown>;
     expect(opts.maxTokens).toBe(16384);
@@ -855,13 +854,15 @@ describe("createLLMClient with providers lookup", () => {
   it("anthropic + claude-sonnet-4-6 拿到 modelCard 的 maxOutput (64000)，不是未知模型兜底", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "anthropic",
-      service: "anthropic",
-      model: "claude-sonnet-4-6",
-      apiKey: "test",
-      baseUrl: "https://api.anthropic.com",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "anthropic",
+        service: "anthropic",
+        model: "claude-sonnet-4-6",
+        apiKey: "test",
+        baseUrl: "https://api.anthropic.com",
+      }),
+    );
     expect(client.defaults.maxTokens).toBe(64_000);
     expect(client._piModel?.maxTokens).toBe(64_000);
     expect(client._piModel?.contextWindow).toBe(1_000_000);
@@ -870,13 +871,15 @@ describe("createLLMClient with providers lookup", () => {
   it("custom service + gpt-4o 靠 Layer 2 全局扫命中 openai provider", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "openai",
-      service: "custom",
-      model: "gpt-4o",
-      apiKey: "test",
-      baseUrl: "https://middleman.example/v1",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "openai",
+        service: "custom",
+        model: "gpt-4o",
+        apiKey: "test",
+        baseUrl: "https://middleman.example/v1",
+      }),
+    );
     // lobe 数据里 gpt-4o maxOutput=4096
     expect(client.defaults.maxTokens).toBe(4096);
   });
@@ -884,13 +887,15 @@ describe("createLLMClient with providers lookup", () => {
   it("未知 model 走 8192 * 3 的写作兜底预算", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "openai",
-      service: "custom",
-      model: "my-private-xyz-model-does-not-exist",
-      apiKey: "test",
-      baseUrl: "https://middleman.example/v1",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "openai",
+        service: "custom",
+        model: "my-private-xyz-model-does-not-exist",
+        apiKey: "test",
+        baseUrl: "https://middleman.example/v1",
+      }),
+    );
     expect(client.defaults.maxTokens).toBe(24_576);
     expect(client._piModel?.maxTokens).toBe(24_576);
   });
@@ -898,53 +903,61 @@ describe("createLLMClient with providers lookup", () => {
   it("config.maxTokens 命中 modelCard 后被覆盖（用户填 4000 还是用 modelCard 的 64000）", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "anthropic",
-      service: "anthropic",
-      model: "claude-sonnet-4-6",
-      apiKey: "test",
-      baseUrl: "https://api.anthropic.com",
-      maxTokens: 4000,
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "anthropic",
+        service: "anthropic",
+        model: "claude-sonnet-4-6",
+        apiKey: "test",
+        baseUrl: "https://api.anthropic.com",
+        maxTokens: 4000,
+      }),
+    );
     expect(client.defaults.maxTokens).toBe(64_000);
   });
 
   it("B7: kimiCodingPlan 的 kimi-k2.5 走 API 时 piModel.id 是 deploymentName (k2p5)", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "anthropic",
-      service: "kimiCodingPlan",
-      model: "kimi-k2.5",
-      apiKey: "test",
-      baseUrl: "https://api.moonshot.cn/anthropic",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "anthropic",
+        service: "kimiCodingPlan",
+        model: "kimi-k2.5",
+        apiKey: "test",
+        baseUrl: "https://api.moonshot.cn/anthropic",
+      }),
+    );
     expect(client._piModel?.id).toBe("k2p5");
   });
 
   it("B7: 没有 deploymentName 的 model piModel.id 保持原 config.model", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "anthropic",
-      service: "kimiCodingPlan",
-      model: "kimi-k2-thinking",
-      apiKey: "test",
-      baseUrl: "https://api.moonshot.cn/anthropic",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "anthropic",
+        service: "kimiCodingPlan",
+        model: "kimi-k2-thinking",
+        apiKey: "test",
+        baseUrl: "https://api.moonshot.cn/anthropic",
+      }),
+    );
     expect(client._piModel?.id).toBe("kimi-k2-thinking");
   });
 
   it("Google Gemini uses native google-generative-ai provider", async () => {
     const { createLLMClient } = await import("../llm/provider.js");
     const { LLMConfigSchema } = await import("../models/project.js");
-    const client = createLLMClient(LLMConfigSchema.parse({
-      provider: "openai",
-      service: "google",
-      model: "gemini-2.5-flash",
-      apiKey: "test",
-      baseUrl: "https://generativelanguage.googleapis.com/v1beta",
-    }));
+    const client = createLLMClient(
+      LLMConfigSchema.parse({
+        provider: "openai",
+        service: "google",
+        model: "gemini-2.5-flash",
+        apiKey: "test",
+        baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+      }),
+    );
     expect(client._piModel?.api).toBe("google-generative-ai");
     expect(client._piModel?.provider).toBe("google");
     expect(client._piModel?.baseUrl).toBe("https://generativelanguage.googleapis.com/v1beta");

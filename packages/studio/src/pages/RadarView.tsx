@@ -26,7 +26,9 @@ interface RadarHistoryItem {
   readonly result: RadarResult;
 }
 
-interface Nav { toDashboard: () => void }
+interface Nav {
+  toDashboard: () => void;
+}
 
 export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunction }) {
   const c = useColors(theme);
@@ -40,6 +42,7 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
       const data = await fetchJson<{ items: ReadonlyArray<RadarHistoryItem> }>("/radar/history");
       setHistory(data.items ?? []);
     } catch {
+      // failure expected, safe to ignore
       setHistory([]);
     }
   };
@@ -65,7 +68,9 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={nav.toDashboard} className={c.link}>{t("bread.home")}</button>
+        <button onClick={nav.toDashboard} className={c.link}>
+          {t("bread.home")}
+        </button>
         <span className="text-border">/</span>
         <span>{t("nav.radar")}</span>
       </div>
@@ -86,13 +91,17 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
       </div>
 
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">{error}</div>
+        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
       )}
 
       {result && (
         <div className="space-y-6">
           <div className={`border ${c.cardStatic} rounded-lg p-5`}>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">{t("radar.summary")}</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+              {t("radar.summary")}
+            </h3>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.marketSummary}</p>
           </div>
 
@@ -103,11 +112,15 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {rec.platform} · {rec.genre}
                   </span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    rec.confidence >= 0.7 ? "bg-emerald-500/10 text-emerald-600" :
-                    rec.confidence >= 0.4 ? "bg-amber-500/10 text-amber-600" :
-                    "bg-muted text-muted-foreground"
-                  }`}>
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      rec.confidence >= 0.7
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : rec.confidence >= 0.4
+                          ? "bg-amber-500/10 text-amber-600"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
                     {(rec.confidence * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -116,7 +129,9 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
                 {rec.benchmarkTitles.length > 0 && (
                   <div className="flex gap-2 flex-wrap">
                     {rec.benchmarkTitles.map((bt) => (
-                      <span key={bt} className="px-2 py-0.5 text-[10px] bg-secondary rounded">{bt}</span>
+                      <span key={bt} className="px-2 py-0.5 text-[10px] bg-secondary rounded">
+                        {bt}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -139,8 +154,12 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
                 onClick={() => setResult(item.result)}
                 className="w-full rounded-md border border-border/40 px-3 py-2 text-left text-xs hover:bg-muted/30"
               >
-                <div className="font-medium text-foreground">{new Date(item.timestamp).toLocaleString()}</div>
-                <div className="mt-1 line-clamp-2 text-muted-foreground">{item.summaryPreview || item.file}</div>
+                <div className="font-medium text-foreground">
+                  {new Date(item.timestamp).toLocaleString()}
+                </div>
+                <div className="mt-1 line-clamp-2 text-muted-foreground">
+                  {item.summaryPreview || item.file}
+                </div>
               </button>
             ))}
           </div>
@@ -148,7 +167,9 @@ export function RadarView({ nav, theme, t }: { nav: Nav; theme: Theme; t: TFunct
       )}
 
       {!result && !loading && !error && (
-        <div className={`border border-dashed ${c.cardStatic} rounded-lg p-12 text-center text-muted-foreground text-sm italic`}>
+        <div
+          className={`border border-dashed ${c.cardStatic} rounded-lg p-12 text-center text-muted-foreground text-sm italic`}
+        >
           {t("radar.emptyHint")}
         </div>
       )}
