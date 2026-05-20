@@ -465,6 +465,13 @@ export {
   type AgentHealthOptions,
   type AgentCallMetrics,
 } from "./governance/agent-health.js";
+export {
+  PolicyLoader,
+  ResolvedPolicy,
+  type GovernancePolicy,
+  type AuditPolicy,
+  type DimensionPolicy,
+} from "./governance/policy-loader.js";
 
 // Telemetry
 export {
@@ -476,6 +483,23 @@ export {
   type FinishedSpan,
   type SpanExporter,
 } from "./telemetry/tracer.js";
+
+// Events
+export { EventBus, type EventHandler } from "./events/bus.js";
+export {
+  INKOS_EVENTS,
+  type ChapterDraftedEvent,
+  type ChapterAuditedEvent,
+  type ChapterRevisedEvent,
+  type AuditFailedEvent,
+  type BookPausedEvent,
+  type BookResumedEvent,
+  type PipelineErrorEvent,
+} from "./events/events.js";
+
+// Services
+export { FoundationService, type FoundationServiceDeps, type InitBookOptions } from "./services/foundation.js";
+export { AuditService, type AuditServiceDeps, type AuditOptions } from "./services/audit.js";
 
 // Utils
 export { isNewLayoutBook } from "./utils/outline-paths.js";

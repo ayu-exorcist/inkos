@@ -223,6 +223,8 @@ export interface PipelineConfig {
   readonly contextWindow?: number;
   /** Optional telemetry tracer for pipeline observability. */
   readonly telemetry?: import("../telemetry/tracer.js").TelemetryTracer;
+  /** Optional event bus for decoupled cross-cutting concerns. */
+  readonly eventBus?: import("../events/bus.js").EventBus;
 }
 
 export interface TokenUsageSummary {
