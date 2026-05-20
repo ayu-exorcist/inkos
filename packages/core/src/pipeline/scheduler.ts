@@ -6,6 +6,10 @@ import type { QualityGates, DetectionConfig } from "../models/project.js";
 import { dispatchWebhookEvent } from "../notify/dispatcher.js";
 import { detectChapter, detectAndRewrite } from "./detection-runner.js";
 import type { Logger } from "../utils/logger.js";
+import {
+  AdaptiveQualityGate,
+  type ChapterOutcome,
+} from "../governance/adaptive-gates.js";
 
 export interface SchedulerConfig extends PipelineConfig {
   readonly radarCron: string;
@@ -16,6 +20,8 @@ export interface SchedulerConfig extends PipelineConfig {
   readonly cooldownAfterChapterMs: number;
   readonly maxChaptersPerDay: number;
   readonly qualityGates?: QualityGates;
+  /** When true, use AdaptiveQualityGate instead of static QualityGates. */
+  readonly adaptiveGatesEnabled?: boolean;
   readonly detection?: DetectionConfig;
   readonly onChapterComplete?: (bookId: string, chapter: number, status: string) => void;
   readonly onError?: (bookId: string, error: Error) => void;
@@ -44,6 +50,7 @@ export class Scheduler {
   private failureDimensions = new Map<string, Map<string, number>>();
   // Daily chapter counter: "YYYY-MM-DD" → count
   private dailyChapterCount = new Map<string, number>();
+  private adaptiveGate?: AdaptiveQualityGate;
 
   private readonly log?: Logger;
 
@@ -52,6 +59,9 @@ export class Scheduler {
     this.pipeline = new PipelineRunner(config);
     this.state = new StateManager(config.projectRoot);
     this.log = config.logger?.child("scheduler");
+    if (config.adaptiveGatesEnabled) {
+      this.adaptiveGate = new AdaptiveQualityGate({ base: this.gates });
+    }
   }
 
   async start(): Promise<void> {
@@ -135,6 +145,7 @@ export class Scheduler {
     this.pausedBooks.delete(bookId);
     this.consecutiveFailures.delete(bookId);
     this.failureDimensions.delete(bookId);
+    this.adaptiveGate?.reset(bookId);
   }
 
   /** Check if a book is paused. */
@@ -150,6 +161,13 @@ export class Scheduler {
         retryTemperatureStep: 0.1,
       }
     );
+  }
+
+  private getEffectiveGates(bookId: string): QualityGates {
+    if (this.adaptiveGate) {
+      return this.adaptiveGate.snapshot(bookId);
+    }
+    return this.gates;
   }
 
   /** Check if daily cap is reached across all books. */
@@ -209,8 +227,9 @@ export class Scheduler {
       const success = await this.writeOneChapter(bookId, bookConfig);
       if (!success) {
         // Immediate retry with delay (if within retry limit)
+        const gates = this.getEffectiveGates(bookId);
         const failures = this.consecutiveFailures.get(bookId) ?? 0;
-        if (failures <= this.gates.maxAuditRetries && this.config.retryDelayMs > 0) {
+        if (failures <= gates.maxAuditRetries && this.config.retryDelayMs > 0) {
           this.log?.warn(`${bookId} retrying in ${this.config.retryDelayMs}ms`);
           await this.sleep(this.config.retryDelayMs);
           const retrySuccess = await this.writeOneChapter(bookId, bookConfig);
@@ -226,14 +245,20 @@ export class Scheduler {
   private async writeOneChapter(bookId: string, bookConfig: BookConfig): Promise<boolean> {
     try {
       // Compute temperature override: base 0.7 + failures * step
+      const gates = this.getEffectiveGates(bookId);
       const failures = this.consecutiveFailures.get(bookId) ?? 0;
       const tempOverride =
-        failures > 0 ? Math.min(1.2, 0.7 + failures * this.gates.retryTemperatureStep) : undefined;
+        failures > 0 ? Math.min(1.2, 0.7 + failures * gates.retryTemperatureStep) : undefined;
 
       const result = await this.pipeline.writeNextChapter(bookId, undefined, tempOverride);
 
       if (result.status === "ready-for-review") {
         this.consecutiveFailures.delete(bookId);
+        this.adaptiveGate?.record(bookId, {
+          chapterNumber: result.chapterNumber,
+          success: true,
+          issueCategories: [],
+        });
         this.recordChapterWritten();
 
         // Auto-detection loop after successful audit
@@ -247,11 +272,21 @@ export class Scheduler {
 
       // Audit failed — apply quality gates
       const issueCategories = result.auditResult.issues.map((i) => i.category);
+      this.adaptiveGate?.record(bookId, {
+        chapterNumber: result.chapterNumber,
+        success: false,
+        issueCategories,
+      });
       await this.handleAuditFailure(bookId, result.chapterNumber, issueCategories);
       this.config.onChapterComplete?.(bookId, result.chapterNumber, result.status);
       return false;
     } catch (e) {
       this.config.onError?.(bookId, e as Error);
+      this.adaptiveGate?.record(bookId, {
+        chapterNumber: 0,
+        success: false,
+        issueCategories: ["exception"],
+      });
       await this.handleAuditFailure(bookId, 0);
       return false;
     }
@@ -311,7 +346,7 @@ export class Scheduler {
       }
     }
 
-    const gates = this.gates;
+    const gates = this.getEffectiveGates(bookId);
 
     if (failures <= gates.maxAuditRetries) {
       this.log?.warn(`${bookId} audit failed (${failures}/${gates.maxAuditRetries}), will retry`);
@@ -321,7 +356,7 @@ export class Scheduler {
     // Check if we should pause
     if (failures >= gates.pauseAfterConsecutiveFailures) {
       this.pausedBooks.add(bookId);
-      const reason = `${failures} consecutive audit failures (threshold: ${gates.pauseAfterConsecutiveFailures})`;
+      const reason = `${failures} consecutive audit failures (threshold: ${gates.pauseAfterConsecutiveFailures}, mode: ${this.adaptiveGate?.snapshot(bookId).mode ?? "static"})`;
       this.log?.error(`${bookId} PAUSED: ${reason}`);
       this.config.onPause?.(bookId, reason);
 

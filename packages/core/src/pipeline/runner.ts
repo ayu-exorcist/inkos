@@ -121,6 +121,13 @@ export class PipelineRunner {
     this.registry = config.registry ?? getBuiltInRegistry();
   }
 
+  private withSpan<T>(name: string, fn: () => Promise<T>, attrs?: Record<string, string | number | boolean>): Promise<T> {
+    const tracer = this.config.telemetry;
+    if (!tracer) return fn();
+    tracer.startSpan({ name, attributes: attrs });
+    return fn().finally(() => tracer.endSpan());
+  }
+
   /**
    * Resolve an agent from the extension registry.
    * Falls back to built-in instantiation if the agent is not registered.
@@ -418,8 +425,10 @@ export class PipelineRunner {
   // ---------------------------------------------------------------------------
 
   async runRadar(): Promise<RadarResult> {
-    const radar = await this.resolveAgent<RadarAgent>("radar", undefined);
-    return radar.scan();
+    return this.withSpan("runRadar", async () => {
+      const radar = await this.resolveAgent<RadarAgent>("radar", undefined);
+      return await radar.scan();
+    });
   }
 
   async initBook(book: BookConfig, options: InitBookOptions = {}): Promise<void> {
@@ -1347,6 +1356,7 @@ export class PipelineRunner {
     wordCount?: number,
     temperatureOverride?: number,
   ): Promise<ChapterPipelineResult> {
+    this.config.telemetry?.startSpan({ name: "writeNextChapter", attributes: { bookId } });
     const releaseLock = await this.state.acquireBookLock(bookId);
     try {
       return await this._writeNextChapterLocked(
@@ -1355,8 +1365,12 @@ export class PipelineRunner {
         temperatureOverride,
         this.config.externalContext,
       );
+    } catch (e) {
+      this.config.telemetry?.recordError(String(e));
+      throw e;
     } finally {
       await releaseLock();
+      this.config.telemetry?.endSpan();
     }
   }
 
@@ -2430,6 +2444,7 @@ ${matrix}`,
    * Step 2: Sequentially replay each chapter through ChapterAnalyzer to build truth files.
    */
   async importChapters(input: ImportChaptersInput): Promise<ImportChaptersResult> {
+    this.config.telemetry?.startSpan({ name: "importChapters", attributes: { bookId: input.bookId, count: input.chapters.length } });
     const releaseLock = await this.state.acquireBookLock(input.bookId);
     try {
       const book = await this.state.loadBookConfig(input.bookId);
@@ -2618,6 +2633,7 @@ ${matrix}`,
       };
     } finally {
       await releaseLock();
+      this.config.telemetry?.endSpan();
     }
   }
 

@@ -453,6 +453,30 @@ export {
 } from "./agents/fanfic-prompt-sections.js";
 export * from "./prompts/index.js";
 
+// Governance
+export {
+  AdaptiveQualityGate,
+  type AdaptiveGateOptions,
+  type ChapterOutcome,
+  type AdaptiveGateSnapshot,
+} from "./governance/adaptive-gates.js";
+export {
+  AgentHealthMonitor,
+  type AgentHealthOptions,
+  type AgentCallMetrics,
+} from "./governance/agent-health.js";
+
+// Telemetry
+export {
+  TelemetryTracer,
+  createConsoleExporter,
+  createLoggerExporter,
+  type SpanOptions,
+  type SpanEvent,
+  type FinishedSpan,
+  type SpanExporter,
+} from "./telemetry/tracer.js";
+
 // Utils
 export { isNewLayoutBook } from "./utils/outline-paths.js";
 export { fetchUrl, searchWeb } from "./utils/web-search.js";

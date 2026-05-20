@@ -3,6 +3,7 @@ import { chatCompletion } from "../llm/provider.js";
 import { searchWeb, fetchUrl } from "../utils/web-search.js";
 import type { Logger } from "../utils/logger.js";
 import { ContextBudgetManager } from "../llm/context-budget.js";
+import type { AgentHealthMonitor } from "../governance/agent-health.js";
 
 export interface AgentContext {
   readonly client: LLMClient;
@@ -17,6 +18,8 @@ export interface AgentContext {
    * via ContextBudgetManager before sending to the LLM.
    */
   readonly contextWindow?: number;
+  /** Optional health monitor for circuit-breaker protection. */
+  readonly healthMonitor?: AgentHealthMonitor;
 }
 
 export abstract class BaseAgent {
@@ -34,6 +37,11 @@ export abstract class BaseAgent {
     messages: ReadonlyArray<LLMMessage>,
     options?: { readonly temperature?: number; readonly maxTokens?: number },
   ): Promise<LLMResponse> {
+    const monitor = this.ctx.healthMonitor;
+    if (monitor && !monitor.canCall(this.name)) {
+      throw new Error(`Circuit breaker open for agent "${this.name}"`);
+    }
+
     let finalMessages = [...messages];
 
     if (this.ctx.contextWindow && this.ctx.contextWindow > 0) {
@@ -47,10 +55,18 @@ export abstract class BaseAgent {
       finalMessages = result.messages;
     }
 
-    return chatCompletion(this.ctx.client, this.ctx.model, finalMessages, {
-      ...options,
-      onStreamProgress: this.ctx.onStreamProgress,
-    });
+    const start = Date.now();
+    try {
+      const response = await chatCompletion(this.ctx.client, this.ctx.model, finalMessages, {
+        ...options,
+        onStreamProgress: this.ctx.onStreamProgress,
+      });
+      monitor?.record(this.name, true, Date.now() - start);
+      return response;
+    } catch (e) {
+      monitor?.record(this.name, false, Date.now() - start);
+      throw e;
+    }
   }
 
   /**

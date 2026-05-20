@@ -221,6 +221,8 @@ export interface PipelineConfig {
    * compress message history via ContextBudgetManager.
    */
   readonly contextWindow?: number;
+  /** Optional telemetry tracer for pipeline observability. */
+  readonly telemetry?: import("../telemetry/tracer.js").TelemetryTracer;
 }
 
 export interface TokenUsageSummary {
