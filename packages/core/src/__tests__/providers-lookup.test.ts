@@ -61,9 +61,10 @@ describe("Layer 2 优先级（聚合入口精简后）", () => {
     expect(hit?.maxOutput).toBe(4096);
   });
 
-  it("已下架默认入口的 PPIO 不再参与 provider 精确查找", () => {
+  it("bank.yaml 自动加载后 PPIO 参与 provider 精确查找", () => {
     const hit = lookupModel("ppio", "deepseek/deepseek-v3.2");
-    expect(hit).toBeUndefined();
+    expect(hit).toBeDefined();
+    expect(hit?.maxOutput).toBe(8192);
   });
 });
 

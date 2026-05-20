@@ -2,6 +2,7 @@ import type { LLMClient, LLMMessage, LLMResponse, OnStreamProgress } from "../ll
 import { chatCompletion } from "../llm/provider.js";
 import { searchWeb, fetchUrl } from "../utils/web-search.js";
 import type { Logger } from "../utils/logger.js";
+import { ContextBudgetManager } from "../llm/context-budget.js";
 
 export interface AgentContext {
   readonly client: LLMClient;
@@ -10,6 +11,12 @@ export interface AgentContext {
   readonly bookId?: string;
   readonly logger?: Logger;
   readonly onStreamProgress?: OnStreamProgress;
+  /**
+   * Model context-window size in tokens.
+   * When provided, BaseAgent automatically compresses message history
+   * via ContextBudgetManager before sending to the LLM.
+   */
+  readonly contextWindow?: number;
 }
 
 export abstract class BaseAgent {
@@ -27,7 +34,20 @@ export abstract class BaseAgent {
     messages: ReadonlyArray<LLMMessage>,
     options?: { readonly temperature?: number; readonly maxTokens?: number },
   ): Promise<LLMResponse> {
-    return chatCompletion(this.ctx.client, this.ctx.model, messages, {
+    let finalMessages = [...messages];
+
+    if (this.ctx.contextWindow && this.ctx.contextWindow > 0) {
+      const budget = new ContextBudgetManager({ contextWindow: this.ctx.contextWindow });
+      const result = await budget.compress(finalMessages);
+      if (result.summary) {
+        this.log?.info(
+          `[context-budget] compressed ${result.originalTokenCount} → ${result.compressedTokenCount} tokens`,
+        );
+      }
+      finalMessages = result.messages;
+    }
+
+    return chatCompletion(this.ctx.client, this.ctx.model, finalMessages, {
       ...options,
       onStreamProgress: this.ctx.onStreamProgress,
     });

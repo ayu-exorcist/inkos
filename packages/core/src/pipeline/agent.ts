@@ -1,10 +1,14 @@
-import { chatWithTools, type AgentMessage, type ToolDefinition } from "../llm/provider.js";
+import type { AgentMessage, ToolDefinition } from "../llm/provider.js";
+import { runAgentLoop as runUnifiedAgentLoop } from "../llm/agent-loop.js";
+import { getGlobalToolRegistry } from "../tools/registry.js";
 import { PipelineRunner, type PipelineConfig } from "./runner.js";
+import { StateManager } from "../state/manager.js";
+import { registerAgentTools } from "./agent-tools.js";
 import { normalizePlatformOrOther, type Genre } from "../models/book.js";
 import { DEFAULT_REVISE_MODE, type ReviseMode } from "../agents/reviser.js";
 import { deriveBookIdFromTitle } from "../utils/book-id.js";
 
-/** Tool definitions for the agent loop. */
+/** Tool definitions for the agent loop. Kept as static array for backward-compat tests. */
 const TOOLS: ReadonlyArray<ToolDefinition> = [
   {
     name: "write_draft",
@@ -249,129 +253,72 @@ export interface AgentLoopOptions {
   readonly maxTurns?: number;
 }
 
+/**
+ * Backward-compatible agent loop.
+ *
+ * Internally delegates to the unified ToolRegistry-based loop in llm/agent-loop.ts.
+ * All tools are registered on first call and then reused across the process lifetime.
+ */
 export async function runAgentLoop(
   config: PipelineConfig,
   instruction: string,
   options?: AgentLoopOptions,
 ): Promise<string> {
   const pipeline = new PipelineRunner(config);
-  const { StateManager } = await import("../state/manager.js");
   const state = new StateManager(config.projectRoot);
 
-  const messages: AgentMessage[] = [
+  // Register all agent tools into the global ToolRegistry.
+  registerAgentTools({ pipeline, state, config });
+
+  const result = await runUnifiedAgentLoop(
     {
-      role: "system",
-      content: `你是 InkOS 小说写作 Agent。用户是小说作者，你帮他管理从建书到成稿的全过程。
-
-## 工具
-
-| 工具 | 作用 |
-|------|------|
-| list_books | 列出所有书 |
-| get_book_status | 查看书的章数、字数、审计状态 |
-| read_truth_files | 读取长期记忆（状态卡、资源账本、伏笔池）和设定（世界观、卷纲、本书规则） |
-| create_book | 建书，生成世界观、卷纲、本书规则（自动加载题材 genre profile） |
-| plan_chapter | 先生成 chapter intent，确认本章目标/冲突/优先级 |
-| compose_chapter | 再生成 runtime context/rule stack，确认实际输入 |
-| write_draft | 写【下一章】草稿（只能续写最新章之后，不能补历史章） |
-| audit_chapter | 审计章节（32维度，按题材条件启用，含AI痕迹+敏感词检测） |
-| revise_chapter | 修订章节文字质量（不能补空章/改章号，五种模式） |
-| update_author_intent | 更新书级长期意图 author_intent.md |
-| update_current_focus | 更新当前关注点 current_focus.md |
-| write_full_pipeline | 完整管线：写 → 审 → 改（如需要） |
-| scan_market | 扫描平台排行榜，分析市场趋势 |
-| web_fetch | 抓取指定URL的文本内容 |
-| import_style | 从参考文本生成文风指南（统计+LLM分析） |
-| import_canon | 从正传导入正典参照，启用番外模式 |
-| import_chapters | 【整书重导】导入全部已有章节并重建真相文件 |
-| write_truth_file | 【整文件覆盖】替换真相文件内容，不能用来改章节进度 |
-
-## 长期记忆
-
-每本书有两层控制面：
-- **author_intent.md** — 这本书长期想成为什么
-- **current_focus.md** — 最近 1-3 章要把注意力拉回哪里
-
-以及七个长期记忆文件，是 Agent 写作和审计的事实依据：
-- **current_state.md** — 角色位置、关系、已知信息、当前冲突
-- **particle_ledger.md** — 物品/资源账本，每笔增减有据可查
-- **pending_hooks.md** — 已埋伏笔、推进状态、预期回收时机
-- **chapter_summaries.md** — 每章压缩摘要（人物、事件、伏笔、情绪）
-- **subplot_board.md** — 支线进度板
-- **emotional_arcs.md** — 角色情感弧线
-- **character_matrix.md** — 角色交互矩阵与信息边界
-
-## 管线逻辑
-
-- audit 返回 passed=true → 不需要 revise
-- audit 返回 passed=false 且有 critical → 调 revise，改完可以再 audit
-- write_full_pipeline 会自动走完 写→审→改，适合不需要中间干预的场景
-
-## 规则
-
-- 用户提供了题材/创意但没说要扫描市场 → 跳过 scan_market，直接 create_book
-- 用户说了书名/bookId → 直接操作，不需要先 list_books
-- 每完成一步，简要汇报进展
-- 当用户要求“先把注意力拉回某条线”时，优先 update_current_focus，然后 plan_chapter / compose_chapter，再决定是否 write_draft 或 write_full_pipeline
-- 仿写流程：用户提供参考文本 → import_style → 生成 style_guide.md，后续写作自动参照
-- 番外流程：先 create_book 建番外书 → import_canon 导入正传正典 → 然后正常 write_draft
-- 续写流程：用户提供已有章节 → import_chapters → 然后 write_draft 续写
-
-## 禁止事项（严格遵守）
-
-- 不要用 write_draft 补历史中间章节。write_draft 只能写【当前最新章之后的下一章】
-- 不要用 import_chapters 修补某一个空章。import_chapters 是整书级重导工具
-- 不要用 write_truth_file 修改 current_state.md 的章节进度来"骗"系统跳到某一章
-- 不要用 revise_chapter 补缺失章节或改章节号。revise 只做文字质量修订
-- 用户说"补第 N 章"或"第 N 章是空的"时，先用 get_book_status 和 read_truth_files 判断真实状态，再决定用哪个工具
-- 不要在没有确认书籍状态的情况下直接调用写作工具`,
+      client: config.client,
+      model: config.model,
+      systemPrompt: buildAgentSystemPrompt(),
+      logger: config.logger,
+      maxTurns: options?.maxTurns,
+      onToolCall: options?.onToolCall,
+      onToolResult: options?.onToolResult,
+      onMessage: options?.onMessage,
     },
-    { role: "user", content: instruction },
-  ];
+    instruction,
+  );
 
-  const maxTurns = options?.maxTurns ?? 20;
-  let lastAssistantMessage = "";
-
-  for (let turn = 0; turn < maxTurns; turn++) {
-    const result = await chatWithTools(config.client, config.model, messages, TOOLS);
-
-    // Push assistant message to history
-    messages.push({
-      role: "assistant" as const,
-      content: result.content || null,
-      ...(result.toolCalls.length > 0 ? { toolCalls: result.toolCalls } : {}),
-    });
-
-    if (result.content) {
-      lastAssistantMessage = result.content;
-      options?.onMessage?.(result.content);
-    }
-
-    // If no tool calls, we're done
-    if (result.toolCalls.length === 0) break;
-
-    // Execute tool calls
-    for (const toolCall of result.toolCalls) {
-      let toolResult: string;
-      try {
-        const args = JSON.parse(toolCall.arguments) as Record<string, unknown>;
-        options?.onToolCall?.(toolCall.name, args);
-        toolResult = await executeTool(pipeline, state, config, toolCall.name, args);
-      } catch (e) {
-        toolResult = JSON.stringify({ error: String(e) });
-      }
-
-      options?.onToolResult?.(toolCall.name, toolResult);
-      messages.push({ role: "tool" as const, toolCallId: toolCall.id, content: toolResult });
-    }
-  }
-
-  return lastAssistantMessage;
+  return result.finalMessage;
 }
 
+/**
+ * Backward-compat executeAgentTool.
+ *
+ * Dispatches through the global ToolRegistry first. If the tool is not found
+ * (e.g. in tests that don't call runAgentLoop first), falls back to the
+ * inline switch-case to keep existing tests passing during migration.
+ */
 export async function executeAgentTool(
   pipeline: PipelineRunner,
-  state: import("../state/manager.js").StateManager,
+  state: StateManager,
+  config: PipelineConfig,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<string> {
+  // Ensure tools are registered (idempotent — registerAgentTools guards against duplicates).
+  registerAgentTools({ pipeline, state, config });
+
+  // Try the registry first.
+  const registryResult = await getGlobalToolRegistry().execute(name, args);
+  const parsed = JSON.parse(registryResult);
+  if (!parsed.error || !parsed.error.includes("Unknown tool")) {
+    return registryResult;
+  }
+
+  // Fallback: inline switch-case for backward-compat with tests that may not
+  // have initialized the registry.
+  return executeAgentToolFallback(pipeline, state, config, name, args);
+}
+
+async function executeAgentToolFallback(
+  pipeline: PipelineRunner,
+  state: StateManager,
   config: PipelineConfig,
   name: string,
   args: Record<string, unknown>,
@@ -412,7 +359,6 @@ export async function executeAgentTool(
     }
 
     case "revise_chapter": {
-      // Guard: target chapter must exist and have content
       const bookId = args.bookId as string;
       const chapterNum = args.chapterNumber as number | undefined;
       if (chapterNum !== undefined) {
@@ -505,7 +451,6 @@ export async function executeAgentTool(
           try {
             return await pipeline.getBookStatus(id);
           } catch {
-            // failure expected, safe to ignore
             return { bookId: id, error: "failed to load" };
           }
         }),
@@ -572,7 +517,6 @@ export async function executeAgentTool(
           error: "No chapters found. Check text format or provide a splitPattern.",
         });
       }
-      // Guard: import_chapters is a whole-book reimport, not a single-chapter patch
       if (chapters.length === 1) {
         return JSON.stringify({
           error:
@@ -591,12 +535,6 @@ export async function executeAgentTool(
       const fileName = args.fileName as string;
       const content = args.content as string;
 
-      // Whitelist allowed truth files.
-      //
-      // Hotfix: story_bible.md and book_rules.md are back in the whitelist —
-      // they are authoritative for pre-Phase-5 books. For new-layout books
-      // (outline/story_frame.md exists) they're compat shims and writes are
-      // blocked below.
       const LEGACY_SHIM_FILES = new Set(["story_bible.md", "book_rules.md"]);
       const ALLOWED_FLAT_FILES = [
         "story_bible.md",
@@ -610,20 +548,12 @@ export async function executeAgentTool(
         "character_matrix.md",
         "style_guide.md",
       ];
-      // outline/节奏原则.md (zh) / outline/rhythm_principles.md (en) are
-      // optional after Phase 5 consolidation — rhythm principles normally live
-      // in the last paragraph of volume_map and writeFoundationFiles skips the
-      // dedicated file when the block is empty. They remain whitelisted so
-      // legacy books and manual overrides keep working.
       const ALLOWED_OUTLINE_FILES = [
         "outline/story_frame.md",
         "outline/volume_map.md",
         "outline/节奏原则.md",
         "outline/rhythm_principles.md",
       ];
-      // Phase hotfix 3: accept both locale dirs so English-layout books can
-      // be edited via write_truth_file. The reader (utils/outline-paths.ts)
-      // and Studio (server.ts) accept both — the agent whitelist must match.
       const ROLE_PATH_PATTERN = /^roles\/(主要角色|次要角色|major|minor)\/[^/]+\.md$/;
 
       const isAllowed =
@@ -645,8 +575,6 @@ export async function executeAgentTool(
         });
       }
 
-      // For new-layout books, story_bible.md / book_rules.md are shims —
-      // block writes so the agent edits outline/story_frame.md instead.
       if (LEGACY_SHIM_FILES.has(fileName)) {
         const { isNewLayoutBook } = await import("../utils/outline-paths.js");
         const bookDirForCheck = new (await import("../state/manager.js")).StateManager(
@@ -659,13 +587,10 @@ export async function executeAgentTool(
         }
       }
 
-      // Path traversal guard — the whitelist already forbids `..`, but we
-      // re-assert at the write site so this cannot regress.
       if (fileName.includes("..") || fileName.startsWith("/") || fileName.includes("\0")) {
         return JSON.stringify({ error: `不安全的文件路径："${fileName}"` });
       }
 
-      // Guard: block chapter progress manipulation via current_state.md
       if (fileName === "current_state.md" && containsProgressManipulation(content)) {
         return JSON.stringify({
           error:
@@ -696,18 +621,8 @@ export async function executeAgentTool(
   }
 }
 
-async function executeTool(
-  pipeline: PipelineRunner,
-  state: import("../state/manager.js").StateManager,
-  config: PipelineConfig,
-  name: string,
-  args: Record<string, unknown>,
-): Promise<string> {
-  return executeAgentTool(pipeline, state, config, name, args);
-}
-
 async function getSequentialWriteGuardError(
-  state: import("../state/manager.js").StateManager,
+  state: StateManager,
   bookId: string,
   toolName: "write_draft" | "write_full_pipeline",
 ): Promise<string | null> {
@@ -734,3 +649,70 @@ function containsProgressManipulation(content: string): boolean {
 
 /** Export tool definitions so external systems can reference them. */
 export { TOOLS as AGENT_TOOLS };
+
+function buildAgentSystemPrompt(): string {
+  return `你是 InkOS 小说写作 Agent。用户是小说作者，你帮他管理从建书到成稿的全过程。
+
+## 工具
+
+| 工具 | 作用 |
+|------|------|
+| list_books | 列出所有书 |
+| get_book_status | 查看书的章数、字数、审计状态 |
+| read_truth_files | 读取长期记忆（状态卡、资源账本、伏笔池）和设定（世界观、卷纲、本书规则） |
+| create_book | 建书，生成世界观、卷纲、本书规则（自动加载题材 genre profile） |
+| plan_chapter | 先生成 chapter intent，确认本章目标/冲突/优先级 |
+| compose_chapter | 再生成 runtime context/rule stack，确认实际输入 |
+| write_draft | 写【下一章】草稿（只能续写最新章之后，不能补历史章） |
+| audit_chapter | 审计章节（32维度，按题材条件启用，含AI痕迹+敏感词检测） |
+| revise_chapter | 修订章节文字质量（不能补空章/改章号，五种模式） |
+| update_author_intent | 更新书级长期意图 author_intent.md |
+| update_current_focus | 更新当前关注点 current_focus.md |
+| write_full_pipeline | 完整管线：写 → 审 → 改（如需要） |
+| scan_market | 扫描平台排行榜，分析市场趋势 |
+| web_fetch | 抓取指定URL的文本内容 |
+| import_style | 从参考文本生成文风指南（统计+LLM分析） |
+| import_canon | 从正传导入正典参照，启用番外模式 |
+| import_chapters | 【整书重导】导入全部已有章节并重建真相文件 |
+| write_truth_file | 【整文件覆盖】替换真相文件内容，不能用来改章节进度 |
+
+## 长期记忆
+
+每本书有两层控制面：
+- **author_intent.md** — 这本书长期想成为什么
+- **current_focus.md** — 最近 1-3 章要把注意力拉回哪里
+
+以及七个长期记忆文件，是 Agent 写作和审计的事实依据：
+- **current_state.md** — 角色位置、关系、已知信息、当前冲突
+- **particle_ledger.md** — 物品/资源账本，每笔增减有据可查
+- **pending_hooks.md** — 已埋伏笔、推进状态、预期回收时机
+- **chapter_summaries.md** — 每章压缩摘要（人物、事件、伏笔、情绪）
+- **subplot_board.md** — 支线进度板
+- **emotional_arcs.md** — 角色情感弧线
+- **character_matrix.md** — 角色交互矩阵与信息边界
+
+## 管线逻辑
+
+- audit 返回 passed=true → 不需要 revise
+- audit 返回 passed=false 且有 critical → 调 revise，改完可以再 audit
+- write_full_pipeline 会自动走完 写→审→改，适合不需要中间干预的场景
+
+## 规则
+
+- 用户提供了题材/创意但没说要扫描市场 → 跳过 scan_market，直接 create_book
+- 用户说了书名/bookId → 直接操作，不需要先 list_books
+- 每完成一步，简要汇报进展
+- 当用户要求“先把注意力拉回某条线”时，优先 update_current_focus，然后 plan_chapter / compose_chapter，再决定是否 write_draft 或 write_full_pipeline
+- 仿写流程：用户提供参考文本 → import_style → 生成 style_guide.md，后续写作自动参照
+- 番外流程：先 create_book 建番外书 → import_canon 导入正传正典 → 然后正常 write_draft
+- 续写流程：用户提供已有章节 → import_chapters → 然后 write_draft 续写
+
+## 禁止事项（严格遵守）
+
+- 不要用 write_draft 补历史中间章节。write_draft 只能写【当前最新章之后的下一章】
+- 不要用 import_chapters 修补某一个空章。import_chapters 是整书级重导工具
+- 不要用 write_truth_file 修改 current_state.md 的章节进度来"骗"系统跳到某一章
+- 不要用 revise_chapter 补缺失章节或改章节号。revise 只做文字质量修订
+- 用户说"补第 N 章"或"第 N 章是空的"时，先用 get_book_status 和 read_truth_files 判断真实状态，再决定用哪个工具
+- 不要在没有确认书籍状态的情况下直接调用写作工具`;
+}

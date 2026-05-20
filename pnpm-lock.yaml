@@ -23,9 +23,6 @@ importers:
       '@actalk/inkos-core':
         specifier: workspace:*
         version: link:../core
-      '@actalk/inkos-studio':
-        specifier: workspace:*
-        version: link:../studio
       commander:
         specifier: ^14.0.3
         version: 14.0.3

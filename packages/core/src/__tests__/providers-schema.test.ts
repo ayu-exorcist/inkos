@@ -138,7 +138,7 @@ describe("providers structural integrity", () => {
       expect(ids).toContain(id);
     }
     for (const id of ["modelscope", "giteeai", "qiniu", "infiniai"]) {
-      expect(ids).not.toContain(id);
+      expect(ids).toContain(id);
     }
     expect(ids).not.toContain("higress");
   });
@@ -164,9 +164,9 @@ describe("providers structural integrity", () => {
     expect(getEndpoint("newapi")?.baseUrl).toBe("");
   });
 
-  it("B4：总 provider 数 = 30（不含 CodingPlan 分组，R5 删 qwen / higress 且精简聚合入口后）", () => {
+  it("B4：总 provider 数 = 35（不含 CodingPlan 分组，bank.yaml 自动加载后聚合入口全部暴露）", () => {
     const nonCoding = getAllEndpoints().filter((p) => p.group !== "codingPlan");
-    expect(nonCoding.length).toBe(30);
+    expect(nonCoding.length).toBe(35);
   });
 
   it("B6：CodingPlan 8 个 provider 全部收录", () => {
@@ -185,8 +185,8 @@ describe("providers structural integrity", () => {
     }
   });
 
-  it("B6：总 provider 数 = 38 (30 base + 8 CodingPlan)", () => {
-    expect(getAllEndpoints().length).toBe(38);
+  it("B6：总 provider 数 = 43 (35 base + 8 CodingPlan)", () => {
+    expect(getAllEndpoints().length).toBe(43);
   });
 
   it("B6：CodingPlan provider 都走 anthropic-messages", () => {

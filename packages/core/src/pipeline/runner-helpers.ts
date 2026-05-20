@@ -213,6 +213,14 @@ export interface PipelineConfig {
   readonly inputGovernanceMode?: InputGovernanceMode;
   readonly logger?: Logger;
   readonly onStreamProgress?: OnStreamProgress;
+  /** Optional extension registry. Defaults to built-in registry. */
+  readonly registry?: import("../extension/registry.js").ExtensionRegistry;
+  /**
+   * Model context-window size in tokens.
+   * When provided, all agents created by this runner will automatically
+   * compress message history via ContextBudgetManager.
+   */
+  readonly contextWindow?: number;
 }
 
 export interface TokenUsageSummary {

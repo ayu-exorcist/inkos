@@ -1,7 +1,8 @@
-import { readFile, writeFile, mkdir, readdir, rm, stat, unlink, open } from "node:fs/promises";
 import { join } from "node:path";
 import type { BookConfig } from "../models/book.js";
 import type { ChapterMeta } from "../models/chapter.js";
+import type { StorageLayer } from "../storage/layer.js";
+import { FileSystemStorage } from "../storage/fs.js";
 import {
   bootstrapStructuredStateFromMarkdown,
   resolveDurableStoryProgress,
@@ -10,8 +11,11 @@ import {
 export class StateManager {
   /** Books actively being written by this process — used for same-process stale lock detection. */
   private readonly activeWrites = new Set<string>();
+  private readonly storage: StorageLayer;
 
-  constructor(private readonly projectRoot: string) {}
+  constructor(private readonly projectRoot: string, storage?: StorageLayer) {
+    this.storage = storage ?? new FileSystemStorage();
+  }
 
   private static defaultAuthorIntent(language: "zh" | "en"): string {
     return language === "zh"
@@ -41,11 +45,11 @@ export class StateManager {
     const rolesMajorDir = join(storyDir, "roles", "主要角色");
     const rolesMinorDir = join(storyDir, "roles", "次要角色");
 
-    await mkdir(storyDir, { recursive: true });
-    await mkdir(runtimeDir, { recursive: true });
-    await mkdir(outlineDir, { recursive: true });
-    await mkdir(rolesMajorDir, { recursive: true });
-    await mkdir(rolesMinorDir, { recursive: true });
+    await this.storage.mkdir(storyDir, { recursive: true });
+    await this.storage.mkdir(runtimeDir, { recursive: true });
+    await this.storage.mkdir(outlineDir, { recursive: true });
+    await this.storage.mkdir(rolesMajorDir, { recursive: true });
+    await this.storage.mkdir(rolesMinorDir, { recursive: true });
 
     await this.writeIfMissing(
       join(storyDir, "author_intent.md"),
@@ -62,10 +66,10 @@ export class StateManager {
     // Ensure style_guide includes writing methodology even without reference text
     const styleGuidePath = join(storyDir, "style_guide.md");
     try {
-      const existing = await readFile(styleGuidePath, "utf-8");
+      const existing = await this.storage.readFile(styleGuidePath, "utf-8");
       if (!existing.includes("写作方法论") && !existing.includes("Writing Methodology")) {
         const { buildWritingMethodologySection } = await import("../utils/writing-methodology.js");
-        await writeFile(
+        await this.storage.writeFile(
           styleGuidePath,
           `${existing}\n\n${buildWritingMethodologySection(language)}`,
           "utf-8",
@@ -74,7 +78,7 @@ export class StateManager {
     } catch {
       // failure expected, safe to ignore
       const { buildWritingMethodologySection } = await import("../utils/writing-methodology.js");
-      await writeFile(styleGuidePath, buildWritingMethodologySection(language), "utf-8");
+      await this.storage.writeFile(styleGuidePath, buildWritingMethodologySection(language), "utf-8");
     }
   }
 
@@ -88,8 +92,8 @@ export class StateManager {
     const storyDir = join(this.bookDir(bookId), "story");
     const runtimeDir = join(storyDir, "runtime");
     const [authorIntent, currentFocus] = await Promise.all([
-      readFile(join(storyDir, "author_intent.md"), "utf-8"),
-      readFile(join(storyDir, "current_focus.md"), "utf-8"),
+      this.storage.readFile(join(storyDir, "author_intent.md"), "utf-8"),
+      this.storage.readFile(join(storyDir, "current_focus.md"), "utf-8"),
     ]);
 
     return { authorIntent, currentFocus, runtimeDir };
@@ -97,7 +101,7 @@ export class StateManager {
 
   private async resolveControlDocumentLanguage(bookId: string): Promise<"zh" | "en"> {
     try {
-      const raw = await readFile(join(this.bookDir(bookId), "book.json"), "utf-8");
+      const raw = await this.storage.readFile(join(this.bookDir(bookId), "book.json"), "utf-8");
       const parsed = JSON.parse(raw) as { language?: unknown };
       return parsed.language === "zh" ? "zh" : "en";
     } catch {
@@ -107,28 +111,28 @@ export class StateManager {
   }
 
   async acquireBookLock(bookId: string): Promise<() => Promise<void>> {
-    await mkdir(this.bookDir(bookId), { recursive: true });
+    await this.storage.mkdir(this.bookDir(bookId), { recursive: true });
     const lockPath = join(this.bookDir(bookId), ".write.lock");
     try {
-      const handle = await open(lockPath, "wx");
+      const handle = await this.storage.open(lockPath, "wx");
       try {
         await handle.writeFile(`pid:${process.pid} ts:${Date.now()}`, "utf-8");
       } catch (error) {
         await handle.close().catch(() => undefined);
-        await unlink(lockPath).catch(() => undefined);
+        await this.storage.unlink(lockPath).catch(() => undefined);
         throw error;
       }
       await handle.close();
     } catch (e) {
       const code = (e as NodeJS.ErrnoException | undefined)?.code;
       if (code === "EEXIST") {
-        const lockData = await readFile(lockPath, "utf-8").catch(() => "pid:unknown ts:unknown");
+        const lockData = await this.storage.readFile(lockPath, "utf-8").catch(() => "pid:unknown ts:unknown");
         const lockPid = this.extractLockPid(lockData);
         const isStale =
           (lockPid !== undefined && !this.isProcessAlive(lockPid)) ||
           (lockPid === process.pid && !this.activeWrites.has(bookId));
         if (isStale) {
-          await unlink(lockPath).catch(() => undefined);
+          await this.storage.unlink(lockPath).catch(() => undefined);
           return this.acquireBookLock(bookId);
         }
         throw new Error(
@@ -142,7 +146,7 @@ export class StateManager {
     return async () => {
       this.activeWrites.delete(bookId);
       try {
-        await unlink(lockPath);
+        await this.storage.unlink(lockPath);
       } catch {
         // ignore
       }
@@ -183,18 +187,18 @@ export class StateManager {
 
   async loadProjectConfig(): Promise<Record<string, unknown>> {
     const configPath = join(this.projectRoot, "inkos.json");
-    const raw = await readFile(configPath, "utf-8");
+    const raw = await this.storage.readFile(configPath, "utf-8");
     return JSON.parse(raw);
   }
 
   async saveProjectConfig(config: Record<string, unknown>): Promise<void> {
     const configPath = join(this.projectRoot, "inkos.json");
-    await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
+    await this.storage.writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
   }
 
   async loadBookConfig(bookId: string): Promise<BookConfig> {
     const configPath = join(this.bookDir(bookId), "book.json");
-    const raw = await readFile(configPath, "utf-8");
+    const raw = await this.storage.readFile(configPath, "utf-8");
     if (!raw.trim()) {
       throw new Error(`book.json is empty for book "${bookId}"`);
     }
@@ -206,8 +210,8 @@ export class StateManager {
   }
 
   async saveBookConfigAt(bookDir: string, config: BookConfig): Promise<void> {
-    await mkdir(bookDir, { recursive: true });
-    await writeFile(join(bookDir, "book.json"), JSON.stringify(config, null, 2), "utf-8");
+    await this.storage.mkdir(bookDir, { recursive: true });
+    await this.storage.writeFile(join(bookDir, "book.json"), JSON.stringify(config, null, 2), "utf-8");
   }
 
   async ensureRuntimeState(bookId: string, fallbackChapter = 0): Promise<void> {
@@ -219,12 +223,12 @@ export class StateManager {
 
   async listBooks(): Promise<ReadonlyArray<string>> {
     try {
-      const entries = await readdir(this.booksDir);
+      const entries = await this.storage.readdir(this.booksDir);
       const bookIds: string[] = [];
       for (const entry of entries) {
         const bookJsonPath = join(this.booksDir, entry, "book.json");
         try {
-          await stat(bookJsonPath);
+          await this.storage.stat(bookJsonPath);
           bookIds.push(entry);
         } catch {
           // not a book directory
@@ -256,7 +260,7 @@ export class StateManager {
     const chapterNumbers = new Set<number>();
 
     try {
-      const files = await readdir(chaptersDir);
+      const files = await this.storage.readdir(chaptersDir);
       for (const file of files) {
         const match = file.match(/^(\d+)_.*\.md$/);
         if (!match) continue;
@@ -273,7 +277,7 @@ export class StateManager {
   async loadChapterIndex(bookId: string): Promise<ReadonlyArray<ChapterMeta>> {
     const indexPath = join(this.bookDir(bookId), "chapters", "index.json");
     try {
-      const raw = await readFile(indexPath, "utf-8");
+      const raw = await this.storage.readFile(indexPath, "utf-8");
       return JSON.parse(raw);
     } catch {
       // failure expected, safe to ignore
@@ -287,8 +291,8 @@ export class StateManager {
 
   async saveChapterIndexAt(bookDir: string, index: ReadonlyArray<ChapterMeta>): Promise<void> {
     const chaptersDir = join(bookDir, "chapters");
-    await mkdir(chaptersDir, { recursive: true });
-    await writeFile(join(chaptersDir, "index.json"), JSON.stringify(index, null, 2), "utf-8");
+    await this.storage.mkdir(chaptersDir, { recursive: true });
+    await this.storage.writeFile(join(chaptersDir, "index.json"), JSON.stringify(index, null, 2), "utf-8");
   }
 
   async snapshotState(bookId: string, chapterNumber: number): Promise<void> {
@@ -298,7 +302,7 @@ export class StateManager {
   async snapshotStateAt(bookDir: string, chapterNumber: number): Promise<void> {
     const storyDir = join(bookDir, "story");
     const snapshotDir = join(storyDir, "snapshots", String(chapterNumber));
-    await mkdir(snapshotDir, { recursive: true });
+    await this.storage.mkdir(snapshotDir, { recursive: true });
 
     const files = [
       "current_state.md",
@@ -312,8 +316,8 @@ export class StateManager {
     await Promise.all(
       files.map(async (f) => {
         try {
-          const content = await readFile(join(storyDir, f), "utf-8");
-          await writeFile(join(snapshotDir, f), content, "utf-8");
+          const content = await this.storage.readFile(join(storyDir, f), "utf-8");
+          await this.storage.writeFile(join(snapshotDir, f), content, "utf-8");
         } catch {
           // file doesn't exist yet
         }
@@ -323,13 +327,13 @@ export class StateManager {
     const stateDir = join(bookDir, "story", "state");
     const snapshotStateDir = join(snapshotDir, "state");
     try {
-      const stateFiles = await readdir(stateDir);
+      const stateFiles = await this.storage.readdir(stateDir);
       if (stateFiles.length > 0) {
-        await mkdir(snapshotStateDir, { recursive: true });
+        await this.storage.mkdir(snapshotStateDir, { recursive: true });
         await Promise.all(
           stateFiles.map(async (fileName) => {
-            const content = await readFile(join(stateDir, fileName), "utf-8");
-            await writeFile(join(snapshotStateDir, fileName), content, "utf-8");
+            const content = await this.storage.readFile(join(stateDir, fileName), "utf-8");
+            await this.storage.writeFile(join(snapshotStateDir, fileName), content, "utf-8");
           }),
         );
       }
@@ -364,7 +368,7 @@ export class StateManager {
 
     for (const requiredPath of requiredSingle) {
       try {
-        await stat(requiredPath);
+        await this.storage.stat(requiredPath);
       } catch {
         // failure expected, safe to ignore
         return false;
@@ -375,7 +379,7 @@ export class StateManager {
       let found = false;
       for (const candidate of alternatives) {
         try {
-          await stat(candidate);
+          await this.storage.stat(candidate);
           found = true;
           break;
         } catch {
@@ -410,8 +414,8 @@ export class StateManager {
 
       await Promise.all(
         requiredFiles.map(async (f) => {
-          const content = await readFile(join(snapshotDir, f), "utf-8");
-          await writeFile(join(storyDir, f), content, "utf-8");
+          const content = await this.storage.readFile(join(snapshotDir, f), "utf-8");
+          await this.storage.writeFile(join(storyDir, f), content, "utf-8");
         }),
       );
 
@@ -419,11 +423,11 @@ export class StateManager {
         optionalFiles.map(async (f) => {
           const targetPath = join(storyDir, f);
           try {
-            const content = await readFile(join(snapshotDir, f), "utf-8");
-            await writeFile(targetPath, content, "utf-8");
+            const content = await this.storage.readFile(join(snapshotDir, f), "utf-8");
+            await this.storage.writeFile(targetPath, content, "utf-8");
           } catch {
             // failure expected, safe to ignore
-            await rm(targetPath, { force: true });
+            await this.storage.rm(targetPath, { force: true });
           }
         }),
       );
@@ -432,14 +436,14 @@ export class StateManager {
       let restoredStructuredState = false;
       try {
         const snapshotStateDir = join(snapshotDir, "state");
-        const stateFiles = await readdir(snapshotStateDir);
+        const stateFiles = await this.storage.readdir(snapshotStateDir);
         if (stateFiles.length > 0) {
           restoredStructuredState = true;
-          await mkdir(stateDir, { recursive: true });
+          await this.storage.mkdir(stateDir, { recursive: true });
           await Promise.all(
             stateFiles.map(async (fileName) => {
-              const content = await readFile(join(snapshotStateDir, fileName), "utf-8");
-              await writeFile(join(stateDir, fileName), content, "utf-8");
+              const content = await this.storage.readFile(join(snapshotStateDir, fileName), "utf-8");
+              await this.storage.writeFile(join(stateDir, fileName), content, "utf-8");
             }),
           );
         }
@@ -447,7 +451,7 @@ export class StateManager {
         // snapshot structured state missing — skip
       }
       if (!restoredStructuredState) {
-        await rm(stateDir, { recursive: true, force: true });
+        await this.storage.rm(stateDir, { recursive: true, force: true });
       }
 
       return true;
@@ -487,13 +491,13 @@ export class StateManager {
 
     // Delete chapter markdown files for discarded chapters
     try {
-      const files = await readdir(chaptersDir);
+      const files = await this.storage.readdir(chaptersDir);
       for (const file of files) {
         const match = file.match(/^(\d+)_.*\.md$/);
         if (!match) continue;
         const num = parseInt(match[1]!, 10);
         if (num > targetChapter) {
-          await unlink(join(chaptersDir, file)).catch(() => {});
+          await this.storage.unlink(join(chaptersDir, file)).catch(() => {});
         }
       }
     } catch {
@@ -503,11 +507,11 @@ export class StateManager {
     // Delete snapshots for discarded chapters
     const snapshotsDir = join(bookDir, "story", "snapshots");
     try {
-      const snapshots = await readdir(snapshotsDir);
+      const snapshots = await this.storage.readdir(snapshotsDir);
       for (const snap of snapshots) {
         const num = parseInt(snap, 10);
         if (Number.isFinite(num) && num > targetChapter) {
-          await rm(join(snapshotsDir, snap), { recursive: true, force: true });
+          await this.storage.rm(join(snapshotsDir, snap), { recursive: true, force: true });
         }
       }
     } catch {
@@ -517,13 +521,13 @@ export class StateManager {
     // Delete runtime artifacts for discarded chapters
     const runtimeDir = join(bookDir, "story", "runtime");
     try {
-      const runtimeFiles = await readdir(runtimeDir);
+      const runtimeFiles = await this.storage.readdir(runtimeDir);
       for (const file of runtimeFiles) {
         const match = file.match(/^chapter-(\d+)\./);
         if (!match) continue;
         const num = parseInt(match[1]!, 10);
         if (num > targetChapter) {
-          await unlink(join(runtimeDir, file)).catch(() => {});
+          await this.storage.unlink(join(runtimeDir, file)).catch(() => {});
         }
       }
     } catch {
@@ -533,13 +537,13 @@ export class StateManager {
     // Also check story/drafts/ for discarded chapter files
     const draftsDir = join(bookDir, "story", "drafts");
     try {
-      const draftFiles = await readdir(draftsDir);
+      const draftFiles = await this.storage.readdir(draftsDir);
       for (const file of draftFiles) {
         const match = file.match(/^(\d+)_.*\.md$/);
         if (!match) continue;
         const num = parseInt(match[1]!, 10);
         if (num > targetChapter) {
-          await unlink(join(draftsDir, file)).catch(() => {});
+          await this.storage.unlink(join(draftsDir, file)).catch(() => {});
         }
       }
     } catch {
@@ -549,9 +553,9 @@ export class StateManager {
     // Drop any persisted sqlite acceleration index so discarded chapters
     // cannot leak back into retrieval after the markdown/state rollback.
     await Promise.all([
-      rm(join(bookDir, "story", "memory.db"), { force: true }),
-      rm(join(bookDir, "story", "memory.db-shm"), { force: true }),
-      rm(join(bookDir, "story", "memory.db-wal"), { force: true }),
+      this.storage.rm(join(bookDir, "story", "memory.db"), { force: true }),
+      this.storage.rm(join(bookDir, "story", "memory.db-shm"), { force: true }),
+      this.storage.rm(join(bookDir, "story", "memory.db-wal"), { force: true }),
     ]);
 
     await this.saveChapterIndex(bookId, kept);
@@ -560,10 +564,10 @@ export class StateManager {
 
   private async writeIfMissing(path: string, content: string): Promise<void> {
     try {
-      await stat(path);
+      await this.storage.stat(path);
     } catch {
       // failure expected, safe to ignore
-      await writeFile(path, content, "utf-8");
+      await this.storage.writeFile(path, content, "utf-8");
     }
   }
 }

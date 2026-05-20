@@ -330,6 +330,13 @@ export {
   type OnStreamProgress,
 } from "./llm/provider.js";
 export {
+  ContextBudgetManager,
+  estimateTokens,
+  estimateMessageTokens,
+  type CompressionResult,
+  type ContextBudgetOptions,
+} from "./llm/context-budget.js";
+export {
   SERVICE_PRESETS,
   SERVICE_TO_PI_PROVIDER,
   resolveServicePreset,
@@ -558,6 +565,12 @@ export {
 // State
 export { StateManager } from "./state/manager.js";
 export { bootstrapStructuredStateFromMarkdown } from "./state/state-bootstrap.js";
+
+// Storage
+export type { StorageLayer, FileHandle } from "./storage/layer.js";
+export { FileSystemStorage } from "./storage/fs.js";
+export { InMemoryStorage } from "./storage/memory.js";
+export { HybridStorage } from "./storage/hybrid.js";
 export {
   renderCurrentStateProjection,
   renderHooksProjection,

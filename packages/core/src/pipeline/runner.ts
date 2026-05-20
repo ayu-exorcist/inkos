@@ -10,10 +10,11 @@ import type {
   InputGovernanceMode,
 } from "../models/project.js";
 import type { GenreProfile } from "../models/genre-profile.js";
-import { ArchitectAgent, type ArchitectOutput } from "../agents/architect.js";
+import type { ArchitectOutput } from "../agents/architect.js";
+import { ArchitectAgent } from "../agents/architect.js";
 import { FoundationReviewerAgent } from "../agents/foundation-reviewer.js";
 import { PlannerAgent, type PlanChapterOutput } from "../agents/planner.js";
-import { composeGovernedChapter, type ComposeChapterOutput } from "../agents/composer.js";
+import { composeGovernedChapter, ComposerAgent, type ComposeChapterOutput } from "../agents/composer.js";
 import { WriterAgent, type WriteChapterInput, type WriteChapterOutput } from "../agents/writer.js";
 import { LengthNormalizerAgent } from "../agents/length-normalizer.js";
 import { ChapterAnalyzerAgent } from "../agents/chapter-analyzer.js";
@@ -33,9 +34,15 @@ import { StateManager } from "../state/manager.js";
 import { MemoryDB, type Fact } from "../state/memory-db.js";
 import { dispatchNotification, dispatchWebhookEvent } from "../notify/dispatcher.js";
 import type { WebhookEvent } from "../notify/webhook.js";
-import type { AgentContext } from "../agents/base.js";
+import type { AgentContext, BaseAgent } from "../agents/base.js";
 import type { AuditResult, AuditIssue } from "../agents/continuity.js";
 import type { RadarResult } from "../agents/radar.js";
+import { ExtensionRegistry, getBuiltInRegistry } from "../extension/registry.js";
+import {
+  createWorkflowContext,
+  WriteNextChapterWorkflow,
+  type WriteNextChapterInput,
+} from "../workflow/index.js";
 import type { LengthSpec, LengthTelemetry } from "../models/length-governance.js";
 import type { ChapterMemo, ContextPackage, RuleStack } from "../models/input-governance.js";
 import {
@@ -105,11 +112,55 @@ export class PipelineRunner {
   private readonly state: StateManager;
   private readonly config: PipelineConfig;
   private readonly agentClients = new Map<string, LLMClient>();
+  private readonly registry: ExtensionRegistry;
   private memoryIndexFallbackWarned = false;
 
   constructor(config: PipelineConfig) {
     this.config = config;
     this.state = new StateManager(config.projectRoot);
+    this.registry = config.registry ?? getBuiltInRegistry();
+  }
+
+  /**
+   * Resolve an agent from the extension registry.
+   * Falls back to built-in instantiation if the agent is not registered.
+   */
+  private async resolveAgent<T extends BaseAgent>(
+    name: string,
+    bookId: string | undefined,
+  ): Promise<T> {
+    const factory = this.registry.resolveAgent(name);
+    if (factory) {
+      return factory.create(this.agentCtxFor(name, bookId)) as Promise<T>;
+    }
+    // Fallback: direct import for agents not yet registered in the built-in registry.
+    // This branch will be removed once all agents are registered.
+    switch (name) {
+      case "writer":
+        return new WriterAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "auditor":
+        return new ContinuityAuditor(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "reviser":
+        return new ReviserAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "architect":
+        return new ArchitectAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "planner":
+        return new PlannerAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "composer":
+        return new ComposerAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "foundation-reviewer":
+        return new FoundationReviewerAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "state-validator":
+        return new StateValidatorAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "radar":
+        return new RadarAgent(this.agentCtxFor(name, bookId), this.config.radarSources) as unknown as T;
+      case "chapter-analyzer":
+        return new ChapterAnalyzerAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      case "length-normalizer":
+        return new LengthNormalizerAgent(this.agentCtxFor(name, bookId)) as unknown as T;
+      default:
+        throw new Error(`Unknown agent "${name}" and no registry factory found`);
+    }
   }
 
   private localize(language: LengthLanguage, messages: { zh: string; en: string }): string {
@@ -339,6 +390,7 @@ export class PipelineRunner {
       bookId,
       logger: this.config.logger?.child(agent),
       onStreamProgress: this.config.onStreamProgress,
+      contextWindow: this.config.contextWindow,
     };
   }
 
@@ -366,12 +418,12 @@ export class PipelineRunner {
   // ---------------------------------------------------------------------------
 
   async runRadar(): Promise<RadarResult> {
-    const radar = new RadarAgent(this.agentCtxFor("radar"), this.config.radarSources);
+    const radar = await this.resolveAgent<RadarAgent>("radar", undefined);
     return radar.scan();
   }
 
   async initBook(book: BookConfig, options: InitBookOptions = {}): Promise<void> {
-    const architect = new ArchitectAgent(this.agentCtxFor("architect", book.id));
+    const architect = await this.resolveAgent<ArchitectAgent>("architect", book.id);
     const bookDir = this.state.bookDir(book.id);
     const stagingBookDir = join(
       this.state.booksDir,
@@ -382,7 +434,7 @@ export class PipelineRunner {
 
     this.logStage(stageLanguage, { zh: "生成基础设定", en: "generating foundation" });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
-    const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", book.id));
+    const reviewer = await this.resolveAgent<FoundationReviewerAgent>("foundation-reviewer", book.id);
     const resolvedLanguage =
       (book.language ?? gp.language) === "en" ? ("en" as const) : ("zh" as const);
     const foundation = await this.generateAndReviewFoundation({
@@ -505,7 +557,7 @@ export class PipelineRunner {
       ]);
     }
 
-    const architect = new ArchitectAgent(this.agentCtxFor("architect", bookId));
+    const architect = await this.resolveAgent<ArchitectAgent>("architect", bookId);
     const foundation = await architect.generateFoundation(book, undefined, undefined, {
       reviseFrom: {
         storyBible: oldStoryBible,
@@ -516,7 +568,7 @@ export class PipelineRunner {
       },
     });
 
-    const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", bookId));
+    const reviewer = await this.resolveAgent<FoundationReviewerAgent>("foundation-reviewer", bookId);
     const resolvedLanguage = (book.language ?? "zh") === "en" ? ("en" as const) : ("zh" as const);
     try {
       const review = await reviewer.review({
@@ -629,8 +681,8 @@ export class PipelineRunner {
     const fanficCanon = await this.importFanficCanon(book.id, sourceText, sourceName, fanficMode);
 
     // Step 2: Generate foundation with review loop
-    const architect = new ArchitectAgent(this.agentCtxFor("architect", book.id));
-    const reviewer = new FoundationReviewerAgent(this.agentCtxFor("foundation-reviewer", book.id));
+    const architect = await this.resolveAgent<ArchitectAgent>("architect", book.id);
+    const reviewer = await this.resolveAgent<FoundationReviewerAgent>("foundation-reviewer", book.id);
     this.logStage(stageLanguage, { zh: "生成同人基础设定", en: "generating fanfic foundation" });
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const resolvedLanguage =
@@ -693,7 +745,7 @@ export class PipelineRunner {
         book.language ?? gp.language,
       );
 
-      const writer = new WriterAgent(this.agentCtxFor("writer", bookId));
+      const writer = await this.resolveAgent<WriterAgent>("writer", bookId);
       this.logStage(stageLanguage, { zh: "撰写章节草稿", en: "writing chapter draft" });
       const output = await writer.writeChapter({
         book,
@@ -883,7 +935,7 @@ export class PipelineRunner {
     }
 
     const content = await this.readChapterContent(bookDir, targetChapter);
-    const auditor = new ContinuityAuditor(this.agentCtxFor("auditor", bookId));
+    const auditor = await this.resolveAgent<ContinuityAuditor>("auditor", bookId);
     const { profile: gp } = await this.loadGenreProfile(book.genre);
     const language = book.language ?? gp.language;
     this.logStage(language, {
@@ -963,7 +1015,7 @@ export class PipelineRunner {
 
       // Re-audit to get structured issues (index only stores strings)
       const content = await this.readChapterContent(bookDir, targetChapter);
-      const auditor = new ContinuityAuditor(this.agentCtxFor("auditor", bookId));
+      const auditor = await this.resolveAgent<ContinuityAuditor>("auditor", bookId);
       const { profile: gp } = await this.loadGenreProfile(book.genre);
       const language = book.language ?? gp.language;
       const countingMode = resolveLengthCountingMode(language);
@@ -1010,7 +1062,7 @@ export class PipelineRunner {
         chapterMeta.lengthTelemetry?.countingMode === "en_words" ? "en" : language;
       const lengthSpec = buildLengthSpec(chapterLengthTarget, lengthLanguage);
 
-      const reviser = new ReviserAgent(this.agentCtxFor("reviser", bookId));
+      const reviser = await this.resolveAgent<ReviserAgent>("reviser", bookId);
       this.logStage(stageLanguage, {
         zh: `修订第${targetChapter}章`,
         en: `revising chapter ${targetChapter}`,
@@ -1362,77 +1414,71 @@ export class PipelineRunner {
     const { readBookRules } = await import("../agents/rules-reader.js");
     const parsedBookRules = (await readBookRules(bookDir))?.rules ?? null;
 
-    // 1. Write chapter
-    const writer = new WriterAgent(this.agentCtxFor("writer", bookId));
-    this.logStage(stageLanguage, { zh: "撰写章节草稿", en: "writing chapter draft" });
-    const output = await writer.writeChapter({
-      book,
-      bookDir,
-      chapterNumber,
-      ...writeInput,
-      lengthSpec,
-      ...(wordCount ? { wordCountOverride: wordCount } : {}),
-      ...(temperatureOverride ? { temperatureOverride } : {}),
+    // -----------------------------------------------------------------------
+    // Core LLM stages delegated to the workflow engine.
+    // -----------------------------------------------------------------------
+    const { createWorkflowContext, runDraftAndReviewWorkflow } = await import("../workflow/index.js");
+    const wfCtx = await createWorkflowContext({
+      runner: this,
+      state: this.state,
+      config: this.config,
+      logger: this.config.logger,
+      bookId,
     });
-    const writerCount = countChapterLength(output.content, lengthSpec.countingMode);
 
-    // Token usage accumulator
-    let totalUsage: TokenUsageSummary = output.tokenUsage ?? {
-      promptTokens: 0,
-      completionTokens: 0,
-      totalTokens: 0,
-    };
-    const auditor = new ContinuityAuditor(this.agentCtxFor("auditor", bookId));
-    const reviewResult = await runChapterReviewCycle({
-      book: { genre: book.genre },
-      bookDir,
+    const { draft, review: reviewResult } = await runDraftAndReviewWorkflow(wfCtx, {
       chapterNumber,
-      initialOutput: output,
-      reducedControlInput,
+      writeInput,
       lengthSpec,
-      initialUsage: totalUsage,
-      createReviser: () => new ReviserAgent(this.agentCtxFor("reviser", bookId)),
-      auditor,
-      normalizeDraftLengthIfNeeded: (chapterContent) =>
-        this.normalizeDraftLengthIfNeeded({
-          bookId,
-          chapterNumber,
-          chapterContent,
-          lengthSpec,
-          chapterIntent: writeInput.chapterIntent,
-        }),
-      normalizePostWriteSurface: (chapterContent) =>
-        normalizePostWriteSurface(chapterContent, pipelineLang),
-      assertChapterContentNotEmpty: (content, stage) =>
-        this.assertChapterContentNotEmpty(content, chapterNumber, stage),
-      addUsage: PipelineRunner.addUsage,
-      analyzeAITells: (content) => analyzeAITells(content, pipelineLang),
-      analyzeSensitiveWords: (content) => analyzeSensitiveWords(content, undefined, pipelineLang),
-      runPostWriteChecks: (content) => {
-        const baseIssues = postWriteValidate(content, gp, parsedBookRules, pipelineLang)
-          .filter((v) => v.severity === "error")
-          .map((v) => ({
-            severity: "critical" as const,
-            category: v.rule,
-            description: v.description,
-            suggestion: v.suggestion,
-          }));
-        // Phase 9-3: verify the draft acts on every hook the memo committed to.
-        const memoBody = writeInput.chapterMemo?.body ?? "";
-        const ledgerIssues = memoBody ? validateHookLedger(memoBody, content) : [];
-        return [...baseIssues, ...ledgerIssues];
+      wordCount,
+      temperatureOverride,
+      reviewDeps: {
+        reducedControlInput,
+        normalizeDraftLengthIfNeeded: (chapterContent) =>
+          this.normalizeDraftLengthIfNeeded({
+            bookId,
+            chapterNumber,
+            chapterContent,
+            lengthSpec,
+            chapterIntent: writeInput.chapterIntent,
+          }),
+        normalizePostWriteSurface: (chapterContent) =>
+          normalizePostWriteSurface(chapterContent, pipelineLang),
+        assertChapterContentNotEmpty: (content, stage) =>
+          this.assertChapterContentNotEmpty(content, chapterNumber, stage),
+        addUsage: PipelineRunner.addUsage,
+        analyzeAITells: (content) => analyzeAITells(content, pipelineLang),
+        analyzeSensitiveWords: (content) => analyzeSensitiveWords(content, undefined, pipelineLang),
+        runPostWriteChecks: (content) => {
+          const baseIssues = postWriteValidate(content, gp, parsedBookRules, pipelineLang)
+            .filter((v) => v.severity === "error")
+            .map((v) => ({
+              severity: "critical" as const,
+              category: v.rule,
+              description: v.description,
+              suggestion: v.suggestion,
+            }));
+          const memoBody = writeInput.chapterMemo?.body ?? "";
+          const ledgerIssues = memoBody ? validateHookLedger(memoBody, content) : [];
+          return [...baseIssues, ...ledgerIssues];
+        },
+        maxReviewIterations: this.config.writingReviewRetries,
+        logWarn: (message) => this.logWarn(pipelineLang, message),
+        logStage: (message) => this.logStage(stageLanguage, message),
       },
-      maxReviewIterations: this.config.writingReviewRetries,
-      logWarn: (message) => this.logWarn(pipelineLang, message),
-      logStage: (message) => this.logStage(stageLanguage, message),
     });
-    totalUsage = reviewResult.totalUsage;
+
+    const output = draft.output;
+    const writerCount = draft.writerCount;
+    let totalUsage = reviewResult.totalUsage;
     let finalContent = reviewResult.finalContent;
     let finalWordCount = reviewResult.finalWordCount;
     let revised = reviewResult.revised;
     let auditResult = reviewResult.auditResult;
     const postReviseCount = reviewResult.postReviseCount;
     const normalizeApplied = reviewResult.normalizeApplied;
+
+    const writer = await this.resolveAgent<WriterAgent>("writer", bookId);
 
     // 3b. Lightweight per-chapter promotion pass — check if any hooks should
     // be promoted based on advanced_count derived from chapter_summaries.
@@ -1571,7 +1617,7 @@ export class PipelineRunner {
       readFile(join(storyDir, "book_rules.md"), "utf-8").catch(() => ""),
       readFile(join(storyDir, "chapter_summaries.md"), "utf-8").catch(() => ""),
     ]);
-    const validator = new StateValidatorAgent(this.agentCtxFor("state-validator", bookId));
+    const validator = await this.resolveAgent<StateValidatorAgent>("state-validator", bookId);
     const truthValidation = await validateChapterTruthPersistence({
       writer,
       validator,
@@ -1762,7 +1808,7 @@ export class PipelineRunner {
       readFile(join(storyDir, "pending_hooks.md"), "utf-8").catch(() => ""),
     ]);
 
-    const writer = new WriterAgent(this.agentCtxFor("writer", bookId));
+    const writer = await this.resolveAgent<WriterAgent>("writer", bookId);
     let repairedOutput = await writer.settleChapterState({
       book,
       bookDir,
@@ -1771,7 +1817,7 @@ export class PipelineRunner {
       content,
       allowReapply: true,
     });
-    const validator = new StateValidatorAgent(this.agentCtxFor("state-validator", bookId));
+    const validator = await this.resolveAgent<StateValidatorAgent>("state-validator", bookId);
     let validation = await validator.validate(
       content,
       targetChapter,
@@ -1901,7 +1947,7 @@ export class PipelineRunner {
             { reuseExistingIntentWhenContextMissing: true },
           );
 
-    const writer = new WriterAgent(this.agentCtxFor("writer", bookId));
+    const writer = await this.resolveAgent<WriterAgent>("writer", bookId);
     let syncedOutput = await writer.settleChapterState({
       book,
       bookDir,
@@ -1913,7 +1959,7 @@ export class PipelineRunner {
       ruleStack: reducedControlInput?.composed.ruleStack,
       allowReapply: true,
     });
-    const validator = new StateValidatorAgent(this.agentCtxFor("state-validator", bookId));
+    const validator = await this.resolveAgent<StateValidatorAgent>("state-validator", bookId);
     let validation = await validator.validate(
       content,
       targetChapter,
@@ -2405,7 +2451,7 @@ ${matrix}`,
         );
         const foundationSource = buildImportFoundationSource(input.chapters, resolvedLanguage);
 
-        const architect = new ArchitectAgent(this.agentCtxFor("architect", input.bookId));
+        const architect = await this.resolveAgent<ArchitectAgent>("architect", input.bookId);
         const isSeries = input.importMode === "series";
         const foundation = isSeries
           ? await this.generateAndReviewFoundation({
@@ -2417,8 +2463,9 @@ ${matrix}`,
                   reviewFeedback,
                   { importMode: "series" },
                 ),
-              reviewer: new FoundationReviewerAgent(
-                this.agentCtxFor("foundation-reviewer", input.bookId),
+              reviewer: await this.resolveAgent<FoundationReviewerAgent>(
+                "foundation-reviewer",
+                input.bookId,
               ),
               mode: "series",
               language: resolvedLanguage === "en" ? "en" : "zh",
@@ -2466,8 +2513,8 @@ ${matrix}`,
           en: `Step 2: Sequential replay from chapter ${startFrom}...`,
         }),
       );
-      const analyzer = new ChapterAnalyzerAgent(this.agentCtxFor("chapter-analyzer", input.bookId));
-      const writer = new WriterAgent(this.agentCtxFor("writer", input.bookId));
+      const analyzer = await this.resolveAgent<ChapterAnalyzerAgent>("chapter-analyzer", input.bookId);
+      const writer = await this.resolveAgent<WriterAgent>("writer", input.bookId);
       const countingMode = resolveLengthCountingMode(book.language ?? gp.language);
       let totalWords = 0;
       let importedCount = 0;
@@ -2608,7 +2655,7 @@ ${matrix}`,
       return output;
     }
 
-    const analyzer = new ChapterAnalyzerAgent(this.agentCtxFor("chapter-analyzer", bookId));
+    const analyzer = await this.resolveAgent<ChapterAnalyzerAgent>("chapter-analyzer", bookId);
     const analyzed = await analyzer.analyzeChapter({
       book,
       bookDir,
@@ -2791,8 +2838,9 @@ ${matrix}`,
       };
     }
 
-    const normalizer = new LengthNormalizerAgent(
-      this.agentCtxFor("length-normalizer", params.bookId),
+    const normalizer = await this.resolveAgent<LengthNormalizerAgent>(
+      "length-normalizer",
+      params.bookId,
     );
     const normalized = await normalizer.normalizeChapter({
       chapterContent: params.chapterContent,
@@ -3370,7 +3418,7 @@ ${matrix}`,
       if (persisted) return persisted;
     }
 
-    const planner = new PlannerAgent(this.agentCtxFor("planner", book.id));
+    const planner = await this.resolveAgent<PlannerAgent>("planner", book.id);
     const plan = await planner.planChapter({
       book,
       bookDir,
