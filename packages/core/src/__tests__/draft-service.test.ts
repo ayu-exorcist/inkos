@@ -34,9 +34,9 @@ describe("DraftService", () => {
 
     const bus = new EventBus();
     const events: Array<{ type: string; payload: unknown }> = [];
-    bus.on(INKOS_EVENTS.CHAPTER_DRAFTED, (payload) =>
-      events.push({ type: INKOS_EVENTS.CHAPTER_DRAFTED, payload }),
-    );
+    bus.on(INKOS_EVENTS.CHAPTER_DRAFTED, (payload) => {
+      events.push({ type: INKOS_EVENTS.CHAPTER_DRAFTED, payload });
+    });
 
     const service = new DraftService({
       state,
@@ -88,7 +88,7 @@ describe("DraftService", () => {
         }
         throw new Error(`Unknown agent ${name}`);
       },
-      logger: { info: vi.fn(), warn: vi.fn() },
+      logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn(), child: vi.fn() },
       eventBus: bus,
     });
 

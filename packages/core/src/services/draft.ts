@@ -420,7 +420,7 @@ export class DraftService {
     };
   }
 
-  private async createGovernedArtifacts(
+  async createGovernedArtifacts(
     book: BookConfig,
     bookDir: string,
     chapterNumber: number,

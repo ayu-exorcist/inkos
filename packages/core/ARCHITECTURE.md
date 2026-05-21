@@ -24,6 +24,8 @@ This document focuses on `packages/core`.
 │  - FoundationService                    │
 │  - DraftService                         │
 │  - AuditService                         │
+│  - RevisionService                      │
+│  - ImportService                        │
 ├─────────────────────────────────────────┤
 │  Workflow Engine  (reusable sequences)  │
 │  - runDraftAndReviewWorkflow            │
@@ -50,6 +52,8 @@ This document focuses on `packages/core`.
 - `FoundationService` for book initialization and foundation revision
 - `DraftService` for chapter drafting, planning, and composition
 - `AuditService` for chapter auditing and merged evaluation
+- `RevisionService` for chapter revision based on audit feedback
+- `ImportService` for canon import, fanfic initialization, and chapter import
 
 The Runner remains responsible for:
 - Agent resolution (registry fallback)
@@ -57,6 +61,7 @@ The Runner remains responsible for:
 - Event emission
 - Webhook dispatch
 - Lock management (acquires locks, then delegates)
+- Public API facade (all public methods delegate to Services)
 
 ### Backward Compatibility
 
@@ -93,6 +98,28 @@ All public methods on `PipelineRunner` retain their original signatures. Interna
 - `evaluateMergedAudit()` — combines LLM audit + AI-tells + sensitive words + long-span fatigue into a single evaluation
 
 **Dependencies**: agent resolver only.
+
+### RevisionService
+
+**Responsibility**: Chapter revision based on audit feedback.
+
+- `reviseDraft()` — re-audit → call ReviserAgent → normalize length → re-audit → decide whether to apply → persist files → update index → sync memory
+
+**Dependencies**: `StateManager`, `AuditService`, `DraftService`, agent resolver, optional logger/eventBus.
+
+### ImportService
+
+**Responsibility**: Canon import, fanfic initialization, and chapter import.
+
+- `importFanficCanon()` — generates `fanfic_canon.md` from source text
+- `initFanficBook()` — one-step fanfic book creation (config + canon + foundation)
+- `importCanon()` — generates `parent_canon.md` from parent book truth files
+- `importChapters()` — sequential replay of existing chapters through ChapterAnalyzer
+- `generateStyleGuide()` — qualitative + statistical style extraction
+
+**Dependencies**: `StateManager`, `DraftService`, agent resolver, LLM client/model, optional logger/telemetry.
+
+**Backward compatibility note**: `initFanficBook` accepts an optional `importFanficCanon` callback so that `PipelineRunner` facade spies continue to work in tests.
 
 ## Workflow Engine
 
@@ -213,5 +240,6 @@ Declarative provider configuration:
 | P3 | Adaptive gates + Health monitor + Telemetry |
 | P4 | Plugin discovery |
 | P5 | Governance policy file loader + Service extraction + EventBus |
+| P5-2 | RevisionService + ImportService extraction |
 
 All phases maintain **full backward compatibility** at the `PipelineRunner` public API level.

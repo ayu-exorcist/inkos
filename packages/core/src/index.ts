@@ -501,6 +501,8 @@ export {
 export { FoundationService, type FoundationServiceDeps, type InitBookOptions } from "./services/foundation.js";
 export { AuditService, type AuditServiceDeps, type AuditOptions } from "./services/audit.js";
 export { DraftService, type DraftServiceDeps } from "./services/draft.js";
+export { RevisionService, type RevisionServiceDeps } from "./services/revision.js";
+export { ImportService, type ImportServiceDeps } from "./services/import.js";
 
 // Utils
 export { isNewLayoutBook } from "./utils/outline-paths.js";
